@@ -15,7 +15,7 @@ for ii,obj in enumerate(objlist):
 fmod=re.compile(r"^\s*module\s+(\w*)",re.IGNORECASE)
 fuse=re.compile(r"^\s*use\s+(\w*)",re.IGNORECASE)
 finclude=re.compile(r"^\s*include\s+[\'\"](\w*)[\'\"]",re.IGNORECASE)
-fext=re.compile("\.[fF](?:9[05])?$")
+fext=re.compile("\.(CUF)|([fF](?:9[05])?)$")
 
 src={}
 for dr in os.walk(opts.srcdir):

@@ -18,27 +18,125 @@
 #
 #
 # Object list
+ifndef OPTARGET
 OBJ = banner.o       \
       comm.o         \
+      common_kernels.o         \
       data.o         \
       error.o        \
       eos.o          \
       geometry.o     \
+      geometry_kernels.o     \
       getacc.o       \
+      getacc_kernels.o       \
       getdt.o        \
+      getdt_kernels.o        \
       getein.o       \
+      getein_kernels.o       \
       getforce.o     \
+      getforce_kernels.o     \
       gethg.o        \
+      getpc_kernels.o        \
       getpc.o        \
+      getq_kernels.o         \
       getq.o         \
       getsp.o        \
       halt.o         \
       hydro.o        \
       init.o         \
+      init_kernels.o         \
       lagstep.o      \
+      lagstep_kernels.o      \
       main.o         \
       mesh.o         \
       read.o         \
       timers.o       \
       utilities.o    \
       write.o
+else
+ifeq ($(OPTARGET),genseq)
+OBJ = banner.o       \
+      comm.o         \
+      common_kernels.o         \
+      data.o         \
+      error.o        \
+      eos.o          \
+      geometry_op.o     \
+      getacc_op.o       \
+      getdt_op.o        \
+      getein_op.o       \
+      getforce_op.o     \
+      gethg.o        \
+      getpc_op.o        \
+      getq_op.o         \
+      getsp.o        \
+      halt.o         \
+      hydro.o        \
+      init_op.o         \
+      lagstep_op.o      \
+      main.o         \
+      mesh.o         \
+      read.o         \
+      timers.o       \
+      utilities.o    \
+      write.o
+OBJ += $(shell find . -name "*_seqkernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
+endif
+ifeq ($(OPTARGET),openmp)
+OBJ = banner.o       \
+      comm.o         \
+      common_kernels.o         \
+      data.o         \
+      error.o        \
+      eos.o          \
+      geometry_op.o     \
+      getacc_op.o       \
+      getdt_op.o        \
+      getein_op.o       \
+      getforce_op.o     \
+      gethg.o        \
+      getpc_op.o        \
+      getq_op.o         \
+      getsp.o        \
+      halt.o         \
+      hydro.o        \
+      init_op.o         \
+      lagstep_op.o      \
+      main.o         \
+      mesh.o         \
+      read.o         \
+      timers.o       \
+      utilities.o    \
+      write.o
+OBJ += $(shell find . -name "*_kernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
+endif
+ifeq ($(OPTARGET),cuda)
+OBJ = banner.o       \
+      comm.o         \
+      cudaConfigurationParams.o \
+      common_kernels.o         \
+      data.o         \
+      error.o        \
+      eos.o          \
+      geometry_op.o     \
+      getacc_op.o       \
+      getdt_op.o        \
+      getein_op.o       \
+      getforce_op.o     \
+      gethg.o        \
+      getpc_op.o        \
+      getq_op.o         \
+      getsp.o        \
+      halt.o         \
+      hydro.o        \
+      init_op.o         \
+      lagstep_op.o      \
+      main.o         \
+      mesh.o         \
+      read.o         \
+      timers.o       \
+      utilities_op.o    \
+      write.o
+OBJ += $(shell find . -name "*_kernel.CUF" | sed s/\\.CUF/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
+endif
+endif

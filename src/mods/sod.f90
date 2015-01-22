@@ -25,6 +25,9 @@ SUBROUTINE modify()
   USE integers_mod,ONLY: nel,nnod
   USE reals_mod,   ONLY: eos_param
   USE logicals_mod,ONLY: zsp
+  USE parameters_mod,ONLY: LI
+  USE op2_bookleaf
+  USE sod_kernels
 
   ! Local
   INTEGER(KIND=ink) :: inod,iel,ii,n1,n2,n3,n4
@@ -33,58 +36,67 @@ SUBROUTINE modify()
   ! find mid-point
   x1=ndx(1)
   x2=x1
-  DO inod=1,nnod
-    IF (ndx(inod).LT.x1) x1=ndx(inod)
-    IF (ndx(inod).GT.x2) x2=ndx(inod)
-  ENDDO
+  call op_par_loop_3(sod_midpoint, s_nodes, &
+&         op_arg_dat(d_ndx,-1,OP_ID,1,'real(8)',OP_READ), &
+&         op_arg_gbl(x1,1,'real(8)',OP_MIN), &
+&         op_arg_gbl(x2,1,'real(8)',OP_MAX))
   xmid=0.5_rlk*(x1+x2)
 
   ! reset variables
-  DO iel=1,nel
-    x1=ndx(ielnod(1,iel))
-    x2=ndx(ielnod(2,iel))
-    x3=ndx(ielnod(3,iel))
-    x4=ndx(ielnod(4,iel))
-    IF ((0.25_rlk*(x1+x2+x3+x4)).LT.xmid) THEN
-      ielmat(iel)=1_ink
-      rho(iel)=1.0_rlk
-      pre(iel)=1.0_rlk
-    ELSE
-      ielmat(iel)=2_ink
-      rho(iel)=0.125_rlk
-      pre(iel)=0.1_rlk
-    ENDIF
-    ein(iel)=pre(iel)/(rho(iel)*(eos_param(1,ielmat(iel))-1.0_rlk))
-    elmass(iel)=rho(iel)*elvol(iel)
-    cnmass(1:4,iel)=rho(iel)*cnwt(1:4,iel)
-  ENDDO
+
+  call op_par_loop_14(sod_reset,s_elements, &
+&         op_arg_dat(d_ndx,1,m_el2node,1,'real(8)',OP_READ), &
+&         op_arg_dat(d_ndx,2,m_el2node,1,'real(8)',OP_READ), &
+&         op_arg_dat(d_ndx,3,m_el2node,1,'real(8)',OP_READ), &
+&         op_arg_dat(d_ndx,4,m_el2node,1,'real(8)',OP_READ), &
+&         op_arg_gbl(xmid,1,'real(8)',OP_READ), &
+&         op_arg_dat(d_ielmat,-1,OP_ID,1,'integer(4)',OP_WRITE), &
+&         op_arg_dat(d_rho,-1,OP_ID,1,'real(8)',OP_WRITE), &
+&         op_arg_dat(d_pre,-1,OP_ID,1,'real(8)',OP_WRITE), &
+&         op_arg_dat(d_ein,-1,OP_ID,1,'real(8)',OP_WRITE), &
+&         op_arg_dat(d_elmass,-1,OP_ID,1,'real(8)',OP_WRITE), &
+&         op_arg_dat(d_cnmass,-1,OP_ID,4,'real(8)',OP_WRITE), &
+&         op_arg_gbl(eos_param,LI*6,'real(8)',OP_READ), &
+&         op_arg_dat(d_elvol,-1,OP_ID,1,'real(8)',OP_READ), &
+&         op_arg_dat(d_cnwt,-1,OP_ID,4,'real(8)',OP_READ))
 
   ! reset subzonal pressure mass
   IF (zsp) THEN
-    DO iel=1,nel
-      n1=ielnod(1,iel)
-      n2=ielnod(2,iel)
-      n3=ielnod(3,iel)
-      n4=ielnod(4,iel)
-      x3=0.25_rlk*(ndx(n1)+ndx(n2)+ndx(n3)+ndx(n4))
-      y3=0.25_rlk*(ndy(n1)+ndy(n2)+ndy(n3)+ndy(n4))
-      DO inod=1,4
-        x1=ndx(ielnod(inod,iel))
-        y1=ndy(ielnod(inod,iel))
-        ii=MOD(inod,4)+1_ink
-        x2=0.5_rlk*(x1+ndx(ielnod(ii,iel)))
-        y2=0.5_rlk*(y1+ndy(ielnod(ii,iel)))
-        ii=MOD(inod+2,4)+1_ink
-        x4=0.5_rlk*(x1+ndx(ielnod(ii,iel)))
-        y4=0.5_rlk*(y1+ndy(ielnod(ii,iel)))
-        w1=-x1+x2+x3-x4
-        w2=-x1-x2+x3+x4
-        w3=-y1+y2+y3-y4
-        w4=-y1-y2+y3+y4
-        spmass(inod,iel)=rho(iel)*(w1*w4-w2*w3)
-      ENDDO
-    ENDDO
+    call op_par_loop_10(sod_subz,s_elements, &
+&            op_arg_dat(d_ndx, 1,m_el2node,1,'real(8)',OP_READ), &
+&            op_arg_dat(d_ndx, 2,m_el2node,1,'real(8)',OP_READ), &
+&            op_arg_dat(d_ndx, 3,m_el2node,1,'real(8)',OP_READ), &
+&            op_arg_dat(d_ndx, 4,m_el2node,1,'real(8)',OP_READ), &
+&            op_arg_dat(d_ndy, 1,m_el2node,1,'real(8)',OP_READ), &
+&            op_arg_dat(d_ndy, 2,m_el2node,1,'real(8)',OP_READ), &
+&            op_arg_dat(d_ndy, 3,m_el2node,1,'real(8)',OP_READ), &
+&            op_arg_dat(d_ndy, 4,m_el2node,1,'real(8)',OP_READ), &
+&            op_arg_dat(d_rho,-1,OP_ID    ,1,'real(8)',OP_READ), &
+&            op_arg_dat(d_spmass,-1,OP_ID ,4,'real(8)',OP_WRITE))
+!     DO iel=1,nel
+!       n1=ielnod(1,iel)
+!       n2=ielnod(2,iel)
+!       n3=ielnod(3,iel)
+!       n4=ielnod(4,iel)
+!       x3=0.25_rlk*(ndx(n1)+ndx(n2)+ndx(n3)+ndx(n4))
+!       y3=0.25_rlk*(ndy(n1)+ndy(n2)+ndy(n3)+ndy(n4))
+!       DO inod=1,4
+!         x1=ndx(ielnod(inod,iel))
+!         y1=ndy(ielnod(inod,iel))
+!         ii=MOD(inod,4)+1_ink
+!         x2=0.5_rlk*(x1+ndx(ielnod(ii,iel)))
+!         y2=0.5_rlk*(y1+ndy(ielnod(ii,iel)))
+!         ii=MOD(inod+2,4)+1_ink
+!         x4=0.5_rlk*(x1+ndx(ielnod(ii,iel)))
+!         y4=0.5_rlk*(y1+ndy(ielnod(ii,iel)))
+!         w1=-x1+x2+x3-x4
+!         w2=-x1-x2+x3+x4
+!         w3=-y1+y2+y3-y4
+!         w4=-y1-y2+y3+y4
+!         spmass(inod,iel)=rho(iel)*(w1*w4-w2*w3)
+!       ENDDO
+!     ENDDO
   ENDIF
-  
+
 END SUBROUTINE modify
 

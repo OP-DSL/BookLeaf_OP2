@@ -1,90 +1,83 @@
-#
-#!Crown Copyright 2014 AWE.
-#!
-#! This file is part of Bookleaf.
-#!
-#! Bookleaf is free software: you can redistribute it and/or modify it under
-#! the terms of the GNU General Public License as published by the
-#! Free Software Foundation, either version 3 of the License, or (at your option)
-#! any later version.
-#!
-#! Bookleaf is distributed in the hope that it will be useful, but
-#! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-#! FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-#! details.
-#!
-#! You should have received a copy of the GNU General Public License along with
-#! Bookleaf. If not, see http://www.gnu.org/licenses/.
-#
-#
-getsp.o : t3_util.o data.o 
-
-getdt.o : t3_util.o utilities.o data.o geometry.o t3_collect.o error.o 
-
-t3_schedule.o : t3_util.o t3_register.o t3_types.o t3_decomposition.o \
-	t3_keys.o 
-
-getforce.o : getsp.o gethg.o t3_util.o data.o 
-
-gethg.o : t3_util.o data.o 
-
-getein.o : t3_util.o data.o 
-
-write.o : t3_util.o data.o t3_collect.o 
-
-t3_util.o : t3_types.o data.o 
-
-init.o : t3_util.o utilities.o getpc.o data.o geometry.o error.o 
-
-t3_register.o : t3_util.o t3_types.o 
-
-getacc.o : t3_util.o utilities.o data.o register.o 
-
-getq.o : t3_util.o data.o register.o 
-
-main.o : write.o t3_util.o mesh.o data.o register.o timers.o error.o 
-
-t3_types.o : 
-
-hydro.o : getdt.o t3_util.o lagstep.o data.o 
-
-halt.o : write.o t3_util.o data.o timers.o typhon.o 
-
-t3_decomposition.o : t3_util.o t3_types.o 
-
-read.o : utilities.o data.o error.o 
-
-utilities.o : data.o 
-
-getpc.o : t3_util.o data.o eos.o 
-
-mesh.o : utilities.o data.o error.o 
-
-t3_exchange.o : t3_schedule.o t3_util.o t3_register.o t3_types.o t3_decomposition.o \
-	t3_keys.o 
-
-t3_keys.o : t3_util.o t3_register.o t3_types.o t3_decomposition.o \
-	t3_collect.o 
-
-lagstep.o : getforce.o getein.o t3_util.o getacc.o getq.o utilities.o \
-	getpc.o data.o geometry.o 
-
-data.o : 
-
-t3_quantity.o : t3_util.o t3_register.o t3_types.o 
-
-geometry.o : t3_util.o utilities.o data.o error.o 
-
-register.o : t3_util.o data.o error.o typhon.o 
-
-eos.o : data.o 
-
-t3_collect.o : t3_types.o 
-
-timers.o : t3_util.o data.o 
-
-error.o : data.o 
-
-typhon.o : t3_util.o t3_register.o t3_types.o t3_decomposition.o t3_exchange.o \
-	t3_keys.o t3_quantity.o 
-
+getq_christiensen_bc_kernel.o: cudaConfigurationParams.o data.o 
+sod.o: data.o sod_kernels.o 
+getsp.o: data.o t3_util.o 
+cudaConfigurationParams.o: 
+t3_schedule.o: t3_register.o t3_decomposition.o t3_keys.o t3_types.o \
+	t3_util.o 
+getpc_merge_kernel.o: cudaConfigurationParams.o data.o 
+geometry_op.o: geometry_min_kernel.o data.o utilities_op.o geometry_calc_kernel.o \
+	t3_util.o error.o 
+gethg.o: data.o t3_util.o 
+getdt_div_kernel.o: cudaConfigurationParams.o data.o 
+gather_fun_kernel.o: cudaConfigurationParams.o data.o 
+geometry_min_kernel.o: cudaConfigurationParams.o data.o 
+data.o: 
+sod_kernels.o: data.o 
+t3_register.o: t3_types.o t3_util.o 
+getacc_accel_kernel.o: cudaConfigurationParams.o data.o 
+getq_christiensen_q_kernel.o: cudaConfigurationParams.o data.o 
+getforce_op.o: getsp.o gethg.o data.o getforce_visc_kernel.o getforce_pres_kernel.o \
+	t3_util.o 
+getq_christiensen1_kernel.o: cudaConfigurationParams.o data.o 
+lagstep_half_pos_kernel.o: cudaConfigurationParams.o data.o 
+getq_christiensen_limiter_kernel.o: cudaConfigurationParams.o data.o 
+t3_decomposition.o: t3_types.o t3_util.o 
+t3_collect.o: t3_types.o 
+write.o: data.o t3_collect.o mesh.o t3_util.o 
+getacc_avgvel_kernel.o: cudaConfigurationParams.o data.o 
+set_zero4_kernel.o: cudaConfigurationParams.o data.o 
+t3_keys.o: t3_register.o t3_decomposition.o t3_collect.o t3_types.o \
+	t3_util.o 
+main.o: data.o write.o mesh.o comm.o t3_util.o timers.o error.o 
+t3_types.o: 
+utilities_op.o: gather_fun_kernel.o data.o 
+hydro.o: data.o lagstep_op.o getdt_op.o t3_util.o 
+getdt_minval_kernel.o: cudaConfigurationParams.o data.o 
+getforce_visc_kernel.o: cudaConfigurationParams.o data.o 
+init_dem_kernel.o: cudaConfigurationParams.o data.o 
+halt.o: data.o write.o t3_util.o timers.o typhon.o 
+common_kernels.o: data.o 
+getein_op.o: data.o getein_update_kernel.o t3_util.o 
+read.o: data.o utilities_op.o error.o 
+getdt_cfl_kernel.o: cudaConfigurationParams.o data.o 
+getq_gradcon_kernel.o: cudaConfigurationParams.o data.o 
+geometry_calc_kernel.o: cudaConfigurationParams.o data.o 
+init_subz_pm_kernel.o: cudaConfigurationParams.o data.o 
+set_zero1_kernel.o: cudaConfigurationParams.o data.o 
+mesh.o: data.o utilities_op.o error.o 
+comm.o: data.o t3_util.o error.o typhon.o 
+getacc_updpos_kernel.o: cudaConfigurationParams.o data.o 
+t3_exchange.o: t3_schedule.o t3_register.o t3_decomposition.o t3_keys.o \
+	t3_types.o t3_util.o 
+getacc_scatter_kernel.o: cudaConfigurationParams.o data.o 
+lagstep_op.o: geometry_op.o data.o getforce_op.o lagstep_half_pos_kernel.o \
+	utilities_op.o getein_op.o getpc_op.o getacc_op.o t3_util.o getq_op.o \
+	a_eq_b_over_c_kernel.o 
+getpc_op.o: getpc_merge_kernel.o data.o getpc_update_kernel.o eos.o \
+	t3_util.o 
+getdt_minloc_kernel.o: cudaConfigurationParams.o data.o 
+t3_quantity.o: t3_register.o t3_types.o t3_util.o 
+getdt_op.o: geometry_op.o getdt_div_kernel.o data.o t3_collect.o utilities_op.o \
+	getdt_minval_kernel.o getdt_cfl_kernel.o getdt_minloc_kernel.o t3_util.o \
+	error.o 
+getacc_bc_kernel.o: cudaConfigurationParams.o data.o 
+getein_update_kernel.o: cudaConfigurationParams.o data.o 
+getforce_pres_kernel.o: cudaConfigurationParams.o data.o 
+getpc_update_kernel.o: cudaConfigurationParams.o data.o 
+getacc_op.o: data.o getacc_accel_kernel.o getacc_avgvel_kernel.o utilities_op.o \
+	set_zero1_kernel.o comm.o getacc_updpos_kernel.o getacc_scatter_kernel.o \
+	getacc_bc_kernel.o t3_util.o 
+eos.o: data.o 
+t3_util.o: data.o t3_types.o 
+getq_op.o: getq_christiensen_bc_kernel.o data.o getq_christiensen_q_kernel.o \
+	getq_christiensen1_kernel.o getq_christiensen_limiter_kernel.o set_zero4_kernel.o \
+	getq_gradcon_kernel.o set_zero1_kernel.o comm.o t3_util.o 
+timers.o: data.o t3_util.o 
+banner.o: 
+error.o: data.o 
+typhon.o: t3_register.o t3_decomposition.o t3_keys.o t3_types.o t3_exchange.o \
+	t3_quantity.o t3_util.o 
+a_eq_b_over_c_kernel.o: cudaConfigurationParams.o data.o 
+init_op.o: geometry_op.o data.o set_zero4_kernel.o utilities_op.o \
+	init_dem_kernel.o init_subz_pm_kernel.o set_zero1_kernel.o getpc_op.o \
+	t3_util.o error.o 

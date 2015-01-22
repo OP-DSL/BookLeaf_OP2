@@ -100,6 +100,7 @@ ifneq ($(MOD),)
     PP_MOD=-DMOD
   endif
   OBJ+=$(MOD).o
+  OBJ+=$(MOD)_kernels.o
 endif
 ifeq ($(NO_MPI),)
   ifneq (,$(findstring $(MAKECMDGOALS),$(EXE)))
@@ -132,7 +133,7 @@ endif
 VPATH=$(SRCDIR):$(MODDIR):$(SRCDIR)/comms:$(SRCDIR)/cutils
 
 # Collect all pre-processor options
-PREPRO = $(PP_MOD)   \
+PREPRO += $(PP_MOD)   \
 	 $(PP_MPI)   \
 	 $(PP_SILO)  \
 	 $(PP_OMP)
@@ -141,7 +142,8 @@ CPREPRO = $(F2C_DEF)
 
 # Includes
 INC =	$(SILOINC)   \
-	$(HDF5INC) 
+	$(HDF5INC)	\
+	-I$(OP2_INSTALL_PATH)/fortran/mod/$(OP2_COMPILER)
 
 # Libraries
 LIB = 	$(SILOLIB)   \
@@ -150,21 +152,22 @@ LIB = 	$(SILOLIB)   \
 
 # Rules
 .SUFFIXES:
-.SUFFIXES: .o .f90 .F90 .c
+.SUFFIXES: .o .f90 .F90 .CUF .c
 .f90.o:
-	$(FC) $(FFLAGS) $(INC) $<
+	$(FC) $(FFLAGS) $(CUDAF) $(INC) $<
 .F90.o:
-	$(FC) $(FFLAGS) $(PREPRO) $(INC) $<
+	$(FC) $(FFLAGS) $(CUDAF) $(PREPRO) $(INC) $<
 .c.o:
-	$(CC) $(CFLAGS) $(CPREPRO) $<
-
+	$(CC) $(CFLAGS) $(CUDAF) $(CPREPRO) $<
+.CUF.o:
+	$(FC) $(FFLAGS) $(CUDAF) $(INC) $<
 # Dependencies
 $(OBJ): | makefile.dep
 DEP+=makefile.dep
 
 # Commands
 $(EXE): $(DEP) $(OBJ)
-	$(FC) $(OBJ) $(LIB) $(LFLAGS) $(EXENAME)
+	$(FC) $(OBJ) $(LIB) $(LFLAGS) $(EXENAME) -L$(OP2_INSTALL_PATH)/fortran/lib/ -lop2_for_seq
 
 clean:
 	- rm -f *.o

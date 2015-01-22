@@ -24,31 +24,29 @@ MODULE getacc_mod
 
 CONTAINS
 
-  SUBROUTINE getacc(nshape,nel,nes,nnod,nns,cnfx,cnfy,ndub,ndvb,elu,elv,&
-&                   rho,dt05,dt)
+  SUBROUTINE getacc(dt05,dt,d_cnfx,d_cnfy,d_ndub,d_ndvb,d_elu,d_elv,d_rho)
 
     USE kinds_mod,    ONLY: ink,rlk
     USE reals_mod,    ONLY: zerocut,dencut,accut
     USE comms_mod,    ONLY: HALFSTEP,exchange
     USE paradef_mod,  ONLY: zparallel,ielsort1
-    USE pointers_mod, ONLY: ielnod,cnmass,cnwt,indtype,ndu,ndv,ndx,ndy
-    USE utilities_mod,ONLY: gather
+    USE utilities_mod,ONLY: gather,gather2
     USE timing_mod,   ONLY: bookleaf_times
     USE TYPH_util_mod,ONLY: get_time
+    USE OP2_Fortran_Reference
+    use, intrinsic :: ISO_C_BINDING
+    USE op2_bookleaf, ONLY: m_el2node,m_el2el,s_elements, s_nodes,d_ndmass,d_ndarea, &
+&                           d_cnmass,d_cnwt,d_indtype,d_ndu,d_ndv,d_ndx,d_ndy
+    USE getacc_kernels
+    USE common_kernels, ONLY:set_zero1
 
     ! Argument list
-    INTEGER(KIND=ink),                   INTENT(IN)  :: nshape,nel,nnod,&
-&                                                       nes,nns
-    REAL(KIND=rlk),DIMENSION(nshape,nes),INTENT(IN)  :: cnfx,cnfy
-    REAL(KIND=rlk),DIMENSION(nns),       INTENT(OUT) :: ndub,ndvb
-    REAL(KIND=rlk),DIMENSION(nshape,nes),INTENT(OUT) :: elu,elv
-    REAL(KIND=rlk),DIMENSION(nes),       INTENT(IN)  :: rho
     REAL(KIND=rlk),                      INTENT(IN)  :: dt05,dt
+    type(op_dat), INTENT(INOUT) :: d_cnfx,d_cnfy,d_ndub,d_ndvb,d_elu,d_elv,d_rho
     ! Local
-    INTEGER(KIND=ink)                                :: ii,jj,kk,iel,   &
-&                                                       inod
-    REAL(KIND=rlk)                                   :: w1,w2,t0,t1
-    REAL(KIND=rlk),DIMENSION(nns)                    :: ndmass,ndarea
+    INTEGER(KIND=ink)                                :: jj
+    REAL(KIND=rlk)                                   :: t0,t1
+
 
     ! Timer
     t0=get_time()
@@ -59,85 +57,92 @@ CONTAINS
     ENDIF
 
     ! Construct nodal mass and scatter force to nodes
-    ndmass=0.0_rlk
-    ndarea=0.0_rlk
-    ndub=0.0_rlk
-    ndvb=0.0_rlk
-    DO jj=1,4
-      DO kk=1,nes
-        IF (zparallel) THEN
-          iel=ielsort1(kk)
-        ELSE
-          iel=kk
-        ENDIF
-        inod=ielnod(jj,iel)
-        IF (cnmass(jj,iel).GT.zerocut) THEN
-          ndmass(inod)=ndmass(inod)+cnmass(jj,iel)
-        ELSE
-          ii=jj-1_ink
-          IF (ii.EQ.0_ink) ii=4_ink
-          IF (cnmass(ii,iel).GT.zerocut) THEN
-            ndmass(inod)=ndmass(inod)+cnmass(ii,iel)
-          ELSE
-            ndmass(inod)=ndmass(inod)+rho(iel)*cnwt(jj,iel)
-          ENDIF
-        ENDIF
-        ndarea(inod)=ndarea(inod)+cnwt(jj,iel)
-        ndub(inod)=ndub(inod)+cnfx(jj,iel)
-        ndvb(inod)=ndvb(inod)+cnfy(jj,iel)
-      ENDDO
-    ENDDO
+    call op_par_loop_1(set_zero1,s_nodes, &
+&           op_arg_dat(d_ndmass,-1,OP_ID,1,'real(8)',OP_WRITE))
+    call op_par_loop_1(set_zero1,s_nodes, &
+&           op_arg_dat(d_ndarea,-1,OP_ID,1,'real(8)',OP_WRITE))
+    call op_par_loop_1(set_zero1,s_nodes, &
+&           op_arg_dat(d_ndub,-1,OP_ID,1,'real(8)',OP_WRITE))
+    call op_par_loop_1(set_zero1,s_nodes, &
+&           op_arg_dat(d_ndvb,-1,OP_ID,1,'real(8)',OP_WRITE))
+
+    call op_par_loop_21(getacc_scatter,s_elements, &
+&           op_arg_dat(d_cnmass,  -1,OP_ID,4,'real(8)',OP_READ), &
+&           op_arg_dat(d_rho,     -1,OP_ID,1,'real(8)',OP_READ), &
+&           op_arg_dat(d_cnwt,    -1,OP_ID,4,'real(8)',OP_READ), &
+&           op_arg_dat(d_cnfx,    -1,OP_ID,4,'real(8)',OP_READ), &
+&           op_arg_dat(d_cnfy,    -1,OP_ID,4,'real(8)',OP_READ), &
+&           op_arg_dat(d_ndmass,   1,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndmass,   2,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndmass,   3,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndmass,   4,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndarea,   1,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndarea,   2,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndarea,   3,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndarea,   4,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndub,     1,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndub,     2,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndub,     3,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndub,     4,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndvb,     1,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndvb,     2,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndvb,     3,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndvb,     4,m_el2node,1,'real(8)',OP_INC))
+
+!This is silly, order of operations shouldn't matter, but it does, so in the meanwhile...
+!For actual parallel execution it will be different anyway, will use the above
+!    DO jj=1,4
+!      call DISABLED(getacc_scatter2,s_elements, &
+!&           op_arg_dat(d_cnmass,  -1,OP_ID,4,'real(8)',OP_READ), &
+!&           op_arg_dat(d_rho,     -1,OP_ID,1,'real(8)',OP_READ), &
+!&           op_arg_dat(d_cnwt,    -1,OP_ID,4,'real(8)',OP_READ), &
+!&           op_arg_dat(d_cnfx,    -1,OP_ID,4,'real(8)',OP_READ), &
+!&           op_arg_dat(d_cnfy,    -1,OP_ID,4,'real(8)',OP_READ), &
+!&           op_arg_dat(d_ndmass,   jj,m_el2node,1,'real(8)',OP_INC), &
+!&           op_arg_dat(d_ndarea,   jj,m_el2node,1,'real(8)',OP_INC), &
+!&           op_arg_dat(d_ndub,   jj,m_el2node,1,'real(8)',OP_INC), &
+!&           op_arg_dat(d_ndvb,   jj,m_el2node,1,'real(8)',OP_INC), &
+!&           op_arg_gbl(jj,1,'integer(4)',OP_READ))
+!    ENDDO
+
+
     ! Calculate acceleration
-    DO inod=1,nnod
-      w1=dencut*ndarea(inod)
-      IF (ndmass(inod).GT.w1) THEN
-        ndub(inod)=ndub(inod)/ndmass(inod)
-        ndvb(inod)=ndvb(inod)/ndmass(inod)
-      ELSE
-        ndub(inod)=0.0_rlk
-        ndvb(inod)=0.0_rlk
-        ndmass(inod)=MAX(zerocut,w1)
-      ENDIF
-    ENDDO
-    
+
+    call op_par_loop_4(getacc_accel,s_nodes, &
+&           op_arg_dat(d_ndarea,  -1,OP_ID,1,'real(8)',OP_READ), &
+&           op_arg_dat(d_ndmass,  -1,OP_ID,1,'real(8)',OP_RW), &
+&           op_arg_dat(d_ndub,    -1,OP_ID,1,'real(8)',OP_RW), &
+&           op_arg_dat(d_ndvb,    -1,OP_ID,1,'real(8)',OP_RW))
+
+
     !# Missing code here that can't be merged
     ! Boundary conditions
-    w1=accut*accut
-    DO inod=1,nnod
-      SELECT CASE(indtype(inod))
-        CASE DEFAULT
-        CASE(-1_ink)
-          ndub(inod)=0.0_rlk
-        CASE(-2_ink)
-          ndvb(inod)=0.0_rlk
-        CASE(-3_ink)
-          ndub(inod)=0.0_rlk
-          ndvb(inod)=0.0_rlk
-      END SELECT
-      w2=ndub(inod)*ndub(inod)+ndvb(inod)*ndvb(inod)
-      IF (w2.LT.w1) THEN
-        ndub(inod)=0.0_rlk
-        ndvb(inod)=0.0_rlk
-      ENDIF
-    ENDDO
+    call op_par_loop_3(getacc_bc,s_nodes, &
+&           op_arg_dat(d_ndub,    -1,OP_ID,1,'real(8)',OP_RW), &
+&           op_arg_dat(d_ndvb,    -1,OP_ID,1,'real(8)',OP_RW), &
+&           op_arg_dat(d_indtype, -1,OP_ID,1,'integer(4)',OP_READ))
+
     !# Missing code here that can't be merged
     ! Calculate average velocity
-    DO inod=1,nnod
-      w1=ndu(inod)
-      w2=ndv(inod)
-      ndu(inod)=w1+dt*ndub(inod)
-      ndv(inod)=w2+dt*ndvb(inod)
-      ndub(inod)=w1+dt05*ndub(inod)
-      ndvb(inod)=w2+dt05*ndvb(inod)
-    ENDDO
-    CALL gather(nshape,nel,nnod,ielnod(1,1),ndub(1),elu(1,1))
-    CALL gather(nshape,nel,nnod,ielnod(1,1),ndvb(1),elv(1,1))
+    call op_par_loop_6(getacc_avgvel,s_nodes, &
+&           op_arg_dat(d_ndub,    -1,OP_ID,1,'real(8)',OP_RW), &
+&           op_arg_dat(d_ndvb,    -1,OP_ID,1,'real(8)',OP_RW), &
+&           op_arg_dat(d_ndu,     -1,OP_ID,1,'real(8)',OP_RW), &
+&           op_arg_dat(d_ndv,     -1,OP_ID,1,'real(8)',OP_RW), &
+&           op_arg_gbl(dt,  1,'real(8)',OP_READ), &
+&           op_arg_gbl(dt05,1,'real(8)',OP_READ))
+
+    CALL gather2(s_elements,m_el2node,d_ndub,d_elu)
+    CALL gather2(s_elements,m_el2node,d_ndvb,d_elv)
     !# Missing code here that can't be merged
     ! Update position
-    DO inod=1,nnod
-      ndx(inod)=ndx(inod)+dt*ndub(inod)
-      ndy(inod)=ndy(inod)+dt*ndvb(inod)
-    ENDDO
+    call op_par_loop_5(getacc_updpos,s_nodes, &
+&           op_arg_dat(d_ndub,    -1,OP_ID,1,'real(8)',OP_READ), &
+&           op_arg_dat(d_ndvb,    -1,OP_ID,1,'real(8)',OP_READ), &
+&           op_arg_dat(d_ndx,     -1,OP_ID,1,'real(8)',OP_RW), &
+&           op_arg_dat(d_ndy,     -1,OP_ID,1,'real(8)',OP_RW), &
+&           op_arg_gbl(dt,  1,'real(8)',OP_READ))
+
     !# Missing code here that can't be merged
 
     ! Timing data

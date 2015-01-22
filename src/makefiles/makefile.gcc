@@ -12,13 +12,13 @@ F2C_DEF   = -DF2C_UNDERSCORE
 # General flags
 REAL_SIZE   = -fdefault-real-8
 INT_SIZE    = 
-FORM        = -ffree-form -std=f2003
-BIG_ENDIAN  = -fconvert=big-endian
-AUTO_ARRAYS = -fmax-stack-var-size=32768
+FORM        = #-ffree-form -std=f2003
+BIG_ENDIAN  = #-fconvert=big-endian
+AUTO_ARRAYS = #-fmax-stack-var-size=32768
 IEEE        =
 # Open MP
 ifeq ($(NO_OMP),)
-  OPENMP    = -fopenmp
+  OPENMP    = -mp -Kieee#-fopenmp
 else
   OPENMP    =
 endif
@@ -53,8 +53,8 @@ ifeq ($(LEV),OPTDEBUG)
   COPT    = -O2
 endif
 ifeq ($(LEV),RELEASE)
-  OPT     = -O2 -funroll-loops -ftree-vectorize
-  COPT    = -O2 -ftree-vectorize
+  OPT     = -O0 -g #-implicitnone #-O2 -funroll-loops -ftree-vectorize
+  COPT    = -O0 -g#-O2 -ftree-vectorize
 endif
 
 FFLAGS = -c $(REALSIZE) $(INTSIZE) $(FORM) $(BIG_ENDIAN) $(AUTO_ARRAYS) \
