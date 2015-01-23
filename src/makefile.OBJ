@@ -78,7 +78,7 @@ OBJ = banner.o       \
       mesh.o         \
       read.o         \
       timers.o       \
-      utilities.o    \
+      utilities_op.o    \
       write.o
 OBJ += $(shell find . -name "*_seqkernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
 endif
@@ -106,7 +106,7 @@ OBJ = banner.o       \
       mesh.o         \
       read.o         \
       timers.o       \
-      utilities.o    \
+      utilities_op.o    \
       write.o
 OBJ += $(shell find . -name "*_kernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
 endif

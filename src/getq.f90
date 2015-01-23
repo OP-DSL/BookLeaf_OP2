@@ -118,7 +118,7 @@ CONTAINS
   &                    op_arg_gbl(iside,1,'integer(4)',OP_READ))
 
       ! Apply limiter
-      call op_par_loop_8(getq_christiensen_limiter,s_elements, &
+      call op_par_loop_10(getq_christiensen_limiter,s_elements, &
   &                    op_arg_dat(d_du,   -1,OP_ID,4,'real(8)',OP_READ), & !du
   &                    op_arg_dat(d_dv,   -1,OP_ID,4,'real(8)',OP_READ), & !dv
   &                    op_arg_dat(d_qx,   -1,OP_ID,4,'real(8)',OP_WRITE), & !qx
