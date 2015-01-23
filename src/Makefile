@@ -167,7 +167,7 @@ DEP+=makefile.dep
 
 # Commands
 $(EXE): $(DEP) $(OBJ)
-	$(FC) $(OBJ) $(LIB) $(LFLAGS) $(EXENAME) -L$(OP2_INSTALL_PATH)/fortran/lib/ -lop2_for_seq
+	$(FC) $(OBJ) $(LIB) $(LFLAGS) $(EXENAME) -L$(OP2_INSTALL_PATH)/fortran/lib/ $(OP2_LIB)
 
 clean:
 	- rm -f *.o

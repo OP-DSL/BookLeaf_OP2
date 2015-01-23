@@ -53,6 +53,7 @@ OBJ = banner.o       \
       timers.o       \
       utilities.o    \
       write.o
+OP2_LIB = -lop2_for_seq
 else
 ifeq ($(OPTARGET),genseq)
 OBJ = banner.o       \
@@ -81,6 +82,7 @@ OBJ = banner.o       \
       utilities_op.o    \
       write.o
 OBJ += $(shell find . -name "*_seqkernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
+OP2_LIB = -lop2_for_seq
 endif
 ifeq ($(OPTARGET),openmp)
 OBJ = banner.o       \
@@ -109,6 +111,7 @@ OBJ = banner.o       \
       utilities_op.o    \
       write.o
 OBJ += $(shell find . -name "*_kernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
+OP2_LIB = -lop2_for_openmp
 endif
 ifeq ($(OPTARGET),cuda)
 OBJ = banner.o       \
@@ -138,5 +141,6 @@ OBJ = banner.o       \
       utilities_op.o    \
       write.o
 OBJ += $(shell find . -name "*_kernel.CUF" | sed s/\\.CUF/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
+OP2_LIB = -lop2_for_cuda
 endif
 endif
