@@ -30,13 +30,14 @@ CONTAINS
     USE eos_mod,      ONLY: getpre,getcc
     USE timing_mod,   ONLY: bookleaf_times
     USE TYPH_util_mod,ONLY: get_time
-    USE parameters_mod,ONLY: LI
-    USE integers_mod,   ONLY: eos_type
-    USE reals_mod,      ONLY: eos_param
-    USE OP2_Fortran_Reference
+    use parameters_mod, ONLY: LI
+    use OP2_Fortran_Reference
     use, intrinsic :: ISO_C_BINDING
-    USE op2_bookleaf, ONLY: s_elements,d_ielmat
+    USE op2_bookleaf, ONLY: s_elements, &
+&                           d_ielmat
     USE getpc_kernels
+    use integers_mod, ONLY: eos_type
+    use reals_mod, ONLY: eos_param
 
     ! Argument list
     type(op_dat), INTENT(INOUT) :: d_rho,d_ein,d_pre,d_csqrd
@@ -50,11 +51,11 @@ CONTAINS
 
     ! update pressure and sound speed
     call op_par_loop_7(getpc_update,s_elements, &
-&           op_arg_dat(d_ielmat,    -1,OP_ID,1,'integer(4)',OP_READ), &
-&           op_arg_gbl(eos_type,LI,'integer(4)',OP_READ), &
-&           op_arg_gbl(eos_param,LI*6,'real(8)',OP_READ), &
-&           op_arg_dat(d_ein,    -1,OP_ID,1,'real(8)',OP_READ), &
+&           op_arg_dat(d_ielmat, -1,OP_ID,1,'integer(4)',OP_READ), &    
+&           op_arg_gbl(eos_type, LI, 'integer(4)',OP_READ), &
+&           op_arg_gbl(eos_param, 6*LI, 'real(8)',OP_READ), &
 &           op_arg_dat(d_rho,    -1,OP_ID,1,'real(8)',OP_READ), &
+&           op_arg_dat(d_ein,    -1,OP_ID,1,'real(8)',OP_READ), &
 &           op_arg_dat(d_pre,    -1,OP_ID,1,'real(8)',OP_WRITE), &
 &           op_arg_dat(d_csqrd,  -1,OP_ID,1,'real(8)',OP_WRITE))
     ! correct negative sound speeds

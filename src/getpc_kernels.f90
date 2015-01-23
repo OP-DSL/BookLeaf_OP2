@@ -26,15 +26,15 @@ MODULE getpc_kernels
 
     USE kinds_mod,ONLY: ink,rlk
     USE reals_mod,ONLY: pcut
-    USE parameters_mod,ONLY: LI
+    use parameters_mod, ONLY: LI
 
     implicit none
 
     REAL(KIND=rlk), INTENT(OUT) :: pre,csqrd
     REAL(KIND=rlk), INTENT(IN) :: rho,ein
+    INTEGER(kind=ink), INTENT(IN) :: im
     REAL(KIND=rlk),DIMENSION(6,LI),INTENT(IN) :: eos_param
-    INTEGER(KIND=ink),DIMENSION(LI), INTENT(IN) :: eos_type
-    INTEGER(KIND=ink),INTENT(IN) :: im
+    INTEGER(KIND=ink), DIMENSION(LI), INTENT(IN) :: eos_type
 
     REAL(KIND=rlk) :: t1,t2,t3,t4,t5
 
