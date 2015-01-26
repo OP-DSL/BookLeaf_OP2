@@ -29,7 +29,8 @@ MODULE lagstep_kernels
     implicit none
 
     REAL(KIND=rlk), INTENT(OUT) :: ndxu,ndyv
-    REAL(KIND=rlk), INTENT(IN) :: ndx,ndy,ndu,ndv,dt
+    REAL(KIND=rlk), INTENT(IN) :: ndx,ndy,ndu,ndv
+    REAL(KIND=rlk), INTENT(INOUT) :: dt
 
     ndxu=ndx+dt*ndu
     ndyv=ndy+dt*ndv

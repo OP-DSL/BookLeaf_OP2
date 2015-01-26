@@ -141,6 +141,6 @@ OBJ = banner.o       \
       utilities_op.o    \
       write.o
 OBJ += $(shell find . -name "*_kernel.CUF" | sed s/\\.CUF/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
-OP2_LIB = -lop2_for_cuda
+OP2_LIB = -lop2_for_cuda -Mcuda=cuda6.0,cc35 -lcuda
 endif
 endif

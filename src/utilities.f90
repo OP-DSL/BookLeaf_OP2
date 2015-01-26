@@ -96,12 +96,12 @@ CONTAINS
     type(op_set) :: iterset
     type(op_map) :: map
     type(op_dat) :: dat1, dat2
-
-    call op_par_loop_5(gather_fun,iterset, &
-                & op_arg_dat(dat1, 1, map, 1, 'real(8)', OP_READ), &
-                & op_arg_dat(dat1, 2, map, 1, 'real(8)', OP_READ), &
-                & op_arg_dat(dat1, 3, map, 1, 'real(8)', OP_READ), &
-                & op_arg_dat(dat1, 4, map, 1, 'real(8)', OP_READ), &
+! check if iteset == s_elements and map == m_ep2node
+    call op_par_loop_5(gather_fun,s_elements, &
+                & op_arg_dat(dat1, 1, m_el2node, 1, 'real(8)', OP_READ), &
+                & op_arg_dat(dat1, 2, m_el2node, 1, 'real(8)', OP_READ), &
+                & op_arg_dat(dat1, 3, m_el2node, 1, 'real(8)', OP_READ), &
+                & op_arg_dat(dat1, 4, m_el2node, 1, 'real(8)', OP_READ), &
                 & op_arg_dat(dat2,-1, OP_ID,4,'real(8)', OP_WRITE))
 
   END SUBROUTINE gather2

@@ -72,7 +72,10 @@ MODULE common_kernels
 
     REAL(KIND=rlk), DIMENSION(4), INTENT(OUT) :: a
 
-    a(1:4) = 0.0_rlk
+    a(1) = 0.0_rlk
+    a(2) = 0.0_rlk
+    a(3) = 0.0_rlk
+    a(4) = 0.0_rlk
 
   END SUBROUTINE set_zero4
 

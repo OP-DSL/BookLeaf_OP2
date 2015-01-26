@@ -29,6 +29,7 @@ SUBROUTINE halt(smessage,iout,zend)
   USE silo_mod,     ONLY: write_silo_dump
 #endif
   USE Typhon,       ONLY: TYPH_kill,TYPH_Abort
+  USE op2_bookleaf
 
   IMPLICIT NONE
 
@@ -84,6 +85,8 @@ SUBROUTINE halt(smessage,iout,zend)
 & '##############'  
   ENDIF
   ! end program
+  call op_timing_output ()
+  call op_exit (  )
 
   IF (zfin) THEN
     ierr=TYPH_Kill(FinalizeMPI=.true.)

@@ -66,7 +66,7 @@ MODULE getq_kernels
 &             du1,du2,du3,du4,dv1,dv2,dv3,dv4,&
 &             dx1,dx2,dx3,dx4,dy1,dy2,dy3,dy4
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(OUT) :: scratch
-    INTEGER(KIND=ink), INTENT(IN) :: iside
+    INTEGER(KIND=ink), INTENT(INOUT) :: iside
     INTEGER(KIND=ink), DIMENSION(N_SHAPE), INTENT(IN) :: ielsd
     INTEGER(KIND=ink) :: is1,is2,ins
     REAL(KIND=rlk) :: w1,w2,w3,w4,den,uhat,vhat,xhat,yhat
@@ -165,7 +165,8 @@ MODULE getq_kernels
     implicit none
 
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(OUT) :: scratch
-    INTEGER(KIND=ink), INTENT(IN) :: iside, indtype1, indtype2, &
+    INTEGER(KIND=ink), INTENT(INOUT) :: iside
+    INTEGER(KIND=ink), INTENT(IN) :: indtype1, indtype2, &
 &                                    indtype3, indtype4
     INTEGER(KIND=ink), DIMENSION(N_SHAPE), INTENT(IN) :: ielel
     INTEGER(KIND=ink) :: in1,in2,ins,ic1,ic2
@@ -214,9 +215,10 @@ MODULE getq_kernels
     implicit none
 
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(IN) :: du,dv,scratch
-    REAL(KIND=rlk), INTENT(IN) :: csqrd,rho,cq1,cq2
+    REAL(KIND=rlk), INTENT(IN) :: csqrd,rho
+    REAL(KIND=rlk), INTENT(INOUT) :: cq1,cq2
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(OUT) :: qx,qy
-    INTEGER(KIND=ink), INTENT(IN) :: iside
+    INTEGER(KIND=ink), INTENT(INOUT) :: iside
     INTEGER(KIND=ink) :: is1,is2
     REAL(KIND=rlk) :: w1,w2,w3,w4
 

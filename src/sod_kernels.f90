@@ -40,15 +40,15 @@ MODULE sod_kernels
 &                      pre,ein,elmass,cnmass,eos_param,elvol,cnwt)
 
     USE kinds_mod,ONLY: rlk,ink
-    USE parameters_mod,ONLY: LI
-    USE integers_mod,ONLY: nshape
+    USE parameters_mod,ONLY: LI, N_SHAPE
 
     implicit none
 
-    REAL(KIND=rlk), INTENT(IN) :: ndx1,ndx2,ndx3,ndx4,xmid,elvol
+    REAL(KIND=rlk), INTENT(IN) :: ndx1,ndx2,ndx3,ndx4,elvol
+    REAL(KIND=rlk), INTENT(INOUT) :: xmid
     REAL(KIND=rlk), INTENT(OUT) :: rho,pre,ein,elmass
-    REAL(KIND=rlk), DIMENSION(nshape), INTENT(OUT) :: cnmass
-    REAL(KIND=rlk), DIMENSION(nshape), INTENT(IN) :: cnwt
+    REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(OUT) :: cnmass
+    REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(IN) :: cnwt
     REAL(KIND=rlk), DIMENSION(6,LI), INTENT(IN) :: eos_param
     INTEGER(KIND=ink), INTENT(OUT) :: ielmat
 
@@ -64,21 +64,24 @@ MODULE sod_kernels
     ENDIF
     ein=pre/(rho*(eos_param(1,ielmat)-1.0_rlk))
     elmass=rho*elvol
-    cnmass(1:4)=rho*cnwt(1:4)
+    cnmass(1)=rho*cnwt(1)
+    cnmass(2)=rho*cnwt(2)
+    cnmass(3)=rho*cnwt(3)
+    cnmass(4)=rho*cnwt(4)
 
   END SUBROUTINE sod_reset
 
   SUBROUTINE sod_subz(ndx1,ndx2,ndx3,ndx4,ndy1,ndy2,ndy3,ndy4,rho,spmass)
 
     USE kinds_mod,ONLY: rlk
-    USE integers_mod,ONLY: nshape
+    USE parameters_mod,ONLY: N_SHAPE
 
     implicit none
 
     REAL(KIND=rlk), INTENT(IN) :: ndx1,ndx2,ndx3,ndx4,ndy1,ndy2,ndy3,ndy4,rho
-    REAL(KIND=rlk), DIMENSION(nshape), INTENT(OUT) :: spmass
+    REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(OUT) :: spmass
 
-    REAL(KIND=rlk), DIMENSION(nshape) :: ndx,ndy
+    REAL(KIND=rlk), DIMENSION(N_SHAPE) :: ndx,ndy
     REAL(KIND=rlk) :: x1,x2,x3,x4,y1,y2,y3,y4,w1,w2,w3,w4
     INTEGER(KIND=ink) :: ii,inod
 

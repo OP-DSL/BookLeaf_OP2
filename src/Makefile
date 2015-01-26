@@ -99,7 +99,11 @@ ifneq ($(MOD),)
   else
     PP_MOD=-DMOD
   endif
+  ifndef OPTARGET
   OBJ+=$(MOD).o
+  else
+  OBJ+=$(MOD)_op.o
+  endif
   OBJ+=$(MOD)_kernels.o
 endif
 ifeq ($(NO_MPI),)
@@ -171,7 +175,10 @@ $(EXE): $(DEP) $(OBJ)
 
 clean:
 	- rm -f *.o
+	- rm -f *.oo
 	- rm -f *.mod
+	- rm -f *.lst
+	- rm -f *.ipa
 	- rm -f $(EXENAME)
 	- rm -f makefile.dep
 

@@ -38,7 +38,10 @@ MODULE init_kernels
     rho=mat_rho(im)
     ein=mat_ein(im)
     elmass=rho*elvol
-    cnmass(1:N_SHAPE)=rho*cnwt(1:N_SHAPE)
+    cnmass(1) = rho*cnwt(1)
+    cnmass(2) = rho*cnwt(2)
+    cnmass(3) = rho*cnwt(3)
+    cnmass(4) = rho*cnwt(4)
 
 
   END SUBROUTINE init_dem

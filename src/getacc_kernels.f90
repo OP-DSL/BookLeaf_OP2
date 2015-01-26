@@ -205,7 +205,7 @@ MODULE getacc_kernels
     implicit none
 
     REAL(KIND=rlk), INTENT(INOUT) :: ndub,ndvb,ndu,ndv
-    REAL(KIND=rlk), INTENT(IN) :: dt,dt05
+    REAL(KIND=rlk), INTENT(INOUT) :: dt,dt05
 
     REAL(KIND=rlk) :: w1,w2
 
@@ -223,8 +223,8 @@ MODULE getacc_kernels
 
     implicit none
 
-    REAL(KIND=rlk), INTENT(INOUT) :: ndy,ndx
-    REAL(KIND=rlk), INTENT(IN) :: dt,ndub,ndvb
+    REAL(KIND=rlk), INTENT(INOUT) :: ndy,ndx,dt
+    REAL(KIND=rlk), INTENT(IN) :: ndub,ndvb
 
     ndx=ndx+dt*ndub
     ndy=ndy+dt*ndvb

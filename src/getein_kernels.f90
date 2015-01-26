@@ -30,7 +30,8 @@ MODULE getein_kernels
     implicit none
 
     REAL(KIND=rlk), DIMENSION(4), INTENT(IN) :: elfx,elfy,elu,elv
-    REAL(KIND=rlk), INTENT(IN) :: elmass,ein,dt
+    REAL(KIND=rlk), INTENT(IN) :: elmass,ein
+    REAL(KIND=rlk), INTENT(INOUT) :: dt
     REAL(KIND=rlk), INTENT(OUT) :: ein_out
 
     REAL(KIND=rlk) :: w1

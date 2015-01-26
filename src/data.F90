@@ -208,6 +208,7 @@ MODULE op2_bookleaf
 &                         rscratch24,rscratch25,rscratch26,rscratch27
 
   INTEGER(kind=ink) :: ii,jj
+  INTEGER(KIND=ink) :: ierr
 
   ! Let's declare OP2 stuff
   call op_init(0)
@@ -323,6 +324,8 @@ MODULE op2_constants
   ! cut-off
   REAL(KIND=rlk), constant       :: ccut_OP2,zcut_OP2,zerocut_OP2, &
  &                                  pcut_OP2,dencut_OP2,accut_OP2
+  INTEGER(KIND=ink), constant :: elements_stride_OP2, nodes_stride_OP2, &
+&                                 reg_stride_OP2
   
 
   CONTAINS
@@ -330,6 +333,7 @@ MODULE op2_constants
   SUBROUTINE bookleaf_op2_init_const
 
     USE OP2_Fortran_Declarations
+    USE op2_bookleaf
 
     implicit none
 
@@ -345,7 +349,12 @@ MODULE op2_constants
     pcut_OP2 = pcut
     dencut_OP2 = dencut
     accut_OP2 = accut
-
+    elements_stride_OP2 = s_elements%setPtr%size + &
+&    s_elements%setPtr%exec_size + s_elements%setPtr%nonexec_size
+    nodes_stride_OP2 = s_nodes%setPtr%size + &
+&    s_nodes%setPtr%exec_size + s_nodes%setPtr%nonexec_size
+    reg_stride_OP2 = s_reg%setPtr%size + &
+&    s_reg%setPtr%exec_size + s_reg%setPtr%nonexec_size
     call op_decl_const(dt_min, 1, 'dt_min')
     call op_decl_const(dt_initial, 1, 'dt_initial')
     call op_decl_const(dt_max, 1, 'dt_max')
