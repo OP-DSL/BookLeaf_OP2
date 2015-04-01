@@ -14,7 +14,7 @@ REALSIZE     = -r8
 INTSIZE      = -i4
 FORM         = -free
 BIG_ENDIAN   = -convert big_endian
-AUTO_ARRAYS  = #-heap-arrays 64
+AUTO_ARRAYS  = -heap-arrays 64
 SHARED_INTEL = -shared-intel 
 #IEEE         = -fp-model precise -fp-model source #-mP2OPT_hlo_loop_unroll=false
 IEEE         = -fltconsistency

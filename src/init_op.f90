@@ -63,6 +63,106 @@ SUBROUTINE init_memory()
 
 END SUBROUTINE init_memory
 
+  SUBROUTINE getconn2(nCell,nFace,e2v,e2e)
+
+    ! Internal
+    USE kinds_mod,ONLY: ink
+  USE utilities_mod,ONLY: sort,arth
+
+    ! argument list
+    INTEGER(KIND=ink),                       INTENT(IN) :: nCell,nFace
+    INTEGER(KIND=ink),DIMENSION(nFace,nCell),INTENT(IN) :: e2v
+    ! result
+    INTEGER(KIND=ink),DIMENSION(nFace,nCell),INTENT(INOUT)            :: e2e
+    ! local
+    INTEGER(KIND=ink)                                   :: i1,i2,i3,i4, &
+&                                                          i5,i6,nSz
+!    INTEGER(KIND=ink),DIMENSION(nCell*nFace)            :: iConn,iUind, &
+    INTEGER(KIND=ink),DIMENSION(:),ALLOCATABLE            :: iConn,iUind, &
+&                                                          iWork1,iWork2
+
+   ALLOCATE(iConn(1:nCell*nFace))
+   ALLOCATE(iUind(1:nCell*nFace))
+   ALLOCATE(iWork1(1:nCell*nFace))
+   ALLOCATE(iWork2(1:nCell*nFace))
+    ! initialise
+    e2e=0_ink
+
+    ! set loop size
+    nSz=nFace*nCell
+
+    ! set work and initial connectivity
+    DO i1=1,nCell
+      i2=nCell+i1
+      i3=nCell+i2
+      i4=nCell+i3
+      iWork1(i1)=e2v(1,i1)
+      iWork2(i1)=e2v(2,i1)
+      iWork1(i2)=e2v(2,i1)
+      iWork2(i2)=e2v(3,i1)
+      iWork1(i3)=e2v(3,i1)
+      iWork2(i3)=e2v(4,i1)
+      iWork1(i4)=e2v(4,i1)
+      iWork2(i4)=e2v(1,i1)
+      iConn(i1)=i1
+      iConn(i2)=i1
+      iConn(i3)=i1
+      iConn(i4)=i1
+    ENDDO
+
+    ! set unique index
+    i4=MAXVAL(e2v)
+    DO i1=1,nSz
+      i5=iWork1(i1)
+      i6=iWork2(i1)
+      i2=MAX(i5,i6)
+      i3=MIN(i5,i6)-1_ink
+      iUind(i1)=i3*i4+i2
+    ENDDO
+    ! sort unique index
+    iWork1=sort(iUind)
+    IF (iWork1(1).EQ.-HUGE(1_ink)) THEN
+      e2e(1,1)=-HUGE(1_ink)
+      RETURN
+    ENDIF
+
+    ! find matches
+    i2=0_ink
+    DO i1=1,nSz-1
+      i3=iWork1(i1)
+      i4=iWork1(i1+1)
+      IF (iUind(i3).EQ.iUind(i4)) THEN
+        i2=i2+1_ink
+        iWork2(i2)=i1
+      ENDIF
+    ENDDO
+
+    ! insert matches into connectivity table
+    iUind=arth(1_ink,1_ink,nSz)
+    iUind=iUind(iWork1)
+    iConn=iConn(iWork1)
+    iWork1=0_ink
+    DO i1=1,i2
+      i3=iWork2(i1)
+      i4=i3+1_ink
+      iWork1(iUind(i3))=iConn(i4)
+      iWork1(iUind(i4))=iConn(i3)
+    ENDDO
+    ! copy to result
+    i4=0_ink
+    DO i1=1,nFace
+      DO i3=1,nCell
+        i4=i4+1_ink
+        e2e(i1,i3)=iWork1(i4)
+      ENDDO
+    ENDDO
+
+   DEALLOCATE(iConn)
+   DEALLOCATE(iUind)
+   DEALLOCATE(iWork1)
+   DeALLOCATE(iWork2)
+  END SUBROUTINE getconn2
+
 SUBROUTINE init()
 
   USE kinds_mod,    ONLY: ink,rlk
@@ -96,7 +196,8 @@ SUBROUTINE init()
 
 
   ! initialise connectivity
-  ielel(1:,1:nel1)=getconn(nel1,nshape,ielnod(1:,1:nel1))
+  !ielel(1:,1:nel1)=getconn(nel1,nshape,ielnod(1:,1:nel1))
+  call getconn2(nel1,nshape,ielnod,ielel)
   ielsd(1:,1:nel1)=getsconn(nel1,nshape,ielel(1:,1:nel1))
 
 
