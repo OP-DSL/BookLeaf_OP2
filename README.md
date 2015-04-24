@@ -36,6 +36,14 @@ this argument on the make command line:
 
 The executable will be named: `bookleaf_$MOD`
 
+## OP2 Build
+
+This version of BookLeaf relies on the OP2 library, the `OP2_INSTALL_PATH` environment
+variable has to set to OP2's op2 subdirectory. During compilation, by default the
+developer version of BookLeaf will be built, by setting OPTARGET optimized versions 
+can be build. Currently supported targets are 'genseq' for single-threaded execution,
+'openmp' for OpenMP execution and 'cuda' for CUDA on GPUs, which requires the PGI CUDA
+Fortran compilers.
 
 ## MPI
 

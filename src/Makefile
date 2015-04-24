@@ -64,6 +64,8 @@ help:
 	#  NO_OMP      - Do not use OpenMP threads
 	#  SILO        - Compile Silo routines
 	#
+	#  OPTARGET    - target for OP2 build, either 'genseq', 'openmp', or 'cuda'
+	#
 	# Commands:
 	#  help        - print this message
 	#  bookleaf    - build executable
