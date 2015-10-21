@@ -29,8 +29,8 @@ CONTAINS
     USE kinds_mod,    ONLY: ink,rlk
     USE reals_mod,    ONLY: pmeritreg
     USE pointers_mod, ONLY: ielreg,csqrd,spmass
-    USE timing_mod,   ONLY: bookleaf_times
-    USE TYPH_util_mod,ONLY: get_time
+    USE timing_mod,   ONLY: bookleaf_times, get_time
+
 
     ! Argument list
     INTEGER(KIND=ink),                   INTENT(IN)    :: nshape,nel

@@ -107,8 +107,7 @@ CONTAINS
     USE pointers_mod,  ONLY: a1,a2,a3,b1,b2,b3,elvol,cnwt,ielnod
     USE error_mod,     ONLY: halt
     USE parameters_mod,ONLY: ONEBYNINE
-    USE timing_mod,    ONLY: bookleaf_times
-    USE TYPH_util_mod, ONLY: get_time
+    USE timing_mod,    ONLY: bookleaf_times, get_time
 
     ! Argument list
     INTEGER(KIND=ink),                   INTENT(IN)  :: nshape,nel,nnod
@@ -164,8 +163,7 @@ CONTAINS
     USE utilities_mod, ONLY: gather2
     USE error_mod,     ONLY: halt
     USE parameters_mod,ONLY: ONEBYNINE
-    USE timing_mod,    ONLY: bookleaf_times
-    USE TYPH_util_mod, ONLY: get_time
+    USE timing_mod,    ONLY: bookleaf_times, get_time
     USE OP2_Fortran_Reference
     use, intrinsic :: ISO_C_BINDING
     USE op2_bookleaf, ONLY: m_el2node,m_el2el,s_elements, &

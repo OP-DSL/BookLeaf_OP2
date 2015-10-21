@@ -22,13 +22,12 @@ SUBROUTINE halt(smessage,iout,zend)
   USE kinds_mod,    ONLY: lok,ink
   USE paradef_mod,  ONLY: MProcW
   USE timers_mod,   ONLY: end_timers,print_timers
-  USE TYPH_util_mod,ONLY: get_time
-  USE timing_mod,   ONLY: bookleaf_times
+
+  USE timing_mod,   ONLY: bookleaf_times, get_time
   USE write_mod,    ONLY: write_sprint
 #ifdef SILO
   USE silo_mod,     ONLY: write_silo_dump
 #endif
-  USE Typhon,       ONLY: TYPH_kill,TYPH_Abort
   USE op2_bookleaf
 
   IMPLICIT NONE
@@ -65,7 +64,7 @@ SUBROUTINE halt(smessage,iout,zend)
 #ifdef SILO
     ! Dump Silo file
     CALL write_silo_dump("final_dump")
-#endif  
+#endif
   ENDIF
 
   IF (zfin) THEN
@@ -82,17 +81,11 @@ SUBROUTINE halt(smessage,iout,zend)
   ! spacer
   IF (MProcW) THEN
     PRINT*,'##########################################################',&
-& '##############'  
+& '##############'
   ENDIF
   ! end program
   call op_timing_output ()
   call op_exit (  )
-
-  IF (zfin) THEN
-    ierr=TYPH_Kill(FinalizeMPI=.true.)
-  ELSE
-    ierr=TYPH_Abort(-1)
-  ENDIF
 
   STOP
 

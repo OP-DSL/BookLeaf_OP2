@@ -172,7 +172,7 @@ MODULE timing_mod
      REAL(KIND=rlk) :: time_in_comms
      REAL(KIND=rlk) :: time_in_colls
   END TYPE time_stats
-  TYPE(time_stats) :: bookleaf_times
+  TYPE(time_stats) :: bookleaf_times, get_time
 
 END MODULE timing_mod
 
@@ -367,7 +367,7 @@ MODULE op2_constants
 &    s_nodes%setPtr%exec_size + s_nodes%setPtr%nonexec_size
     reg_stride_OP2 = s_reg%setPtr%size + &
 &    s_reg%setPtr%exec_size + s_reg%setPtr%nonexec_size
-                                    
+
   END SUBROUTINE bookleaf_op2_init_const
 #else
 

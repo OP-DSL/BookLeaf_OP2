@@ -28,8 +28,8 @@ CONTAINS
 
     USE kinds_mod,    ONLY: ink,rlk
     USE eos_mod,      ONLY: getpre,getcc
-    USE timing_mod,   ONLY: bookleaf_times
-    USE TYPH_util_mod,ONLY: get_time
+    USE timing_mod,   ONLY: bookleaf_times, get_time
+
     use parameters_mod, ONLY: LI
     use OP2_Fortran_Reference
     use, intrinsic :: ISO_C_BINDING
@@ -51,7 +51,7 @@ CONTAINS
 
     ! update pressure and sound speed
     call op_par_loop_7(getpc_update,s_elements, &
-&           op_arg_dat(d_ielmat, -1,OP_ID,1,'integer(4)',OP_READ), &    
+&           op_arg_dat(d_ielmat, -1,OP_ID,1,'integer(4)',OP_READ), &
 &           op_arg_gbl(eos_type, LI, 'integer(4)',OP_READ), &
 &           op_arg_gbl(eos_param, 6*LI, 'real(8)',OP_READ), &
 &           op_arg_dat(d_rho,    -1,OP_ID,1,'real(8)',OP_READ), &

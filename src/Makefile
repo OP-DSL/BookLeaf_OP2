@@ -110,7 +110,7 @@ ifneq ($(MOD),)
 endif
 ifeq ($(NO_MPI),)
   ifneq (,$(findstring $(MAKECMDGOALS),$(EXE)))
-    include $(SRCDIR)/comms/makefile.T3
+#    include $(SRCDIR)/comms/makefile.T3
   endif
 else
   ifeq ($(MKFILEC), makefile.xl)
@@ -119,7 +119,7 @@ else
     PP_MPI=-DNOMPI
   endif
   ifneq (,$(findstring $(MAKECMDGOALS),$(EXE)))
-    include $(SRCDIR)/comms/makefile.T1
+#    include $(SRCDIR)/comms/makefile.T1
   endif
 endif
 ifneq ($(NO_OMP),)
@@ -136,7 +136,7 @@ ifneq (,$(findstring $(EXE),$(MAKECMDGOALS)))
 endif
 
 # Source paths
-VPATH=$(SRCDIR):$(MODDIR):$(SRCDIR)/comms:$(SRCDIR)/cutils
+VPATH=$(SRCDIR):$(MODDIR):$(SRCDIR)/cutils#:$(SRCDIR)/comms
 
 # Collect all pre-processor options
 PREPRO += $(PP_MOD)   \

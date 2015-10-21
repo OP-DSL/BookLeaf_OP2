@@ -37,10 +37,9 @@ CONTAINS
     USE scratch_mod,     ONLY: rscratch11,elu=>rscratch21,elv=>rscratch22
     USE geometry_mod,    ONLY: dlm,dln
     USE error_mod,       ONLY: halt
+
     USE utilities_mod,   ONLY: gather,gather2
-    USE timing_mod,      ONLY: bookleaf_times
-    USE TYPH_util_mod,   ONLY: get_time
-    USE TYPH_Collect_mod,ONLY: TYPH_Gather
+    USE timing_mod,      ONLY: bookleaf_times, get_time
     USE op2_bookleaf, d_elu=>d_rscratch21,d_elv=>d_rscratch22
     USE getdt_kernels
 
@@ -102,14 +101,6 @@ CONTAINS
 
     ! Find smallest timestep
     dt=MIN(dt_cfl,dt_div,dt_g*dt,dt_max)
-    IF (zparallel) THEN
-      t2=get_time()
-      ierr=TYPH_Gather(dt,dtt,comm=CommS)
-      t3=get_time()
-      t3=t3-t2
-      bookleaf_times%time_in_colls=bookleaf_times%time_in_colls+t3
-      dt=MINVAL(dtt)
-    ENDIF
 
     ! Check minimum
     IF (dt.LT.dt_min) CALL halt("ERROR: dt < dt_min",1,.true.)

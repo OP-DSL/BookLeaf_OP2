@@ -20,8 +20,8 @@
 MODULE timers_mod
 
   USE kinds_mod,    ONLY: rlk
-  USE timing_mod,   ONLY: bookleaf_times
-  USE TYPH_util_mod,ONLY: get_time
+  USE timing_mod,   ONLY: bookleaf_times, get_time
+
 
   IMPLICIT NONE
 
@@ -116,6 +116,6 @@ CONTAINS
       WRITE(6,*) ' '
     ENDIF
 
-  END SUBROUTINE print_timers  
+  END SUBROUTINE print_timers
 
 END MODULE timers_mod

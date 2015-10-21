@@ -34,8 +34,8 @@ SUBROUTINE modify()
   REAL(KIND=rlk)    :: x1,x2,x3,x4,y1,y2,y3,y4,w1,w2,w3,w4,xmid
 
   ! find mid-point
-  x1=ndx(1)
-  x2=x1
+  x1=HUGE(1.0_rlk)
+  x2=-1.0_rlk*HUGE(1.0_rlk)
   call op_par_loop_3(sod_midpoint, s_nodes, &
 &         op_arg_dat(d_ndx,-1,OP_ID,1,'real(8)',OP_READ), &
 &         op_arg_gbl(x1,1,'real(8)',OP_MIN), &

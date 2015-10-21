@@ -87,35 +87,35 @@ SUBROUTINE init()
 &                                            w2,w3,w4
 
 
-  ! initialise connectivity
-  ielel(1:,1:nel1)=getconn(nel1,nshape,ielnod(1:,1:nel1))
-  ielsd(1:,1:nel1)=getsconn(nel1,nshape,ielel(1:,1:nel1))
+!   ! initialise connectivity
+!   ielel(1:,1:nel1)=getconn(nel1,nshape,ielnod(1:,1:nel1))
+!   ielsd(1:,1:nel1)=getsconn(nel1,nshape,ielel(1:,1:nel1))
 
 
-  ! initialise node type
-  DO iel=1,nel1
-    nodes(0:nshape-1)=ielnod(1:nshape,iel)
-    IF (COUNT(indtype(nodes).LT.0_ink).EQ.3_ink) THEN
-      l1:DO ii=0,nshape-1
-        IF (indtype(nodes(ii)).GT.0_ink) EXIT l1
-      ENDDO l1
-      ii=MOD(ii+2_ink,nshape)
-      jj=nodes(ii)
-      IF (jj.LE.nnod) THEN
-        j1=nodes(MOD(ii+1_ink,nshape))
-        j2=nodes(MOD(ii+3_ink,nshape))
-        IF (((indtype(j1).EQ.-2_ink).AND.(indtype(j2).EQ.-1_ink)).OR.     &
-&           ((indtype(j2).EQ.-2_ink).AND.(indtype(j1).EQ.-1_ink))) THEN
-          indtype(jj)=-3_ink
-        ENDIF
-      ENDIF
-    ENDIF
-  ENDDO
+!   ! initialise node type
+!   DO iel=1,nel1
+!     nodes(0:nshape-1)=ielnod(1:nshape,iel)
+!     IF (COUNT(indtype(nodes).LT.0_ink).EQ.3_ink) THEN
+!       l1:DO ii=0,nshape-1
+!         IF (indtype(nodes(ii)).GT.0_ink) EXIT l1
+!       ENDDO l1
+!       ii=MOD(ii+2_ink,nshape)
+!       jj=nodes(ii)
+!       IF (jj.LE.nnod) THEN
+!         j1=nodes(MOD(ii+1_ink,nshape))
+!         j2=nodes(MOD(ii+3_ink,nshape))
+!         IF (((indtype(j1).EQ.-2_ink).AND.(indtype(j2).EQ.-1_ink)).OR.     &
+! &           ((indtype(j2).EQ.-2_ink).AND.(indtype(j1).EQ.-1_ink))) THEN
+!           indtype(jj)=-3_ink
+!         ENDIF
+!       ENDIF
+!     ENDIF
+!   ENDDO
 
   !Now everything is declared hopefully, we can pass it on to OP2
   call op2_bookleaf_declare
   call bookleaf_op2_init_const
-  call op_dump_to_hdf5 ("mesh_hdf5"//CHAR(0))
+!  call op_dump_to_hdf5 ("mesh_hdf5"//CHAR(0))
 
   ! initialise time
   time=time_start
@@ -228,29 +228,6 @@ SUBROUTINE init_defaults()
   max_subseg=5_ink
 
 END SUBROUTINE init_defaults
-
-SUBROUTINE init_parallel()
-
-  USE kinds_mod,     ONLY: ink,lok
-  USE paradef_mod,   ONLY: rankW,MProcW,NProcW,CommS,CommW,zparallel
-  USE TYPH_util_mod, ONLY: TYPH_Init,TYPH_Get_Size,TYPH_Get_Rank,set_comm
-
-  IMPLICIT NONE
-
-  ! Local
-  INTEGER(KIND=ink) :: ierr
-
-  ierr=TYPH_Init()
-  ierr=TYPH_Get_Size(NProcW)
-  zparallel=.FALSE._lok
-  IF (NProcW.GT.1_ink) zparallel=.TRUE._lok
-  ierr=TYPH_Get_Rank(RankW)
-  MProcW=.FALSE._lok
-  IF (RankW.EQ.0_ink) MProcW=.TRUE._lok
-  ierr=set_comm(CommW)
-  ierr=set_comm(CommS)
-
-END SUBROUTINE init_parallel
 
 SUBROUTINE init_parameters()
 

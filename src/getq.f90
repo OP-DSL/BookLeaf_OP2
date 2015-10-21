@@ -29,10 +29,8 @@ CONTAINS
 
     USE kinds_mod,    ONLY: ink,rlk
     USE reals_mod,    ONLY: zerocut,cq1,cq2
-    USE comms_mod,    ONLY: exchange,VISCOSITY
     USE paradef_mod,  ONLY: zparallel
-    USE timing_mod,   ONLY: bookleaf_times
-    USE typh_util_mod,ONLY: get_time
+    USE timing_mod,   ONLY: bookleaf_times, get_time
     USE integers_mod,ONLY: nshape
     USE OP2_Fortran_Reference
     use, intrinsic :: ISO_C_BINDING
@@ -72,12 +70,6 @@ CONTAINS
   &                    op_arg_dat(d_elv,-1,OP_ID,4,'real(8)',OP_READ), &
   &                    op_arg_dat(d_elx,-1,OP_ID,4,'real(8)',OP_READ), &
   &                    op_arg_dat(d_ely,-1,OP_ID,4,'real(8)',OP_READ))
-
-
-    ! MPI parallelism
-    IF (zparallel) THEN
-      CALL exchange(VISCOSITY)
-    ENDIF
 
         DO iside=1,nshape/2_ink
 

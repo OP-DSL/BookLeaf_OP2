@@ -34,10 +34,8 @@ CONTAINS
     USE kinds_mod,       ONLY: ink,rlk
     USE integers_mod,    ONLY: nel,nreg,nshape,nstep
     USE reals_mod,       ONLY: time,dencut
-    USE timing_mod,      ONLY: bookleaf_times
-    USE typh_collect_mod,ONLY: typh_reduce,TYPH_OP_SUM,TYPH_OP_MIN,     &
-&                              TYPH_OP_MAX
-    USE typh_util_mod,   ONLY: get_time
+    USE timing_mod,      ONLY: bookleaf_times, get_time
+
     USE paradef_mod,     ONLY: CommS,MProcW
     USE pointers_mod,    ONLY: ielnod,ein,pre,rho,elvol,elmass,cnmass,  &
 &                              ndu,ndv,ielreg,cnwt
@@ -121,15 +119,15 @@ call write_regvalues_host(&
     ENDIF
 
     t2=get_time()
-    ierr=TYPH_Reduce(reg_vol, RVal=reg_vol_gl, Op=TYPH_OP_SUM,Comm=CommS)
-    ierr=TYPH_Reduce(reg_mass,RVal=reg_mass_gl,Op=TYPH_OP_SUM,Comm=CommS)
-    ierr=TYPH_Reduce(reg_ie,  RVal=reg_ie_gl,  Op=TYPH_OP_SUM,Comm=CommS)
-    ierr=TYPH_Reduce(reg_ke,  RVal=reg_ke_gl,  Op=TYPH_OP_SUM,Comm=CommS)
-    ierr=TYPH_Reduce(reg_pre, RVal=reg_pre_gl, Op=TYPH_OP_SUM,Comm=CommS)
-    ierr=TYPH_Reduce(reg_pmn, RVal=reg_pmn_gl, Op=TYPH_OP_MIN,Comm=CommS)
-    ierr=TYPH_Reduce(reg_pmx, RVal=reg_pmx_gl, Op=TYPH_OP_MAX,Comm=CommS)
-    ierr=TYPH_Reduce(reg_dmn, RVal=reg_dmn_gl, Op=TYPH_OP_MIN,Comm=CommS)
-    ierr=TYPH_Reduce(reg_dmx, RVal=reg_dmx_gl, Op=TYPH_OP_MAX,Comm=CommS)
+    reg_vol_gl  =reg_vol
+    reg_mass_gl =reg_mass
+    reg_ie_gl   =reg_ie
+    reg_ke_gl   =reg_ke
+    reg_pre_gl  =reg_pre
+    reg_pmn_gl  =reg_pmn
+    reg_pmx_gl  =reg_pmx
+    reg_dmn_gl  =reg_dmn
+    reg_dmx_gl  =reg_dmx
     t3=get_time()
     t3=t3-t2
     bookleaf_times%time_in_colls=bookleaf_times%time_in_colls+t3

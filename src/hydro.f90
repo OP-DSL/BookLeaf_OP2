@@ -24,8 +24,8 @@ SUBROUTINE hydro()
   USE getdt_mod,    ONLY: getdt
   USE lagstep_mod,  ONLY: lagstep
   USE paradef_mod,  ONLY: MProcW
-  USE timing_mod,   ONLY: bookleaf_times
-  USE TYPH_util_mod,ONLY: get_time
+  USE timing_mod,   ONLY: bookleaf_times, get_time
+
   USE pointers_mod, ONLY: rho,elmass,elvol,ielmat,ein,pre,csqrd,      &
 &                           ndx,ndy,elx,ely,ndu,ndv,ielnod
 

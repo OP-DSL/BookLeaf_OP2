@@ -28,11 +28,10 @@ CONTAINS
 
     USE kinds_mod,    ONLY: ink,rlk
     USE reals_mod,    ONLY: zerocut,dencut,accut
-    USE comms_mod,    ONLY: HALFSTEP,exchange
     USE paradef_mod,  ONLY: zparallel,ielsort1
     USE utilities_mod,ONLY: gather,gather2
-    USE timing_mod,   ONLY: bookleaf_times
-    USE TYPH_util_mod,ONLY: get_time
+    USE timing_mod,   ONLY: bookleaf_times, get_time
+
     USE OP2_Fortran_Reference
     use, intrinsic :: ISO_C_BINDING
     USE op2_bookleaf, ONLY: m_el2node,m_el2el,s_elements, s_nodes,d_ndmass,d_ndarea, &
@@ -50,11 +49,6 @@ CONTAINS
 
     ! Timer
     t0=get_time()
-
-    ! MPI parallelism
-    IF (zparallel) THEN
-      call exchange(HALFSTEP)
-    ENDIF
 
     ! Construct nodal mass and scatter force to nodes
     call op_par_loop_1(set_zero1,s_nodes, &

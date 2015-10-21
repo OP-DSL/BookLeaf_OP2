@@ -47,8 +47,8 @@ CONTAINS
 &                           pre05=>rscratch13,ndxu=>rscratch14,         &
 &                           ndyv=>rscratch15,dx=>rscratch25,            &
 &                           dy=>rscratch26,scratch=>rscratch27
-    USE timing_mod,   ONLY: bookleaf_times
-    USE TYPH_util_mod,ONLY: get_time
+    USE timing_mod,   ONLY: bookleaf_times, get_time
+
     use LAGSTEP_HALF_POS_MODULE
   use A_EQ_B_OVER_C_MODULE
      USE op2_bookleaf,       d_elu=>d_rscratch21,d_elv=>d_rscratch22,            &
@@ -84,8 +84,7 @@ CONTAINS
 &             d_pre,d_dx,d_dy,d_elfx,d_elfy,d_scratch)
 
     ! Force
-    CALL getforce(nshape,nel,dt05,elx(1,1),ely(1,1),elu(1,1),elv(1,1),  &
-&                 elfx(1,1),elfy(1,1),pre(1),rho(1),.FALSE._lok, &
+    CALL getforce(nshape,nel,dt05,.FALSE._lok, &
                   d_elx,d_ely,d_elu,d_elv,d_elfx,d_elfy,d_pre,d_rho)
 
     ! Half step positions
@@ -126,8 +125,7 @@ CONTAINS
     CALL getq(d_elx,d_ely,d_elu,d_elv,d_rho05,  &
 &             d_pre05,d_dx,d_dy,d_elfx,d_elfy,d_scratch)
     ! Force
-    CALL getforce(nshape,nel,dt,elx(1,1),ely(1,1),elu(1,1),elv(1,1),    &
-&                 elfx(1,1),elfy(1,1),pre05(1),rho05(1),.TRUE._lok, &
+    CALL getforce(nshape,nel,dt,.TRUE._lok, &
                   d_elx,d_ely,d_elu,d_elv,d_elfx,d_elfy,d_pre05,d_rho05)
     ! Acceleration
     CALL getacc(dt05,dt,d_elfx,d_elfy,d_ndxu,d_ndyv,d_elu,d_elv,d_rho05)

@@ -32,8 +32,8 @@ CONTAINS
 
     USE kinds_mod,    ONLY: ink,rlk
     USE eos_mod,      ONLY: getpre,getcc
-    USE timing_mod,   ONLY: bookleaf_times
-    USE TYPH_util_mod,ONLY: get_time
+    USE timing_mod,   ONLY: bookleaf_times, get_time
+
     use parameters_mod, ONLY: LI
     use OP2_Fortran_Reference
     use, intrinsic :: ISO_C_BINDING

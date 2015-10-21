@@ -32,11 +32,10 @@ CONTAINS
 
     USE kinds_mod,    ONLY: ink,rlk
     USE reals_mod,    ONLY: zerocut,dencut,accut
-    USE comms_mod,    ONLY: HALFSTEP,exchange
     USE paradef_mod,  ONLY: zparallel,ielsort1
     USE utilities_mod,ONLY: gather,gather2
-    USE timing_mod,   ONLY: bookleaf_times
-    USE TYPH_util_mod,ONLY: get_time
+    USE timing_mod,   ONLY: bookleaf_times, get_time
+
         use, intrinsic :: ISO_C_BINDING
     use SET_ZERO1_MODULE
   use GETACC_SCATTER_MODULE
@@ -59,11 +58,6 @@ CONTAINS
 
     ! Timer
     t0=get_time()
-
-    ! MPI parallelism
-    IF (zparallel) THEN
-      call exchange(HALFSTEP)
-    ENDIF
 
     ! Construct nodal mass and scatter force to nodes
     call set_zero1_host(&

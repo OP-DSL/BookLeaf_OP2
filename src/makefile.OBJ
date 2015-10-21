@@ -20,7 +20,6 @@
 # Object list
 ifndef OPTARGET
 OBJ = banner.o       \
-      comm.o         \
       common_kernels.o         \
       data.o         \
       error.o        \
@@ -58,7 +57,6 @@ OP2_LIB = -lop2_for_seq -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5
 else
 ifeq ($(OPTARGET),genseq)
 OBJ = banner.o       \
-      comm.o         \
       common_kernels.o         \
       data.o         \
       error.o        \
@@ -88,7 +86,6 @@ OP2_LIB = -lop2_for_seq -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5
 endif
 ifeq ($(OPTARGET),openmp)
 OBJ = banner.o       \
-      comm.o         \
       common_kernels.o         \
       data.o         \
       error.o        \
@@ -117,7 +114,6 @@ OP2_LIB = -lop2_for_openmp -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5
 endif
 ifeq ($(OPTARGET),cuda)
 OBJ = banner.o       \
-      comm.o         \
       cudaConfigurationParams.o \
       common_kernels.o         \
       data.o         \

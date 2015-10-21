@@ -23,9 +23,9 @@ MODULE getforce_mod
   PUBLIC :: getforce
 
 CONTAINS
-  
 
-  SUBROUTINE getforce(nshape,nel,dt,elx,ely,elu,elv,elfx,elfy,pre,rho,  &
+
+  SUBROUTINE getforce(nshape,nel,dt,  &
 &                     zflag,d_elx,d_ely,d_elu,d_elv,d_elfx,d_elfy,d_pre,d_rho)
 
     USE kinds_mod,    ONLY: ink,rlk,lok
@@ -33,8 +33,8 @@ CONTAINS
     USE pointers_mod, ONLY: a1,a3,b1,b3,qx,qy
     USE gethg_mod,    ONLY: gethg
     USE getsp_mod,    ONLY: getsp
-    USE timing_mod,   ONLY: bookleaf_times
-    USE TYPH_util_mod,ONLY: get_time
+    USE timing_mod,   ONLY: bookleaf_times, get_time
+
     USE OP2_Fortran_Reference
     use, intrinsic :: ISO_C_BINDING
     USE op2_bookleaf, ONLY: m_el2node,m_el2el,s_elements, &
@@ -45,9 +45,6 @@ CONTAINS
     ! Argument list
     INTEGER(KIND=ink),                   INTENT(IN)  :: nshape,nel
     REAL(KIND=rlk),                      INTENT(IN)  :: dt
-    REAL(KIND=rlk),DIMENSION(nshape,nel),INTENT(IN)  :: elx,ely,elu,elv
-    REAL(KIND=rlk),DIMENSION(nshape,nel),INTENT(OUT) :: elfx,elfy
-    REAL(KIND=rlk),DIMENSION(nel),       INTENT(IN)  :: pre,rho
     LOGICAL(KIND=lok),                   INTENT(IN)  :: zflag
     type(op_dat), INTENT(IN) :: d_elx,d_ely,d_elu,d_elv,d_elfx,d_elfy,d_pre,d_rho
     ! Local
@@ -77,14 +74,14 @@ CONTAINS
 
 
     ! Subzonal pressure force
-    IF (zsp) CALL getsp(nshape,nel,rho,elx,ely,elfx,elfy)
+!    IF (zsp) CALL getsp(nshape,nel,rho,elx,ely,elfx,elfy)
 
     !# Missing code here that can't be merged
-    IF (zflag) THEN
-      !# Missing code here that can't be merged
-      ! Anti-hourglass force
-      IF (zhg) CALL gethg(nshape,nel,dt,rho,elu,elv,elfx,elfy)
-    ENDIF
+!     IF (zflag) THEN
+!       !# Missing code here that can't be merged
+!       ! Anti-hourglass force
+!       IF (zhg) CALL gethg(nshape,nel,dt,rho,elu,elv,elfx,elfy)
+!     ENDIF
 
     ! Timing data
     t1=get_time()

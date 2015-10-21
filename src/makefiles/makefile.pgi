@@ -58,7 +58,7 @@ ifeq ($(LEV),RELEASE)
   IEEE   += 
 endif
 ifeq ($(OPTARGET),cuda)
-  CUDAF     = -Mcuda=cuda6.0,cc35,fastmath,ptxinfo -Minform=inform -fast -Mx,189,0x40 
+  CUDAF     = -Mcuda=cuda6.0,cc35,fastmath,ptxinfo -Minform=inform -Mx,189,0x40 #-fast 
   PREPRO  += -DOP2_ENABLE_CUDA
 endif
 
