@@ -52,8 +52,9 @@ OBJ = banner.o       \
       read.o         \
       timers.o       \
       utilities.o    \
+      write_kernels.o    \
       write.o
-OP2_LIB = -lop2_for_seq
+OP2_LIB = -lop2_for_seq -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5
 else
 ifeq ($(OPTARGET),genseq)
 OBJ = banner.o       \
@@ -80,9 +81,10 @@ OBJ = banner.o       \
       read.o         \
       timers.o       \
       utilities_op.o    \
-      write.o
+      write_kernels.o    \
+      write_op.o
 OBJ += $(shell find . -name "*_seqkernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
-OP2_LIB = -lop2_for_seq
+OP2_LIB = -lop2_for_seq -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5
 endif
 ifeq ($(OPTARGET),openmp)
 OBJ = banner.o       \
@@ -109,9 +111,9 @@ OBJ = banner.o       \
       read.o         \
       timers.o       \
       utilities_op.o    \
-      write.o
+      write_op.o
 OBJ += $(shell find . -name "*_kernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
-OP2_LIB = -lop2_for_openmp
+OP2_LIB = -lop2_for_openmp -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5
 endif
 ifeq ($(OPTARGET),cuda)
 OBJ = banner.o       \
@@ -139,8 +141,8 @@ OBJ = banner.o       \
       read.o         \
       timers.o       \
       utilities_op.o    \
-      write.o
+      write_op.o
 OBJ += $(shell find . -name "*_gpukernel.CUF" | sed s/\\.CUF/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
-OP2_LIB = -lop2_for_cuda -Mcuda=cuda6.0,cc35 -lcuda
+OP2_LIB = -lop2_for_cuda -Mcuda=cuda6.0,cc35 -lcuda -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5
 endif
 endif

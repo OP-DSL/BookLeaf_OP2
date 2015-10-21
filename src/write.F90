@@ -37,6 +37,8 @@ CONTAINS
     USE paradef_mod,     ONLY: CommS,MProcW
     USE pointers_mod,    ONLY: ielnod,ein,pre,rho,elvol,elmass,cnmass,  &
 &                              ndu,ndv,ielreg,cnwt
+    use op2_bookleaf
+    use write_kernels
 
     INTEGER(KIND=ink)                :: iel,ireg,ii,inod,ierr
     REAL(KIND=rlk)                   :: tot_mass,tot_pre,tot_rho,tot_ie,&
@@ -71,39 +73,36 @@ CONTAINS
     tot_mom_u=0.0_rlk
     tot_mom_v=0.0_rlk
 
-    DO iel=1,nel
-      ! Info
-      ireg=ABS(ielreg(iel))
-      ! Condition
-      c1=dencut*elvol(iel)
-      ! Scatter element contributions to region
-      reg_vol(ireg)=reg_vol(ireg)+elvol(iel)
-      IF (elmass(iel).GT.c1) THEN
-        w2=elmass(iel)
-        reg_mass(ireg)=reg_mass(ireg)+w2
-        w3=ein(iel)
-        w3=w3*w2
-        reg_ie(ireg)=reg_ie(ireg)+w3
-        w4=pre(iel)
-        w3=w2*w4
-        reg_pre(ireg)=reg_pre(ireg)+w3
-        IF (w4.GT.reg_pmx(ireg)) reg_pmx(ireg)=w4
-        IF (w4.LT.reg_pmn(ireg)) reg_pmn(ireg)=w4
-        w4=rho(iel)
-        IF (w4.GT.reg_dmx(ireg)) reg_dmx(ireg)=w4
-        IF (w4.LT.reg_dmn(ireg)) reg_dmn(ireg)=w4
-      ENDIF
-      DO ii=1,nshape
-        inod=ielnod(ii,iel)
-        w2=ndu(inod)
-        w3=ndv(inod)
-        IF (elmass(iel).GT.c1) THEN
-          reg_ke(ireg)=0.5_rlk*cnmass(ii,iel)*(w2*w2+w3*w3)+reg_ke(ireg)
-        ENDIF
-        w4=rho(iel)*cnwt(ii,iel)
-        tot_mom_u=tot_mom_u+w2*w4
-        tot_mom_v=tot_mom_v+w3*w4
-      ENDDO
+    DO ireg=1,nreg
+call op_par_loop_28(write_regvalues, s_elements, &
+&      op_arg_dat(d_elvol,  -1,OP_ID,1,'real(8)',OP_READ), &
+&      op_arg_dat(d_elmass, -1,OP_ID,1,'real(8)',OP_READ), &
+&      op_arg_dat(d_ein,    -1,OP_ID,1,'real(8)',OP_READ), &
+&      op_arg_dat(d_pre,    -1,OP_ID,1,'real(8)',OP_READ), &
+&      op_arg_dat(d_rho,    -1,OP_ID,1,'real(8)',OP_READ), &
+&      op_arg_dat(d_cnmass, -1,OP_ID,4,'real(8)',OP_READ), &
+&      op_arg_dat(d_cnwt,   -1,OP_ID,4,'real(8)',OP_READ), &
+&      op_arg_dat(d_ndu,     1,m_el2node,1,'real(8)',OP_READ), &
+&      op_arg_dat(d_ndu,     2,m_el2node,1,'real(8)',OP_READ), &
+&      op_arg_dat(d_ndu,     3,m_el2node,1,'real(8)',OP_READ), &
+&      op_arg_dat(d_ndu,     4,m_el2node,1,'real(8)',OP_READ), &
+&      op_arg_dat(d_ndv,     1,m_el2node,1,'real(8)',OP_READ), &
+&      op_arg_dat(d_ndv,     2,m_el2node,1,'real(8)',OP_READ), &
+&      op_arg_dat(d_ndv,     3,m_el2node,1,'real(8)',OP_READ), &
+&      op_arg_dat(d_ndv,     4,m_el2node,1,'real(8)',OP_READ), &
+&      op_arg_gbl(reg_vol(ireg), 1,'real(8)',OP_INC), &
+&      op_arg_gbl(reg_ie(ireg),  1,'real(8)',OP_INC), &
+&      op_arg_gbl(reg_pre(ireg), 1,'real(8)',OP_INC), &
+&      op_arg_gbl(reg_pmx(ireg), 1,'real(8)',OP_MAX), &
+&      op_arg_gbl(reg_pmn(ireg), 1,'real(8)',OP_MIN), &
+&      op_arg_gbl(reg_mass(ireg),1,'real(8)',OP_INC), &
+&      op_arg_gbl(reg_ke(ireg),  1,'real(8)',OP_INC), &
+&      op_arg_gbl(reg_dmx(ireg), 1,'real(8)',OP_MAX), &
+&      op_arg_gbl(reg_dmn(ireg), 1,'real(8)',OP_MIN), &
+&      op_arg_gbl(tot_mom_u,     1,'real(8)',OP_INC), &
+&      op_arg_gbl(tot_mom_v,     1,'real(8)',OP_INC), &
+&      op_arg_gbl(ireg,          1,'integer(4)',OP_READ), &
+&      op_arg_dat(d_ielreg,     -1,OP_ID,1,'integer(4)',OP_READ))
     ENDDO
 
     IF (MProcW) THEN

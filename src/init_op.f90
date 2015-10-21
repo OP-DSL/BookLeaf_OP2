@@ -60,7 +60,6 @@ SUBROUTINE init_memory()
     ALLOCATE(spmass(nshape,1:nel1),STAT=ierr)
     IF (ierr.NE.0_ink) CALL halt("ERROR: failed to allocate memory",0)
   ENDIF
-
 END SUBROUTINE init_memory
 
 SUBROUTINE init()
@@ -81,6 +80,7 @@ SUBROUTINE init()
   use SET_ZERO1_MODULE
   use SET_ZERO4_MODULE
    USE op2_bookleaf
+  USE OP2_Fortran_hdf5_Declarations
   ! USE USE init_kernels
   ! USE common_kernels,ONLY: set_zero1,set_zero4
   USE parameters_mod,ONLY: LI
@@ -123,7 +123,7 @@ SUBROUTINE init()
   !Now everything is declared hopefully, we can pass it on to OP2
   call op2_bookleaf_declare
   call bookleaf_op2_init_const
-
+  call op_dump_to_hdf5 ("mesh_hdf5"//CHAR(0))
   ! initialise time
   time=time_start
 

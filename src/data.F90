@@ -115,7 +115,7 @@ MODULE pointers_mod
 &                                                        elvol,a1,a2,a3,&
 &                                                        b1,b2,b3,ndx,  &
 &                                                        ndy,ndu,ndv, &
-&                                                        ndmass,ndarea
+&                         ndmass,ndarea
   REAL(KIND=rlk),   DIMENSION(:,:),ALLOCATABLE        :: elx,ely,cnwt,  &
 &                                                        qx,qy,spmass,  &
 &                                                        cnmass
@@ -178,7 +178,7 @@ MODULE op2_bookleaf
   use, intrinsic :: ISO_C_BINDING
   type(op_set) :: s_nodes, s_elements, s_mat, s_reg
   type(op_map) :: m_el2node,m_el2el, m_el2reg
-  type(op_dat) :: d_rho,d_qq,d_elmass,d_elvol,d_ielmat,d_ein,d_pre,d_csqrd,      &
+  type(op_dat) :: d_rho,d_qq,d_elmass,d_elvol,d_ielmat,d_ielreg,d_ein,d_pre,d_csqrd,      &
 &                           d_ndx,d_ndy,d_elx,d_ely,d_ndu,d_ndv, &
 &                           d_a1,d_a2,d_a3,d_b1,d_b2,d_b3,d_cnwt,d_cnmass,d_qx,d_qy,d_indtype, &
 &                           d_spmass,d_ielsd,d_ielel, d_elidx,&
@@ -186,7 +186,6 @@ MODULE op2_bookleaf
   type(op_dat) :: d_rscratch11,d_rscratch12,d_rscratch13,d_rscratch14, &
 &                         d_rscratch15,d_rscratch21,d_rscratch22,d_rscratch23, &
 &                         d_rscratch24,d_rscratch25,d_rscratch26,d_rscratch27
-
   PUBLIC :: op2_bookleaf_declare
 
   CONTAINS
@@ -274,6 +273,7 @@ MODULE op2_bookleaf
   call op_decl_dat(s_elements,nshape,'integer(4)',ielel,d_ielel,'ielel')
   call op_decl_dat(s_elements,1,'integer(4)',elidx,d_elidx,'elidx')
   call op_decl_dat(s_elements,1,'integer(4)',ielmat,d_ielmat,'ielmat')
+  call op_decl_dat(s_elements,1,'integer(4)',ielreg2,d_ielreg,'ielreg')
   IF (ZSP) THEN
     call op_decl_dat(s_elements,nshape,'real(8)',spmass,d_spmass,'spmass')
   ENDIF
@@ -299,6 +299,15 @@ MODULE op2_bookleaf
 
   call op_decl_dat(s_reg   ,1,'integer(4)',zdtnotreg2,  d_zdtnotreg,'d_zdtnotreg')
   call op_decl_dat(s_reg   ,1,'integer(4)',zmidlength2, d_zmidlength,'d_zmidlength')
+!   call op_decl_dat(s_reg   ,1,'real(8)',reg_vol, d_reg_vol,'d_reg_vol')
+!   call op_decl_dat(s_reg   ,1,'real(8)',reg_mass, d_reg_mass,'d_reg_mass')
+!   call op_decl_dat(s_reg   ,1,'real(8)',reg_ke, d_reg_ke,'d_reg_ke')
+!   call op_decl_dat(s_reg   ,1,'real(8)',reg_dmn, d_reg_dmn,'d_reg_dmn')
+!   call op_decl_dat(s_reg   ,1,'real(8)',reg_dmx, d_reg_dmx,'d_reg_dmx')
+!   call op_decl_dat(s_reg   ,1,'real(8)',reg_ie, d_reg_ie,'d_reg_ie')
+!   call op_decl_dat(s_reg   ,1,'real(8)',reg_pre, d_reg_pre,'d_reg_pre')
+!   call op_decl_dat(s_reg   ,1,'real(8)',reg_pmx, d_reg_pmx,'d_reg_pmx')
+!   call op_decl_dat(s_reg   ,1,'real(8)',reg_pmn, d_reg_pmn,'d_reg_pmn')
 
   call op_decl_dat(s_elements,4,'real(8)',rscratch21,d_rscratch21,'rscratch21')
   call op_decl_dat(s_elements,4,'real(8)',rscratch22,d_rscratch22,'rscratch22')
@@ -326,10 +335,10 @@ MODULE op2_constants
  &                                  pcut_OP2,dencut_OP2,accut_OP2
   INTEGER(KIND=ink), constant :: elements_stride_OP2, nodes_stride_OP2, &
 &                                 reg_stride_OP2
-  
+
 
   CONTAINS
-  
+
   SUBROUTINE bookleaf_op2_init_const
 
     USE OP2_Fortran_Declarations
@@ -368,7 +377,7 @@ MODULE op2_constants
     call op_decl_const(dencut, 1, 'dencut')
     call op_decl_const(accut, 1, 'accut')
 
-  END SUBROUTINE bookleaf_op2_init_const  
+  END SUBROUTINE bookleaf_op2_init_const
 #else
 
   CONTAINS

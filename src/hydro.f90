@@ -30,6 +30,7 @@ SUBROUTINE hydro()
 &                           ndx,ndy,elx,ely,ndu,ndv,ielnod
 
   USE op2_bookleaf
+  USE OP2_Fortran_hdf5_Declarations
 
   IMPLICIT NONE
 
@@ -73,5 +74,6 @@ SUBROUTINE hydro()
     IF (time.GE.time_end) EXIT l1
     !# test for resources
   ENDDO l1
+    call op_dump_to_hdf5 ("mesh_test"//CHAR(0))
 
 END SUBROUTINE hydro

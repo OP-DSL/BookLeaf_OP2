@@ -1,85 +1,54 @@
-getq_christiensen_bc_kernel.o: data.o 
+getpc_kernels.o: data.o 
+getq_kernels.o: data.o 
+sod.o: data.o sod_kernels.o 
+getforce_kernels.o: data.o 
 getsp.o: t3_util.o data.o 
-t3_util.o: data.o t3_types.o 
-t3_schedule.o: t3_util.o t3_register.o t3_decomposition.o t3_keys.o \
-	t3_types.o 
-getpc_merge_kernel.o: data.o 
-geometry_op.o: t3_util.o geometry_min_kernel.o data.o geometry_calc_kernel.o \
-	utilities_op.o error.o 
+getdt.o: t3_util.o utilities.o data.o geometry.o t3_collect.o error.o \
+	getdt_kernels.o 
+t3_schedule.o: t3_util.o t3_register.o t3_types.o t3_decomposition.o \
+	t3_keys.o 
+getforce.o: getforce_kernels.o getsp.o gethg.o t3_util.o data.o 
 gethg.o: t3_util.o data.o 
-set_zero1_kernel.o: data.o 
-getdt_div_kernel.o: data.o 
-gather_fun_kernel.o: data.o 
-geometry_min_kernel.o: data.o 
-data.o: 
-t3_register.o: t3_util.o t3_types.o 
-getacc_accel_kernel.o: data.o 
-getq_christiensen_q_kernel.o: data.o 
-getforce_op.o: getsp.o t3_util.o gethg.o data.o getforce_visc_kernel.o \
-	getforce_pres_kernel.o 
-getq_christiensen1_kernel.o: data.o 
-getq_christiensen_limiter_kernel.o: data.o 
+getacc_kernels.o: data.o 
+geometry_kernels.o: data.o 
+lagstep_kernels.o: data.o 
+getein.o: t3_util.o getein_kernels.o data.o 
 banner.o: 
-t3_decomposition.o: t3_util.o t3_types.o 
-t3_collect.o: t3_types.o 
-sod_op.o: data.o sod_reset_kernel.o sod_midpoint_kernel.o sod_subz_kernel.o 
-write.o: t3_util.o data.o t3_collect.o mesh.o 
-getacc_avgvel_kernel.o: data.o 
-set_zero4_kernel.o: data.o 
-sod_reset_kernel.o: data.o 
-t3_keys.o: t3_util.o t3_register.o t3_decomposition.o t3_collect.o \
-	t3_types.o 
-main.o: t3_util.o data.o write.o mesh.o comm.o timers.o error.o 
+write_kernels.o: data.o 
+write.o: write_kernels.o t3_util.o mesh.o data.o t3_collect.o 
+t3_util.o: t3_types.o data.o 
+init.o: t3_util.o init_kernels.o common_kernels.o utilities.o getpc.o \
+	data.o geometry.o error.o 
+t3_register.o: t3_util.o t3_types.o 
+getacc.o: getacc_kernels.o t3_util.o common_kernels.o utilities.o \
+	comm.o data.o 
+getq.o: getq_kernels.o t3_util.o common_kernels.o comm.o data.o 
+main.o: write.o t3_util.o mesh.o comm.o data.o timers.o error.o 
 t3_types.o: 
-a_eq_b_over_c_kernel.o: data.o 
-hydro.o: t3_util.o data.o lagstep_op.o getdt_op.o 
-getdt_minval_kernel.o: data.o 
-getforce_visc_kernel.o: data.o 
-init_dem_kernel.o: data.o 
-halt.o: t3_util.o data.o write.o typhon.o timers.o 
+hydro.o: getdt.o t3_util.o lagstep.o data.o 
+init_kernels.o: data.o 
+halt.o: write.o t3_util.o data.o timers.o typhon.o 
 common_kernels.o: data.o 
-getein_op.o: t3_util.o data.o getein_update_kernel.o 
-read.o: data.o utilities_op.o error.o 
-getdt_cfl_kernel.o: data.o 
-typhon.o: t3_util.o t3_register.o t3_decomposition.o t3_keys.o t3_types.o \
-	t3_exchange.o t3_quantity.o 
-getq_gradcon_kernel.o: data.o 
-geometry_calc_kernel.o: data.o 
-init_subz_pm_kernel.o: data.o 
-getacc_op.o: t3_util.o set_zero1_kernel.o data.o getacc_accel_kernel.o \
-	getacc_avgvel_kernel.o comm.o getacc_updpos_kernel.o getacc_bc_kernel.o \
-	utilities_op.o getacc_scatter_kernel.o 
-mesh.o: data.o utilities_op.o error.o 
-comm.o: t3_util.o data.o typhon.o error.o 
-getacc_updpos_kernel.o: data.o 
-t3_exchange.o: t3_util.o t3_schedule.o t3_register.o t3_decomposition.o \
-	t3_keys.o t3_types.o 
-lagstep_op.o: t3_util.o geometry_op.o data.o getforce_op.o a_eq_b_over_c_kernel.o \
-	getein_op.o getacc_op.o getpc_op.o lagstep_half_pos_kernel.o getq_op.o \
-	utilities_op.o 
-getpc_op.o: t3_util.o getpc_merge_kernel.o data.o getpc_update_kernel.o \
-	eos.o 
-getdt_minloc_kernel.o: data.o 
+t3_decomposition.o: t3_util.o t3_types.o 
+read.o: utilities.o data.o error.o 
+utilities.o: common_kernels.o data.o 
+getpc.o: getpc_kernels.o t3_util.o data.o eos.o 
+mesh.o: utilities.o data.o error.o 
+comm.o: t3_util.o data.o error.o typhon.o 
+getein_kernels.o: data.o 
+t3_exchange.o: t3_schedule.o t3_util.o t3_register.o t3_types.o t3_decomposition.o \
+	t3_keys.o 
+t3_keys.o: t3_util.o t3_register.o t3_types.o t3_decomposition.o t3_collect.o 
+lagstep.o: getforce.o lagstep_kernels.o getein.o t3_util.o getacc.o \
+	getq.o common_kernels.o utilities.o getpc.o data.o geometry.o 
+data.o: 
 t3_quantity.o: t3_util.o t3_register.o t3_types.o 
-getdt_op.o: t3_util.o geometry_op.o getdt_div_kernel.o data.o t3_collect.o \
-	getdt_minval_kernel.o getdt_cfl_kernel.o getdt_minloc_kernel.o utilities_op.o \
-	error.o 
-getacc_bc_kernel.o: data.o 
-getein_update_kernel.o: data.o 
-getforce_pres_kernel.o: data.o 
-getpc_update_kernel.o: data.o 
+geometry.o: geometry_kernels.o t3_util.o utilities.o data.o error.o 
 eos.o: data.o 
-lagstep_half_pos_kernel.o: data.o 
-getq_op.o: getq_christiensen_bc_kernel.o t3_util.o set_zero1_kernel.o \
-	data.o getq_christiensen_q_kernel.o getq_christiensen1_kernel.o getq_christiensen_limiter_kernel.o \
-	set_zero4_kernel.o getq_gradcon_kernel.o comm.o 
+t3_collect.o: t3_types.o 
 timers.o: t3_util.o data.o 
-utilities_op.o: gather_fun_kernel.o data.o 
 sod_kernels.o: data.o 
 error.o: data.o 
-sod_midpoint_kernel.o: data.o 
-getacc_scatter_kernel.o: data.o 
-sod_subz_kernel.o: data.o 
-init_op.o: t3_util.o geometry_op.o set_zero1_kernel.o data.o set_zero4_kernel.o \
-	init_dem_kernel.o init_subz_pm_kernel.o getpc_op.o utilities_op.o \
-	error.o 
+typhon.o: t3_util.o t3_register.o t3_types.o t3_decomposition.o t3_exchange.o \
+	t3_keys.o t3_quantity.o 
+getdt_kernels.o: data.o 
