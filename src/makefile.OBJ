@@ -141,7 +141,8 @@ OBJ = banner.o       \
       read.o         \
       timers.o       \
       utilities_op.o    \
-      write_op.o
+      write_kernels.o       \
+      write.o
 OBJ += $(shell find . -name "*_gpukernel.CUF" | sed s/\\.CUF/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
 OP2_LIB = -lop2_for_cuda -Mcuda=cuda6.0,cc35 -lcuda -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5
 endif

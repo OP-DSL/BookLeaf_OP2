@@ -1,54 +1,86 @@
-getpc_kernels.o: data.o 
-getq_kernels.o: data.o 
-sod.o: data.o sod_kernels.o 
-getforce_kernels.o: data.o 
+getdt_minloc_gpukernel.o: data.o cudaConfigurationParams.o 
+a_eq_b_over_c_gpukernel.o: data.o cudaConfigurationParams.o 
 getsp.o: t3_util.o data.o 
-getdt.o: t3_util.o utilities.o data.o geometry.o t3_collect.o error.o \
-	getdt_kernels.o 
-t3_schedule.o: t3_util.o t3_register.o t3_types.o t3_decomposition.o \
-	t3_keys.o 
-getforce.o: getforce_kernels.o getsp.o gethg.o t3_util.o data.o 
+getforce_pres_gpukernel.o: data.o cudaConfigurationParams.o 
+t3_schedule.o: t3_decomposition.o t3_register.o t3_util.o t3_keys.o \
+	t3_types.o 
+geometry_op.o: geometry_calc_gpukernel.o t3_util.o utilities_op.o \
+	error.o data.o geometry_min_gpukernel.o 
 gethg.o: t3_util.o data.o 
-getacc_kernels.o: data.o 
-geometry_kernels.o: data.o 
-lagstep_kernels.o: data.o 
-getein.o: t3_util.o getein_kernels.o data.o 
-banner.o: 
-write_kernels.o: data.o 
-write.o: write_kernels.o t3_util.o mesh.o data.o t3_collect.o 
-t3_util.o: t3_types.o data.o 
-init.o: t3_util.o init_kernels.o common_kernels.o utilities.o getpc.o \
-	data.o geometry.o error.o 
-t3_register.o: t3_util.o t3_types.o 
-getacc.o: getacc_kernels.o t3_util.o common_kernels.o utilities.o \
-	comm.o data.o 
-getq.o: getq_kernels.o t3_util.o common_kernels.o comm.o data.o 
-main.o: write.o t3_util.o mesh.o comm.o data.o timers.o error.o 
-t3_types.o: 
-hydro.o: getdt.o t3_util.o lagstep.o data.o 
-init_kernels.o: data.o 
-halt.o: write.o t3_util.o data.o timers.o typhon.o 
-common_kernels.o: data.o 
+set_zero4_gpukernel.o: data.o cudaConfigurationParams.o 
 t3_decomposition.o: t3_util.o t3_types.o 
-read.o: utilities.o data.o error.o 
-utilities.o: common_kernels.o data.o 
-getpc.o: getpc_kernels.o t3_util.o data.o eos.o 
-mesh.o: utilities.o data.o error.o 
-comm.o: t3_util.o data.o error.o typhon.o 
-getein_kernels.o: data.o 
-t3_exchange.o: t3_schedule.o t3_util.o t3_register.o t3_types.o t3_decomposition.o \
-	t3_keys.o 
-t3_keys.o: t3_util.o t3_register.o t3_types.o t3_decomposition.o t3_collect.o 
-lagstep.o: getforce.o lagstep_kernels.o getein.o t3_util.o getacc.o \
-	getq.o common_kernels.o utilities.o getpc.o data.o geometry.o 
-data.o: 
-t3_quantity.o: t3_util.o t3_register.o t3_types.o 
-geometry.o: geometry_kernels.o t3_util.o utilities.o data.o error.o 
-eos.o: data.o 
-t3_collect.o: t3_types.o 
-timers.o: t3_util.o data.o 
-sod_kernels.o: data.o 
+getein_update_gpukernel.o: data.o cudaConfigurationParams.o 
+getacc_avgvel_gpukernel.o: data.o cudaConfigurationParams.o 
+write_regvalues_gpukernel.o: data.o cudaConfigurationParams.o 
+getforce_visc_gpukernel.o: data.o cudaConfigurationParams.o 
+geometry_calc_gpukernel.o: data.o cudaConfigurationParams.o 
+getdt_minval_gpukernel.o: data.o cudaConfigurationParams.o 
+t3_register.o: t3_util.o t3_types.o 
+halt.o: write.o t3_util.o data.o timers.o typhon.o 
+getacc_updpos_gpukernel.o: data.o cudaConfigurationParams.o 
+gather_fun_gpukernel.o: data.o cudaConfigurationParams.o 
+getforce_op.o: getsp.o getforce_pres_gpukernel.o gethg.o getforce_visc_gpukernel.o \
+	t3_util.o data.o 
+getdt_cfl_gpukernel.o: data.o cudaConfigurationParams.o 
+banner.o: 
+init_dem_gpukernel.o: data.o cudaConfigurationParams.o 
+set_zero1_gpukernel.o: data.o cudaConfigurationParams.o 
+sod_op.o: sod_reset_gpukernel.o sod_midpoint_gpukernel.o data.o sod_subz_gpukernel.o 
+write.o: t3_util.o write_kernels.o mesh.o data.o t3_collect.o 
+t3_util.o: t3_types.o data.o 
+write_kernels.o: data.o 
+getq_christiensen_limiter_gpukernel.o: data.o cudaConfigurationParams.o 
+getq_christiensen_q_gpukernel.o: data.o cudaConfigurationParams.o 
+t3_keys.o: t3_decomposition.o t3_register.o t3_util.o t3_types.o t3_collect.o 
+main.o: write.o t3_util.o error.o mesh.o comm.o data.o timers.o 
+t3_types.o: 
+utilities_op.o: gather_fun_gpukernel.o data.o 
+hydro.o: t3_util.o getdt_op.o lagstep_op.o data.o 
+getq_christiensen1_gpukernel.o: data.o cudaConfigurationParams.o 
+sod_reset_gpukernel.o: data.o cudaConfigurationParams.o 
+common_kernels.o: data.o 
+getein_op.o: getein_update_gpukernel.o t3_util.o data.o 
+read.o: utilities_op.o error.o data.o 
 error.o: data.o 
-typhon.o: t3_util.o t3_register.o t3_types.o t3_decomposition.o t3_exchange.o \
-	t3_keys.o t3_quantity.o 
-getdt_kernels.o: data.o 
+getdt_op.o: getdt_minloc_gpukernel.o geometry_op.o getdt_minval_gpukernel.o \
+	getdt_cfl_gpukernel.o t3_util.o utilities_op.o error.o data.o getdt_div_gpukernel.o \
+	t3_collect.o 
+sod_midpoint_gpukernel.o: data.o cudaConfigurationParams.o 
+getacc_op.o: getacc_avgvel_gpukernel.o getacc_updpos_gpukernel.o set_zero1_gpukernel.o \
+	t3_util.o utilities_op.o comm.o data.o getacc_bc_gpukernel.o getacc_scatter_gpukernel.o \
+	getacc_accel_gpukernel.o 
+mesh.o: utilities_op.o error.o data.o 
+comm.o: t3_util.o error.o data.o typhon.o 
+t3_exchange.o: t3_schedule.o t3_decomposition.o t3_register.o t3_util.o \
+	t3_keys.o t3_types.o 
+init_subz_pm_gpukernel.o: data.o cudaConfigurationParams.o 
+lagstep_op.o: a_eq_b_over_c_gpukernel.o geometry_op.o getforce_op.o \
+	t3_util.o utilities_op.o getein_op.o getacc_op.o getpc_op.o data.o \
+	getq_op.o lagstep_half_pos_gpukernel.o 
+getpc_op.o: t3_util.o data.o eos.o getpc_update_gpukernel.o getpc_merge_gpukernel.o 
+data.o: 
+t3_quantity.o: t3_register.o t3_util.o t3_types.o 
+getdt_div_gpukernel.o: data.o cudaConfigurationParams.o 
+getacc_bc_gpukernel.o: data.o cudaConfigurationParams.o 
+getq_gradcon_gpukernel.o: data.o cudaConfigurationParams.o 
+sod_subz_gpukernel.o: data.o cudaConfigurationParams.o 
+geometry_min_gpukernel.o: data.o cudaConfigurationParams.o 
+getacc_scatter_gpukernel.o: data.o cudaConfigurationParams.o 
+t3_collect.o: t3_types.o 
+cudaConfigurationParams.o: 
+eos.o: data.o 
+getq_op.o: set_zero4_gpukernel.o set_zero1_gpukernel.o t3_util.o getq_christiensen_limiter_gpukernel.o \
+	getq_christiensen_q_gpukernel.o getq_christiensen1_gpukernel.o comm.o \
+	data.o getq_gradcon_gpukernel.o getq_christiensen_bc_gpukernel.o 
+getpc_update_gpukernel.o: data.o cudaConfigurationParams.o 
+timers.o: t3_util.o data.o 
+getpc_merge_gpukernel.o: data.o cudaConfigurationParams.o 
+sod_kernels.o: data.o 
+getq_christiensen_bc_gpukernel.o: data.o cudaConfigurationParams.o 
+typhon.o: t3_decomposition.o t3_register.o t3_util.o t3_keys.o t3_types.o \
+	t3_exchange.o t3_quantity.o 
+lagstep_half_pos_gpukernel.o: data.o cudaConfigurationParams.o 
+getacc_accel_gpukernel.o: data.o cudaConfigurationParams.o 
+init_op.o: geometry_op.o set_zero4_gpukernel.o init_dem_gpukernel.o \
+	set_zero1_gpukernel.o t3_util.o utilities_op.o error.o init_subz_pm_gpukernel.o \
+	getpc_op.o data.o 
