@@ -37,7 +37,14 @@ EXE  = bookleaf
 ifeq ($(MOD),)
   EXENAME  = $(EXE)
 else
-  EXENAME  = $(EXE)_$(MOD)
+  EXENAME= $(EXE)_$(MOD)
+endif
+ifdef OPTARGET
+ifeq ($(MOD),)
+  EXENAME  = $(EXE)_$(OPTARGET)
+else
+  EXENAME= $(EXE)_$(MOD)_$(OPTARGET)
+endif
 endif
 
 # Determine level
@@ -104,9 +111,13 @@ ifneq ($(MOD),)
   ifndef OPTARGET
   OBJ+=$(MOD).o
   else
+	ifneq ($(OPTARGET),meshgen)
   OBJ+=$(MOD)_op.o
+	endif
   endif
+	ifneq ($(OPTARGET),meshgen)
   OBJ+=$(MOD)_kernels.o
+	endif
 endif
 ifeq ($(NO_MPI),)
   ifneq (,$(findstring $(MAKECMDGOALS),$(EXE)))

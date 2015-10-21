@@ -1,71 +1,67 @@
-getacc_bc_seqkernel.o: data.o 
+getq_christiensen_bc_kernel.o: data.o 
 getsp.o: data.o 
-getdt_minloc_seqkernel.o: data.o 
-geometry_op.o: geometry_min_seqkernel.o geometry_calc_seqkernel.o \
-	utilities_op.o error.o data.o 
+getpc_merge_kernel.o: data.o 
+geometry_op.o: geometry_min_kernel.o data.o utilities_op.o geometry_calc_kernel.o \
+	error.o 
 gethg.o: data.o 
-gather_fun_seqkernel.o: data.o 
-getacc_scatter_seqkernel.o: data.o 
-geometry_min_seqkernel.o: data.o 
-getacc_updpos_seqkernel.o: data.o 
-write_regvalues_seqkernel.o: data.o 
-halt.o: data.o timers.o write_op.o 
-geometry_calc_seqkernel.o: data.o 
-eos.o: data.o 
-init_dem_seqkernel.o: data.o 
-getforce_op.o: getsp.o gethg.o getforce_pres_seqkernel.o getforce_visc_seqkernel.o \
-	data.o 
-init_subz_pm_seqkernel.o: data.o 
-getq_christiensen_limiter_seqkernel.o: data.o 
-write_kernels.o: data.o 
-sod_op.o: sod_midpoint_seqkernel.o sod_reset_seqkernel.o data.o sod_subz_seqkernel.o 
-getdt_cfl_seqkernel.o: data.o 
-getdt_minval_seqkernel.o: data.o 
-getforce_pres_seqkernel.o: data.o 
-getacc_avgvel_seqkernel.o: data.o 
-main.o: error.o mesh.o data.o timers.o write_op.o 
-getpc_update_seqkernel.o: data.o 
-utilities_op.o: gather_fun_seqkernel.o data.o 
-hydro.o: lagstep_op.o data.o getdt_op.o 
-sod_midpoint_seqkernel.o: data.o 
-a_eq_b_over_c_seqkernel.o: data.o 
-getforce_visc_seqkernel.o: data.o 
-common_kernels.o: data.o 
-getein_op.o: data.o getein_update_seqkernel.o 
-read.o: utilities_op.o error.o data.o 
-getq_gradcon_seqkernel.o: data.o 
-sod_reset_seqkernel.o: data.o 
-error.o: data.o 
-set_zero1_seqkernel.o: data.o 
-mesh.o: utilities_op.o error.o data.o 
-getpc_merge_seqkernel.o: data.o 
-set_zero4_seqkernel.o: data.o 
-lagstep_op.o: geometry_op.o getforce_op.o utilities_op.o a_eq_b_over_c_seqkernel.o \
-	getein_op.o getpc_op.o data.o getacc_op.o lagstep_half_pos_seqkernel.o \
-	getq_op.o 
-getpc_op.o: eos.o getpc_update_seqkernel.o getpc_merge_seqkernel.o \
-	data.o 
+set_zero1_kernel.o: data.o 
+a_eq_b_over_c_kernel.o: data.o 
+gather_fun_kernel.o: data.o 
+geometry_min_kernel.o: data.o 
+getdt_div_kernel.o: data.o 
 data.o: 
-getdt_op.o: getdt_minloc_seqkernel.o geometry_op.o getdt_cfl_seqkernel.o \
-	getdt_minval_seqkernel.o utilities_op.o error.o data.o getdt_div_seqkernel.o 
-getdt_div_seqkernel.o: data.o 
-getein_update_seqkernel.o: data.o 
-getacc_op.o: getacc_bc_seqkernel.o getacc_scatter_seqkernel.o getacc_updpos_seqkernel.o \
-	getacc_avgvel_seqkernel.o utilities_op.o set_zero1_seqkernel.o data.o \
-	getacc_accel_seqkernel.o 
-lagstep_half_pos_seqkernel.o: data.o 
-getq_op.o: getq_christiensen_limiter_seqkernel.o getq_gradcon_seqkernel.o \
-	set_zero1_seqkernel.o set_zero4_seqkernel.o data.o getq_christiensen_q_seqkernel.o \
-	getq_christiensen_bc_seqkernel.o getq_christiensen1_seqkernel.o 
-getacc_accel_seqkernel.o: data.o 
-timers.o: data.o 
-write_op.o: write_regvalues_seqkernel.o mesh.o data.o 
-sod_kernels.o: data.o 
-getq_christiensen_q_seqkernel.o: data.o 
-getq_christiensen_bc_seqkernel.o: data.o 
+getacc_accel_kernel.o: data.o 
+getq_christiensen_q_kernel.o: data.o 
+getforce_op.o: getsp.o gethg.o data.o getforce_visc_kernel.o getforce_pres_kernel.o 
+getq_christiensen1_kernel.o: data.o 
+lagstep_half_pos_kernel.o: data.o 
+getq_christiensen_limiter_kernel.o: data.o 
+sod_op.o: data.o sod_reset_kernel.o sod_midpoint_kernel.o sod_subz_kernel.o 
+getacc_avgvel_kernel.o: data.o 
+set_zero4_kernel.o: data.o 
+sod_reset_kernel.o: data.o 
+main.o: data.o mesh.o timers.o write_op.o error.o 
+utilities_op.o: gather_fun_kernel.o data.o 
+hydro.o: data.o lagstep_op.o getdt_op.o 
+getdt_minval_kernel.o: data.o 
+getforce_visc_kernel.o: data.o 
+init_dem_kernel.o: data.o 
+halt.o: data.o timers.o write_op.o 
+common_kernels.o: data.o 
+getein_op.o: data.o getein_update_kernel.o 
+read.o: data.o utilities_op.o error.o 
+getdt_cfl_kernel.o: data.o 
+eos.o: data.o 
+getq_gradcon_kernel.o: data.o 
+geometry_calc_kernel.o: data.o 
+getacc_op.o: set_zero1_kernel.o data.o getacc_accel_kernel.o getacc_avgvel_kernel.o \
+	utilities_op.o getacc_updpos_kernel.o getacc_bc_kernel.o getacc_scatter_kernel.o 
+mesh.o: data.o utilities_op.o error.o 
+getacc_updpos_kernel.o: data.o 
 banner.o: 
-sod_subz_seqkernel.o: data.o 
-getq_christiensen1_seqkernel.o: data.o 
-init_op.o: geometry_op.o init_dem_seqkernel.o init_subz_pm_seqkernel.o \
-	utilities_op.o error.o set_zero1_seqkernel.o set_zero4_seqkernel.o \
-	getpc_op.o data.o 
+lagstep_op.o: geometry_op.o a_eq_b_over_c_kernel.o data.o getforce_op.o \
+	lagstep_half_pos_kernel.o utilities_op.o getein_op.o getacc_op.o getpc_op.o \
+	getq_op.o 
+getpc_op.o: getpc_merge_kernel.o data.o eos.o getpc_update_kernel.o 
+getdt_minloc_kernel.o: data.o 
+getdt_op.o: geometry_op.o getdt_div_kernel.o data.o utilities_op.o \
+	getdt_minval_kernel.o getdt_cfl_kernel.o getdt_minloc_kernel.o error.o 
+write_regvalues_kernel.o: data.o 
+getacc_bc_kernel.o: data.o 
+getein_update_kernel.o: data.o 
+getforce_pres_kernel.o: data.o 
+getpc_update_kernel.o: data.o 
+init_subz_pm_kernel.o: data.o 
+getq_op.o: getq_christiensen_bc_kernel.o set_zero1_kernel.o data.o \
+	getq_christiensen_q_kernel.o getq_christiensen1_kernel.o getq_christiensen_limiter_kernel.o \
+	set_zero4_kernel.o getq_gradcon_kernel.o 
+timers.o: data.o 
+write_op.o: data.o mesh.o write_regvalues_kernel.o 
+sod_kernels.o: data.o 
+error.o: data.o 
+sod_midpoint_kernel.o: data.o 
+getacc_scatter_kernel.o: data.o 
+sod_subz_kernel.o: data.o 
+init_op.o: geometry_op.o set_zero1_kernel.o data.o set_zero4_kernel.o \
+	utilities_op.o init_dem_kernel.o getpc_op.o init_subz_pm_kernel.o \
+	error.o 
