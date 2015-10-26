@@ -1,0 +1,139 @@
+
+!Crown Copyright 2014 AWE.
+!
+! This file is part of Bookleaf.
+!
+! Bookleaf is free software: you can redistribute it and/or modify it under
+! the terms of the GNU General Public License as published by the
+! Free Software Foundation, either version 3 of the License, or (at your option)
+! any later version.
+!
+! Bookleaf is distributed in the hope that it will be useful, but
+! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+! FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+! details.
+!
+! You should have received a copy of the GNU General Public License along with
+! Bookleaf. If not, see http://www.gnu.org/licenses/.
+
+MODULE alestep_mod
+
+  IMPLICIT NONE
+
+  PUBLIC :: alestep
+
+CONTAINS
+
+  SUBROUTINE alestep(nstep,dt)
+
+    USE kinds_mod,      ONLY: rlk,ink
+    USE integers_mod,   ONLY: nel,nel1,nel2,nnod,nnod1,nnod2,nshape,nsz,&
+&                             adv_type
+    USE logicals_mod,   ONLY: zparallel
+    USE reals_mod,      ONLY: zerocut,dencut
+    USE error_mod,      ONLY: halt
+    USE ale_getmesh_mod,ONLY: alegetmesh
+    USE ale_getfvol_mod,ONLY: alegetfvol
+    USE ale_advect_mod, ONLY: aleadvect
+    USE ale_update_mod, ONLY: aleupdate
+    USE pointers_mod,   ONLY: ndx,ndy,elx,ely,elmass,rho,pre,ein,csqrd, &
+&                             elvol,ielmat,cnwt,cnmass,ielel,ielsd,     &
+&                             ielnd,indtype,ielsort1,ielsort2
+    USE scratch_mod,    ONLY: store1=>rscratch11,store2=>rscratch12,    &
+&                             store3=>rscratch13,store4=>rscratch14,    &
+&                             store5=>rscratch15,store6=>rscratch16,    &
+&                             rDelV=>rscratch21,rDelM=>rscratch22,      &
+&                             rFlux=>rscratch23,rwork1=>rscratch24,     &
+&                             rwork2=>rscratch25,rwork3=>rscratch26,    &
+&                             eluv=>rscratch27,elvv=>rscratch28,        &
+&                             indstatus=>iscratch11,zactive=>zscratch11
+    USE timing_mod,     ONLY: bookleaf_times,get_time
+    USE op2_bookleaf, ONLY: d_store1=>d_rscratch11,d_store2=>d_rscratch12,    &
+&                             d_store3=>d_rscratch13,d_store4=>d_rscratch14,    &
+&                             d_store5=>d_rscratch15,d_store6=>d_rscratch16,    &
+&                             d_rDelV=>d_rscratch21,d_rDelM=>d_rscratch22,      &
+&                             d_rFlux=>d_rscratch23,d_rwork1=>d_rscratch24,     &
+&                             d_rwork2=>d_rscratch25,d_rwork3=>d_rscratch26,    &
+&                             d_eluv=>d_rscratch27,d_elvv=>d_rscratch28,        &
+&                             d_indstatus=>d_iscratch11,d_zactive=>d_zscratch11,d_ndx,d_ndy, &
+&                             d_ielel,d_ielsd,d_indtype,d_elvol,d_elmass,d_rho, &
+&                             d_cnwt,d_cnmass,d_elx,d_ely,d_pre,d_ein,d_csqrd
+
+
+    ! Argument list
+    INTEGER(KIND=ink),INTENT(IN) :: nstep
+    REAL(KIND=rlk),   INTENT(IN) :: dt
+    ! Local
+    INTEGER(KIND=ink) :: ii,i1,i2,i3
+    REAL(KIND=rlk)    :: t0,t1
+
+    ! Timer
+    t0=get_time()
+
+    ! select mesh to be moved
+    CALL alegetmesh(nnod2,indstatus(1),d_indstatus)
+
+    ! calculate flux volume
+    CALL alegetfvol(nshape,nnod,nel,nel2,dt,zerocut,indstatus(1), &
+&                   ielnd(1,1),ndx(1),ndy(1),store4(1),store5(1), &
+&                   rDelV(1,1), &
+&                   d_indstatus,d_ndx,d_ndy,d_store4,d_store5,d_rDelV)
+
+    ! advect independent variables
+    SELECT CASE(adv_type)
+      CASE(1_ink)
+        CALL aleadvect(1_ink,2_ink,nshape,nel,nel1,nel2,nnod,nnod1,     &
+&                      nnod2,nsz,ielel(1,1),ielsd(1,1),ielsort1(1),     &
+&                      ielsort2(1),ielnd(1,1),indstatus(1),indtype(1),  &
+&                      dencut,zerocut,store5(1),store6(1),store1(1),    &
+&                      store2(1),store3(1),store4(1),elvol(1),elmass(1),&
+&                      rho(1),cnwt(1,1),cnmass(1,1),rDelV(1,1),         &
+&                      rDelM(1,1),rwork3(1,1),eluv(1,1),elvv(1,1),      &
+&                      rFlux(1,1),rwork1(1,1),rwork2(1,1),zactive(1), &
+&                      d_ielel,d_ielsd,d_indstatus,d_indtype,  &
+&                      d_store5,d_store6,d_store1,    &
+&                      d_store2,d_store3,d_store4,d_elvol,d_elmass, &
+&                      d_rho,d_cnwt,d_cnmass,d_rDelV,         &
+&                      d_rDelM,d_rwork3,d_eluv,d_elvv,      &
+&                      d_rFlux,d_rwork1,d_rwork2,d_zactive)
+      CASE(2_ink)
+        ii=MOD(nstep+1,2)
+        i1=1_ink+ii
+        i2=2_ink-ii
+        i3=i2-i1
+        DO ii=i1,i2,i3
+          CALL aleadvect(ii,ii,nshape,nel,nel1,nel2,nnod,nnod1,nnod2,   &
+&                        nsz,ielel(1,1),ielsd(1,1),ielsort1(1),         &
+&                        ielsort2(1),ielnd(1,1),indstatus(1),indtype(1),&
+&                        dencut,zerocut,store5(1),store6(1),store1(1),  &
+&                        store2(1),store3(1),store4(1),elvol(1),        &
+&                        elmass(1),rho(1),cnwt(1,1),cnmass(1,1),        &
+&                        rDelV(1,1),rDelM(1,1),rwork3(1,1),eluv(1,1),   &
+&                        elvv(1,1),rFlux(1,1),rwork1(1,1),rwork2(1,1),  &
+&                        zactive(1), &
+&                        d_ielel,d_ielsd,d_indstatus,d_indtype, &
+&                        d_store5,d_store6,d_store1,  &
+&                        d_store2,d_store3,d_store4,d_elvol,        &
+&                        d_elmass,d_rho,d_cnwt,d_cnmass,        &
+&                        d_rDelV,d_rDelM,d_rwork3,d_eluv,   &
+&                        d_elvv,d_rFlux,d_rwork1,d_rwork2,  &
+&                        d_zactive)
+        ENDDO
+      CASE DEFAULT
+        CALL halt("ERROR: unrecognised adv_type",0)
+    END SELECT
+
+    ! update dependent variables
+    CALL aleupdate(nshape,nel,nnod,ndx(1),ndy(1),elx(1,1),ely(1,1),     &
+&                  elmass(1),rho(1),pre(1),ein(1),csqrd(1),ielmat(1), &
+&                  d_ndx,d_ndy,d_elx,d_ely,    &
+&                  d_elmass,d_rho,d_pre,d_ein,d_csqrd)
+
+    ! Timing data
+    t1=get_time()
+    t1=t1-t0
+    bookleaf_times%time_in_alestep=bookleaf_times%time_in_alestep+t1
+
+  END SUBROUTINE alestep
+
+END MODULE alestep_mod

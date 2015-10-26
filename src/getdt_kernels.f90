@@ -22,7 +22,7 @@ MODULE getdt_kernels
 
   CONTAINS
 
-  SUBROUTINE getdt_cfl(rscratch11,rho,csqrd,qq,elx,ely,zdtnotreg,zmidlength)
+  SUBROUTINE getdt_cfl(rscratch11,rscratch12,rho,csqrd,qq,elx,ely,zdtnotreg,zmidlength)
 
     USE kinds_mod,ONLY: rlk,ink
 !    USE geometry_mod,    ONLY: dlm,dln
@@ -33,7 +33,7 @@ MODULE getdt_kernels
 
     REAL(KIND=rlk), DIMENSION(4), INTENT(IN) :: elx,ely
     REAL(KIND=rlk), INTENT(IN) :: rho,csqrd,qq
-    REAL(KIND=rlk), INTENT(OUT) :: rscratch11
+    REAL(KIND=rlk), INTENT(OUT) :: rscratch11,rscratch12
     INTEGER(KIND=ink), INTENT(IN) :: zdtnotreg,zmidlength !need to inline this
 
     REAL(KIND=rlk) :: w1,w2,w3
@@ -43,6 +43,7 @@ MODULE getdt_kernels
 
     IF (zdtnotreg) THEN
       rscratch11=dt_max
+      rscratch12=TINY(1.0_rlk)
     ELSE
       w1=MAX(rho,zcut)
       w2=MAX(ccut,csqrd)+2.0_rlk*qq/w1
@@ -148,6 +149,7 @@ MODULE getdt_kernels
         w1=MIN(res(1),res(2),res(3),res(4))
       ENDIF
       rscratch11=w1/w2
+      rscratch12=w1
     ENDIF
 
   END SUBROUTINE getdt_cfl
@@ -186,16 +188,18 @@ MODULE getdt_kernels
 
   END SUBROUTINE getdt_minloc
 
-  SUBROUTINE getdt_div(elu,elv,a1,a3,b1,b3,elvol,w2)
+  SUBROUTINE getdt_div(elu,elv,a1,a3,b1,b3,elvol,w2_s,w2)
 
-    USE kinds_mod,ONLY: rlk
+    USE kinds_mod,ONLY: rlk,ink
     USE parameters_mod,ONLY: N_SHAPE
 
     implicit none
 
     REAL(KIND=rlk), INTENT(IN) :: a1,a3,b1,b3,elvol
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(IN) :: elu,elv
-    REAL(KIND=rlk), INTENT(INOUT) :: w2
+    REAL(KIND=rlk), INTENT(INOUT) :: w2,w2_s
+!    INTEGER(KIND=ink), INTENT(IN) :: iel
+!    INTEGER(KIND=ink), INTENT(INOUT) :: ii
 
     REAL(KIND=rlk) :: w1
 
@@ -204,8 +208,71 @@ MODULE getdt_kernels
 &        elu(3)*( b3-b1)+elv(3)*(-a3+a1)+   &
 &        elu(4)*(-b3-b1)+elv(4)*( a3+a1)
     w1=ABS(w1)/elvol
-    IF (w1.GT.w2) w2=w1
+    w2_s=w1
+    IF (w1.GT.w2) THEN
+      w2=w1
+    ENDIF
 
   END SUBROUTINE getdt_div
 
+  SUBROUTINE getdt_div_maxloc(iel,w2_s,w2,ii)
+    USE kinds_mod,ONLY: rlk,ink
+    REAL(KIND=rlk), INTENT(IN) :: w2,w2_s
+    INTEGER(KIND=ink), INTENT(IN) :: iel
+    INTEGER(KIND=ink), INTENT(INOUT) :: ii
+
+    IF (w2_s.EQ.w2) THEN
+      ii=iel
+    ENDIF
+  END SUBROUTINE getdt_div_maxloc
+
+  SUBROUTINE getdt_ale_zeul(elu,elv,rscratch12,w2_s,w2)
+
+    USE kinds_mod,ONLY: rlk,ink
+    USE parameters_mod,ONLY: N_SHAPE
+    USE reals_mod,ONLY: zerocut
+
+    implicit none
+
+    REAL(KIND=rlk), INTENT(IN) :: rscratch12
+    REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(IN) :: elu,elv
+    REAL(KIND=rlk), INTENT(INOUT) :: w2,w2_s
+!    INTEGER(KIND=ink), INTENT(IN) :: iel
+!    INTEGER(KIND=ink), INTENT(INOUT) :: ii
+
+    REAL(KIND=rlk) :: w1
+
+          w1=MAX(elu(1)*elu(1)+elv(1)*elv(1),           &
+&                elu(2)*elu(2)+elv(2)*elv(2),           &
+&                elu(3)*elu(3)+elv(3)*elv(3),           &
+&                elu(4)*elu(4)+elv(4)*elv(4))
+    w1=rscratch12/MAX(w1,zerocut)
+    w2_s=w1
+    IF (w1.LT.w2) THEN
+      w2=w1
+    ENDIF
+
+  END SUBROUTINE getdt_ale_zeul
+
+  SUBROUTINE getdt_ale_zeul_minloc(iel,w2_s,w2,ii)
+    USE kinds_mod,ONLY: rlk,ink
+    implicit none
+    REAL(KIND=rlk), INTENT(IN) :: w2,w2_s
+    INTEGER(KIND=ink), INTENT(IN) :: iel
+    INTEGER(KIND=ink), INTENT(INOUT) :: ii
+
+    IF (w2_s.EQ.w2) THEN
+      ii=iel
+    ENDIF
+  END SUBROUTINE getdt_ale_zeul_minloc
+
+  SUBROUTINE getdt_mindt_reg(elidx,ielreg,idx,reg)
+    USE kinds_mod,ONLY: rlk,ink
+    implicit none
+    INTEGER(KIND=ink), INTENT(IN) :: elidx,ielreg,idx
+    INTEGER(KIND=ink), INTENT(INOUT) :: reg
+    IF (idx.EQ.elidx) then
+      reg = ielreg
+    ENDIF
+  END SUBROUTINE getdt_mindt_reg
 END MODULE getdt_kernels

@@ -7,8 +7,13 @@ Bookleaf is an unstructured Lagrangian Hydro mini-app.
 
 Four input decks are provided: Sod, Sedov, Saltzmann and Noh.
 
-Currently Bookleaf is a serial application, although MPI routines are included.
-A mesh partitioning routine is yet to be added.
+Current BookLeaf_ref as V1.1, plus:
+* parallel ALE capability
+* Modified makefile.intel
+* Input endtimes modified to match test runs
+
+
+Wiki: https://github.com/UK-MAC/BookLeaf/wiki
 
 
 ## BookLeaf Build Procedure
@@ -32,23 +37,15 @@ Four input decks are provided: Sod, Sedov, Saltzmann and Noh. A separate version
 Bookleaf must be built for each deck. Specify which version is being built using 
 this argument on the make command line:
 
-`MOD=<sod|sedov|saltzmann|noh>`
+`MOD=<sod|sedov|saltzmann>`
 
 The executable will be named: `bookleaf_$MOD`
 
-## OP2 Build
-
-This version of BookLeaf relies on the OP2 library, the `OP2_INSTALL_PATH` environment
-variable has to set to OP2's op2 subdirectory. During compilation, by default the
-developer version of BookLeaf will be built, by setting OPTARGET optimized versions 
-can be build. Currently supported targets are 'genseq' for single-threaded execution,
-'openmp' for OpenMP execution and 'cuda' for CUDA on GPUs, which requires the PGI CUDA
-Fortran compilers.
+Note that the noh deck does not require a MOD command and the executable will simply be called `'bookleaf'
 
 ## MPI
 
-Currently Bookleaf has no capability to generate parallel meshes, however MPI 
-communications are included in the expectation that this feature will be added soon.
+Bookleaf will automatically partition the mesh according to the number of cores that the problem is run on.
 
 By default Bookleaf builds with MPI, however a truly serial version can be built
 by adding:
@@ -69,7 +66,7 @@ by adding:
 
 3) Building the Noh problem in a seperate build directory:
 
-`make MOD=noh SRCDIR=../src bookleaf`
+`make SRCDIR=../src bookleaf`
 
 
 ## Running the Code
@@ -78,8 +75,22 @@ BookLeaf can run with no command line arguments. By default it expects to find a
 file called "control" in the directory it is running in. This can be changed 
 by running:
 
-`bookleaf_sod file=<newfile>`
+`bookleaf_sod FILE=<newfile>`
 
 This file is a copy of the files found in the inputs directory, depending on 
 which problem you wish to run.
+
+## Version History
+
+BookLeaf_ref - As V1.2
+
+V1.2   - Adds in parallel ALE. Plus:
+* Modified makefile.intel for Xeon vectorisation at OPT level and PHI=1 option to build for Xeon Phi, -qopt-report=3 no longer default flag
+* Makefile help has PHI option added plus version updated to v1.1
+* End times for sod and sedov test cases changed to reflect test cases run
+
+V1.1   - Adds in mesh partitioning. Parallel running now available.
+
+V1.0   - Initial version. Contains MPI comms, but only serial meshes can be contructed.
+
 

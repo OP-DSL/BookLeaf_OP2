@@ -52,6 +52,45 @@ MODULE common_kernels
 
   END SUBROUTINE a_eq_b_over_c
 
+    SUBROUTINE a_eq_b(a,b)
+
+    USE kinds_mod,ONLY: rlk
+
+    implicit none
+
+    REAL(KIND=rlk), INTENT(OUT) :: a
+    REAL(KIND=rlk), INTENT(IN) :: b
+
+    a = b
+
+  END SUBROUTINE a_eq_b
+
+      SUBROUTINE a_eq_b_4(a,b)
+
+    USE kinds_mod,ONLY: rlk
+
+    implicit none
+
+    REAL(KIND=rlk), DIMENSION(4), INTENT(OUT) :: a
+    REAL(KIND=rlk), DIMENSION(4), INTENT(IN) :: b
+
+    a = b
+
+  END SUBROUTINE a_eq_b_4
+
+  SUBROUTINE a_eq_b_times_c(a,b,c)
+
+    USE kinds_mod,ONLY: rlk
+
+    implicit none
+
+    REAL(KIND=rlk), INTENT(OUT) :: a
+    REAL(KIND=rlk), INTENT(IN) :: b,c
+
+    a = b*c
+
+  END SUBROUTINE a_eq_b_times_c
+
   SUBROUTINE set_zero1(a)
 
     USE kinds_mod,ONLY: rlk

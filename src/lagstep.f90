@@ -30,7 +30,7 @@ CONTAINS
     USE integers_mod, ONLY: nel,nnod,nshape,nel1,nnod1
     USE geometry_mod, ONLY: getgeom,getgeom2
     USE pointers_mod, ONLY: rho,elmass,elvol,ielmat,ein,pre,csqrd,      &
-&                           ndx,ndy,elx,ely,ndu,ndv,ielnod
+&                           ndx,ndy,elx,ely,ndu,ndv,ielnd
     USE getacc_mod,   ONLY: getacc
     USE getq_mod,     ONLY: getq
     USE getpc_mod,    ONLY: getpc
@@ -43,7 +43,7 @@ CONTAINS
 &                           pre05=>rscratch13,ndxu=>rscratch14,         &
 &                           ndyv=>rscratch15,dx=>rscratch25,            &
 &                           dy=>rscratch26,scratch=>rscratch27
-    USE timing_mod,   ONLY: bookleaf_times, get_time
+    USE timing_mod,   ONLY: timer=>bookleaf_times, get_time
 
     USE op2_bookleaf,       d_elu=>d_rscratch21,d_elv=>d_rscratch22,            &
 &                           d_elfx=>d_rscratch23,d_elfy=>d_rscratch24,          &
@@ -93,7 +93,7 @@ CONTAINS
 
     !# Missing code here that can't be merged
     ! Update geometry and iso-parametric terms
-    CALL getgeom2(d_ndxu,d_ndyv,d_elx,d_ely)
+    CALL getgeom2(d_ndxu,d_ndyv,d_elx,d_ely,timer%time_in_getgeoml)
     !# Missing code here that can't be merged
     ! Half step density
     call op_par_loop_3(a_eq_b_over_c,s_elements, &
@@ -105,7 +105,7 @@ CONTAINS
     CALL getein(dt05,d_ein05,d_elfx,d_elfy,d_elu,d_elv)
     !# Missing code here that can't be merged
     ! Half step pressure
-    CALL getpc(d_rho05,d_ein05,d_pre05,d_csqrd)
+    CALL getpc(d_rho05,d_ein05,d_pre05,d_csqrd,timer%time_in_getpcl)
     !# Missing code here that can't be merged
 
     ! ###############
@@ -120,7 +120,7 @@ CONTAINS
     ! Acceleration
     CALL getacc(dt05,dt,d_elfx,d_elfy,d_ndxu,d_ndyv,d_elu,d_elv,d_rho05)
     ! Update geometry and iso-parametric terms
-    CALL getgeom2(d_ndx,d_ndy,d_elx,d_ely)
+    CALL getgeom2(d_ndx,d_ndy,d_elx,d_ely,timer%time_in_getgeoml)
     !# Missing code here that can't be merged
     ! Full step density
     call op_par_loop_3(a_eq_b_over_c,s_elements, &
@@ -131,13 +131,13 @@ CONTAINS
     CALL getein(dt,d_ein,d_elfx,d_elfy,d_elu,d_elv)
     !# Missing code here that can't be merged
     ! Full step pressure
-    CALL getpc(d_rho,d_ein,d_pre,d_csqrd)
+    CALL getpc(d_rho,d_ein,d_pre,d_csqrd,timer%time_in_getpcl)
     !# Missing code here that can't be merged
 
     ! Timing data
     t1=get_time()
     t1=t1-t0
-    bookleaf_times%time_in_lag=bookleaf_times%time_in_lag+t1
+    timer%time_in_lag=timer%time_in_lag+t1
 
   END SUBROUTINE lagstep
 

@@ -28,7 +28,6 @@ CONTAINS
 
     USE kinds_mod,    ONLY: ink,rlk
     USE reals_mod,    ONLY: zerocut,dencut,accut
-    USE paradef_mod,  ONLY: zparallel,ielsort1
     USE utilities_mod,ONLY: gather,gather2
     USE timing_mod,   ONLY: bookleaf_times, get_time
 

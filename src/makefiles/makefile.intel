@@ -1,11 +1,18 @@
 # Compiler
-ifeq ($(NO_MPI),)
-  FC = mpif90
+# Default assume MPI and Xeon Target
+FC = mpif90
+CC = mpicc
+#If Xeon Phi, then need different MPI wrappers
+ifneq ($(PHI),)
+  FC = mpiifort
   CC = mpicc
-else
+endif
+#No MPI from cmd line then serial for both Xeon and Xeon Phi targets
+ifneq ($(NO_MPI),)
   FC = ifort
   CC = icc
 endif
+
 # Fortran to C interface
 F2C_DEF   = -DF2C_UNDERSCORE
 
@@ -16,8 +23,14 @@ FORM         = -free
 BIG_ENDIAN   = -convert big_endian
 AUTO_ARRAYS  = -heap-arrays 64
 SHARED_INTEL = -shared-intel 
-#IEEE         = -fp-model precise -fp-model source #-mP2OPT_hlo_loop_unroll=false
+IEEE         = -fp-model precise -fp-model source -mP2OPT_hlo_loop_unroll=false
 IEEE         = -fltconsistency
+XHOST        = -xhost
+ifneq ($(PHI),)
+#if Phi vectorisation picked up through mmic flag
+  XHOST =
+  MIC  = -mmic
+endif
 # Open MP
 ifeq ($(NO_OMP),)
   OPENMP = -openmp
@@ -61,15 +74,24 @@ ifeq ($(LEV),OPTDEBUG)
   IEEE   += -no-ftz
 endif
 ifeq ($(LEV),RELEASE)
-  OPT     = -O2 -g -finline-functions -unroll-aggressive #-vec-report3 -opt-report 3
-  COPT    = -O2 -g #-vec-report3 -opt-report 3
+  OPT     = -O2 -finline-functions -unroll-aggressive  -qopt-report=3
+  COPT    = -O2 -qopt-report=3
   IEEE   += -no-ftz
+endif
+ifeq ($(LEV),OPT)
+  OPT     = -O3 -g $(XHOST)
+  COPT    = -O3 -g $(XHOST)
+#Disable following for OPT 
+  BIG_ENDIAN   =
+  AUTO_ARRAYS  =
+  SHARED_INTEL = 	
+  IEEE         =
 endif
 
 FFLAGS = -c $(REALSIZE) $(INTSIZE) $(FORM) $(BIG_ENDIAN) $(AUTO_ARRAYS) \
 	$(SHARED_INTEL) $(IEEE) $(DBG) $(CHECK) $(OPT) $(FLTTRAP)       \
-	$(OPENMP)
+	$(OPENMP) $(MIC)
 
-CFLAGS = -c $(CDBG) $(COPT)
+CFLAGS = -c $(CDBG) $(COPT) $(MIC)
 
-LFLAGS = $(DBG) $(OPT) $(OPENMP) -o
+LFLAGS = $(DBG) $(OPT) $(OPENMP) $(MIC) -o

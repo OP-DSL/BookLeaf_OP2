@@ -3,8 +3,8 @@ FC = mpif90
 CC = pgcc
 
 # General flags
-REALSIZE     = #-r8
-INTSIZE      = #-i8
+REALSIZE     = -r8
+INTSIZE      = -i4
 FORM         = -Mfree
 BIG_ENDIAN   = -Mbyteswapio
 AUTO_ARRAYS  = 
@@ -53,15 +53,23 @@ ifeq ($(LEV),OPTDEBUG)
   IEEE   += 
 endif
 ifeq ($(LEV),RELEASE)
-  OPT     = -fastsse -Mlist -O3 -fast
+  OPT     = -fastsse -gopt -Mipa=fast -Mlist
   COPT    =
   IEEE   += 
 endif
+ifeq ($(LEV),OPT)
+  OPT     = -fastsse -gopt -Mipa=fast -Mlist
+  COPT    =
+#Disable following for OPT
+  BIG_ENDIAN   =
+  AUTO_ARRAYS  =
+  SHARED_INTEL =
+  IEEE         =
+endif
 ifeq ($(OPTARGET),cuda)
-  CUDAF     = -Mcuda=cuda6.0,cc35,fastmath,ptxinfo -Minform=inform -Mx,189,0x40 #-fast 
+  CUDAF     = -Mcuda=cuda6.0,cc35,fastmath,ptxinfo -Minform=inform -Mx,189,0x40 #-fast
   PREPRO  += -DOP2_ENABLE_CUDA
 endif
-
 
 FFLAGS = -c $(REALSIZE) $(INTSIZE) $(FORM) $(BIG_ENDIAN) $(AUTO_ARRAYS) \
 	$(SHARED_INTEL) $(IEEE) $(DBG) $(CHECK) $(OPT) $(FLTTRAP)       \

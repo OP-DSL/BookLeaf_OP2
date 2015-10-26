@@ -21,7 +21,8 @@ PROGRAM main
 ! Internal
   USE kinds_mod,    ONLY: ink
   USE error_mod,    ONLY: halt
-  USE paradef_mod,  ONLY: zparallel,MProcW,Nthread
+  USE logicals_mod,  ONLY: zparallel,zmprocw
+  USE integers_mod, ONLY: Nthread
   USE timing_mod,   ONLY: bookleaf_times, get_time
   USE timers_mod,   ONLY: start_timers
 
@@ -40,6 +41,7 @@ PROGRAM main
 
   ! mesh data
   TYPE(regions),DIMENSION(:),ALLOCATABLE :: reg
+  INTEGER(kind=ink)                      :: nk,nl
 
 ! ###################
 ! Parallelism
@@ -49,7 +51,7 @@ PROGRAM main
 !  CALL init_parallel()
   call op_init(0)
   IF (op_is_root()) THEN
-    MprocW = .TRUE._lok
+    zmprocw = .TRUE._lok
   ENDIF
 
 ! OpenMP
@@ -71,7 +73,7 @@ PROGRAM main
 ! ###################
 
 ! welcome banner
-  IF (MprocW) THEN
+  IF (zmprocw) THEN
     CALL banner()
   ENDIF
 
@@ -93,7 +95,10 @@ PROGRAM main
   CALL read_files()
 
 ! generate mesh from input
-  CALL mesh_gen(reg)
+  CALL mesh_gen(reg,nk,nl)
+
+! check / correct input
+  CALL init_check()
 
 ! print input
   CALL write_iprint(reg)
@@ -106,16 +111,19 @@ PROGRAM main
   CALL init_parameters()
 
 ! setup memory
-  !CALL init_memory()
+!  CALL init_mesh_memory()
 
 ! Transfer mesh onto solution arrays, populate connectivity arrays
-  !CALL mesh_transfer(reg)
+!  CALL mesh_transfer(reg)
+
+! setup memory
+!  CALL init_memory()
 
 ! main initialisation
   CALL init()
 
 ! problem specific modifications
-#ifdef MOD
+#ifdef MODY
   CALL modify()
 #endif
 
@@ -124,9 +132,12 @@ PROGRAM main
 ! print initial totals
   CALL write_sprint()
 
-! Dump initial Silo file
+! Dump initial graphics file
 #ifdef SILO
   CALL write_silo_dump("initial_dump")
+#endif
+#ifdef TIO
+  CALL write_tio_dump("initial_dump.h5")
 #endif
 
 ! ###################

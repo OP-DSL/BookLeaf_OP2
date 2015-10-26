@@ -1,67 +1,51 @@
-getq_christiensen_bc_kernel.o: data.o 
+getq_kernels.o: data.o 
+ale_advectors.o: ale_advectors_kernels.o data.o common_kernels.o 
+sod.o: sod_kernels.o data.o 
+getforce_kernels.o: data.o 
 getsp.o: data.o 
-getpc_merge_kernel.o: data.o 
-geometry_op.o: geometry_min_kernel.o data.o utilities_op.o geometry_calc_kernel.o \
-	error.o 
+getacc.o: getacc_kernels.o data.o common_kernels.o utilities.o 
+getforce.o: getforce_kernels.o getsp.o gethg.o data.o 
 gethg.o: data.o 
-set_zero1_kernel.o: data.o 
-a_eq_b_over_c_kernel.o: data.o 
-gather_fun_kernel.o: data.o 
-geometry_min_kernel.o: data.o 
-getdt_div_kernel.o: data.o 
-data.o: 
-getacc_accel_kernel.o: data.o 
-getq_christiensen_q_kernel.o: data.o 
-getforce_op.o: getsp.o gethg.o data.o getforce_visc_kernel.o getforce_pres_kernel.o 
-getq_christiensen1_kernel.o: data.o 
-lagstep_half_pos_kernel.o: data.o 
-getq_christiensen_limiter_kernel.o: data.o 
-sod_op.o: data.o sod_reset_kernel.o sod_midpoint_kernel.o sod_subz_kernel.o 
-getacc_avgvel_kernel.o: data.o 
-set_zero4_kernel.o: data.o 
-sod_reset_kernel.o: data.o 
-main.o: data.o mesh.o timers.o write_op.o error.o 
-utilities_op.o: gather_fun_kernel.o data.o 
-hydro.o: data.o lagstep_op.o getdt_op.o 
-getdt_minval_kernel.o: data.o 
-getforce_visc_kernel.o: data.o 
-init_dem_kernel.o: data.o 
-halt.o: data.o timers.o write_op.o 
-common_kernels.o: data.o 
-getein_op.o: data.o getein_update_kernel.o 
-read.o: data.o utilities_op.o error.o 
-getdt_cfl_kernel.o: data.o 
-eos.o: data.o 
-getq_gradcon_kernel.o: data.o 
-geometry_calc_kernel.o: data.o 
-getacc_op.o: set_zero1_kernel.o data.o getacc_accel_kernel.o getacc_avgvel_kernel.o \
-	utilities_op.o getacc_updpos_kernel.o getacc_bc_kernel.o getacc_scatter_kernel.o 
-mesh.o: data.o utilities_op.o error.o 
-getacc_updpos_kernel.o: data.o 
-banner.o: 
-lagstep_op.o: geometry_op.o a_eq_b_over_c_kernel.o data.o getforce_op.o \
-	lagstep_half_pos_kernel.o utilities_op.o getein_op.o getacc_op.o getpc_op.o \
-	getq_op.o 
-getpc_op.o: getpc_merge_kernel.o data.o eos.o getpc_update_kernel.o 
-getdt_minloc_kernel.o: data.o 
-getdt_op.o: geometry_op.o getdt_div_kernel.o data.o utilities_op.o \
-	getdt_minval_kernel.o getdt_cfl_kernel.o getdt_minloc_kernel.o error.o 
-write_regvalues_kernel.o: data.o 
-getacc_bc_kernel.o: data.o 
-getein_update_kernel.o: data.o 
-getforce_pres_kernel.o: data.o 
-getpc_update_kernel.o: data.o 
-init_subz_pm_kernel.o: data.o 
-getq_op.o: getq_christiensen_bc_kernel.o set_zero1_kernel.o data.o \
-	getq_christiensen_q_kernel.o getq_christiensen1_kernel.o getq_christiensen_limiter_kernel.o \
-	set_zero4_kernel.o getq_gradcon_kernel.o 
-timers.o: data.o 
-write_op.o: data.o mesh.o write_regvalues_kernel.o 
 sod_kernels.o: data.o 
+getacc_kernels.o: data.o 
+geometry_kernels.o: data.o 
+ale_getfvol.o: data.o common_kernels.o ale_getfvol_kernels.o timers.o 
+alestep.o: ale_getfvol.o ale_getmesh.o data.o ale_advect.o error.o \
+	ale_update.o 
+lagstep_kernels.o: data.o 
+ale_advectors_kernels.o: data.o 
+getein.o: data.o getein_kernels.o 
+ale_getmesh.o: data.o ale_getmesh_kernels.o 
+ale_update_kernels.o: data.o 
+data.o: 
+gethg_kernels.o: data.o 
+write.o: data.o mesh.o 
+init.o: data.o init_kernels.o common_kernels.o utilities.o getpc.o \
+	geometry.o error.o 
+getsp_kernels.o: data.o 
+getdt.o: data.o utilities.o geometry.o error.o getdt_kernels.o 
+getq.o: getq_kernels.o data.o common_kernels.o 
+main.o: data.o write.o mesh.o timers.o error.o 
+hydro.o: alestep.o data.o getdt.o lagstep.o 
+init_kernels.o: data.o 
+halt.o: data.o write.o timers.o 
+common_kernels.o: data.o 
+read.o: data.o utilities.o error.o 
+utilities.o: data.o common_kernels.o 
+getpc.o: data.o eos.o 
+mesh.o: data.o utilities.o error.o 
+getein_kernels.o: data.o 
+ale_advect_kernels.o: data.o 
+lagstep.o: getacc.o getforce.o lagstep_kernels.o getein.o data.o getq.o \
+	common_kernels.o utilities.o getpc.o geometry.o 
+banner.o: 
+ale_getfvol_kernels.o: data.o 
+ale_advect.o: ale_advectors.o data.o common_kernels.o utilities.o \
+	ale_advect_kernels.o 
+geometry.o: geometry_kernels.o data.o utilities.o error.o 
+eos.o: data.o 
+timers.o: data.o 
+ale_getmesh_kernels.o: data.o 
 error.o: data.o 
-sod_midpoint_kernel.o: data.o 
-getacc_scatter_kernel.o: data.o 
-sod_subz_kernel.o: data.o 
-init_op.o: geometry_op.o set_zero1_kernel.o data.o set_zero4_kernel.o \
-	utilities_op.o init_dem_kernel.o getpc_op.o init_subz_pm_kernel.o \
-	error.o 
+getdt_kernels.o: data.o 
+ale_update.o: ale_update_kernels.o data.o getpc.o geometry.o 
