@@ -43,13 +43,13 @@ SUBROUTINE init_memory()
   USE logicals_mod,ONLY: zsp,zale
   USE error_mod,   ONLY: halt
   USE pointers_mod,ONLY: ielreg,ielmat,ielnd,rho,qq,csqrd,pre,ein,cnwt, &
-&                        elmass,elvol,ndu,ndv,a1,a2,a3,b1,b2,b3,ndx,ndy,&
+&                        elmass,elvol,ndu,ndv,a1,a2,a3,b1,b2,b3,ndy,ndx,&
 &                        indtype,ielel,cnmass,elx,ely,qx,qy,spmass,     &
 &                        ielsd,ielsort1,ielsort2,ndmass,ndarea
   USE scratch_mod, ONLY: rscratch21,rscratch22,rscratch23,rscratch24,   &
 &                        rscratch25,rscratch26,rscratch27,rscratch28,   &
 &                        rscratch11,rscratch12,rscratch13,rscratch14,   &
-&                        rscratch15,rscratch16,iscratch11,zscratch11
+&                        rscratch15,rscratch16,rscratch17,rscratch18,iscratch11,zscratch11
 
   IMPLICIT NONE
 
@@ -76,7 +76,7 @@ SUBROUTINE init_memory()
     IF (ierr.NE.0_ink) CALL halt("ERROR: failed to allocate memory",0)
   ENDIF
   IF (zale) THEN
-    ALLOCATE(rscratch16(1:nsz),iscratch11(1:nsz),zscratch11(1:nsz),     &
+    ALLOCATE(rscratch16(1:nsz),rscratch17(1:nsz),rscratch18(1:nsz),iscratch11(1:nsz),zscratch11(1:nsz),     &
 &            rscratch28(nshape,1:nsz),STAT=ierr)
     IF (ierr.NE.0_ink) CALL halt("ERROR: failed to allocate memory",0)
   ENDIF

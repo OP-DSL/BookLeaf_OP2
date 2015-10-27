@@ -45,11 +45,11 @@ CONTAINS
 
     ! Select mesh to be moved
     IF (zeul) THEN
-      call op_par_loop_1(ale_getmesh_get, s_nodes, &
-&             op_arg_dat(d_indstatus, -1, OP_ID, 1, 'integer(4)',OP_WRITE))
-!       DO inod=1,nnod2
-!         indstatus(inod)=2_ink
-!       ENDDO
+!       call op_par_loop_1(ale_getmesh_get, s_nodes, &
+! &             op_arg_dat(d_indstatus, -1, OP_ID, 1, 'integer(4)',OP_WRITE))
+      DO inod=1,nnod2
+        indstatus(inod)=2_ink
+      ENDDO
     ELSE
       ! Other options
     ENDIF

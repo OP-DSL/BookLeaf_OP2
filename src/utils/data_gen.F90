@@ -146,7 +146,9 @@ MODULE scratch_mod
 &                                                        rscratch13,    &
 &                                                        rscratch14,    &
 &                                                        rscratch15,    &
-&                                                        rscratch16
+&                                                        rscratch16,    &
+&                                                        rscratch17,    &
+&                                                        rscratch18
   REAL(KIND=rlk),   DIMENSION(:,:),ALLOCATABLE,TARGET :: rscratch21,    &
 &                                                        rscratch22,    &
 &                                                        rscratch23,    &
@@ -157,7 +159,8 @@ MODULE scratch_mod
 &                                                        rscratch28,    &
 &                                                        rscratch29
   INTEGER(KIND=ink),DIMENSION(:),  ALLOCATABLE,TARGET :: iscratch11
-  LOGICAL(KIND=lok),DIMENSION(:),  ALLOCATABLE,TARGET :: zscratch11
+ ! LOGICAL(KIND=lok),DIMENSION(:),  ALLOCATABLE,TARGET :: zscratch11
+  INTEGER(KIND=ink),DIMENSION(:),  ALLOCATABLE,TARGET :: zscratch11
 
 END MODULE scratch_mod
 
@@ -230,7 +233,7 @@ MODULE op2_bookleaf
 &                           d_spmass,d_ielsd,d_ielel, d_elidx,&
 &                           d_ndmass,d_ndarea, d_zdtnotreg, d_zmidlength
   type(op_dat) :: d_rscratch11,d_rscratch12,d_rscratch13,d_rscratch14, &
-&                         d_rscratch15,d_rscratch16,d_rscratch21,d_rscratch22,d_rscratch23, &
+&                         d_rscratch15,d_rscratch16,d_rscratch17,d_rscratch18,d_rscratch21,d_rscratch22,d_rscratch23, &
 &                         d_rscratch24,d_rscratch25,d_rscratch26,d_rscratch27,d_rscratch28, &
 &                         d_iscratch11,d_zscratch11
 
@@ -251,7 +254,7 @@ MODULE op2_bookleaf
 &                         qx,qy,indtype,spmass,ielsd,ndmass,ndarea, &
 &                         ielreg2,zdtnotreg2,zmidlength2,ielreg,elidx
   USE scratch_mod,  ONLY: rscratch11,rscratch12,rscratch13,rscratch14, & !11-13 on elem 14,15 on nodes
-&                         rscratch15,rscratch16,rscratch21,rscratch22,rscratch23, & !21-27 on elem
+&                         rscratch15,rscratch16,rscratch17,rscratch18,rscratch21,rscratch22,rscratch23, & !21-27 on elem
 &                         rscratch24,rscratch25,rscratch26,rscratch27,rscratch28, &
 &                         iscratch11,zscratch11
 
@@ -346,10 +349,10 @@ MODULE op2_bookleaf
   call op_decl_dat(s_nodes   ,1,'real(8)',rscratch15,  d_rscratch15,'rscratch15')
   IF (zale) THEN
   call op_decl_dat(s_elements,1,'real(8)',rscratch16,  d_rscratch16,'rscratch16')
+  call op_decl_dat(s_elements,1,'real(8)',rscratch17,  d_rscratch17,'rscratch17')
+  call op_decl_dat(s_elements,1,'real(8)',rscratch18,  d_rscratch18,'rscratch18')
   call op_decl_dat(s_elements,1,'integer(4)',iscratch11,d_iscratch11,'iscratch11')
-!WARNING MISSING
-#warning Missing zscratch
-!  call op_decl_dat(s_elements,1,'integer(4)',zscratch11,d_zscratch11,'zscratch11')
+  call op_decl_dat(s_elements,1,'integer(4)',zscratch11,d_zscratch11,'zscratch11')
   ENDIF
 !   call op_decl_dat(s_mat   ,1,'real(8)',mat_rho,  d_mat_rho,'d_mat_rho')
 !   call op_decl_dat(s_mat   ,1,'real(8)',mat_ein,  d_mat_ein,'d_mat_ein')

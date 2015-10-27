@@ -43,8 +43,8 @@ CONTAINS
 &                             store3=>rscratch13,store4=>rscratch14,    &
 &                             store5=>rscratch15,store6=>rscratch16,    &
 &                             rDelV=>rscratch21,rDelM=>rscratch22,      &
-&                             rFlux=>rscratch23,rwork1=>rscratch24,     &
-&                             rwork2=>rscratch25,rwork3=>rscratch26,    &
+&                             rFlux=>rscratch23,rwork1=>rscratch17,     &
+&                             rwork2=>rscratch18,rwork3=>rscratch26,    &
 &                             eluv=>rscratch27,elvv=>rscratch28,        &
 &                             indstatus=>iscratch11,zactive=>zscratch11
     USE timing_mod,     ONLY: bookleaf_times,get_time
@@ -52,8 +52,8 @@ CONTAINS
 &                             d_store3=>d_rscratch13,d_store4=>d_rscratch14,    &
 &                             d_store5=>d_rscratch15,d_store6=>d_rscratch16,    &
 &                             d_rDelV=>d_rscratch21,d_rDelM=>d_rscratch22,      &
-&                             d_rFlux=>d_rscratch23,d_rwork1=>d_rscratch24,     &
-&                             d_rwork2=>d_rscratch25,d_rwork3=>d_rscratch26,    &
+&                             d_rFlux=>d_rscratch23,d_rwork1=>d_rscratch17,     &
+&                             d_rwork2=>d_rscratch18,d_rwork3=>d_rscratch26,    &
 &                             d_eluv=>d_rscratch27,d_elvv=>d_rscratch28,        &
 &                             d_indstatus=>d_iscratch11,d_zactive=>d_zscratch11,d_ndx,d_ndy, &
 &                             d_ielel,d_ielsd,d_indtype,d_elvol,d_elmass,d_rho, &
@@ -89,7 +89,7 @@ CONTAINS
 &                      store2(1),store3(1),store4(1),elvol(1),elmass(1),&
 &                      rho(1),cnwt(1,1),cnmass(1,1),rDelV(1,1),         &
 &                      rDelM(1,1),rwork3(1,1),eluv(1,1),elvv(1,1),      &
-&                      rFlux(1,1),rwork1(1,1),rwork2(1,1),zactive(1), &
+&                      rFlux(1,1),rwork1(1),rwork2(1),zactive(1), &
 &                      d_ielel,d_ielsd,d_indstatus,d_indtype,  &
 &                      d_store5,d_store6,d_store1,    &
 &                      d_store2,d_store3,d_store4,d_elvol,d_elmass, &
@@ -109,7 +109,7 @@ CONTAINS
 &                        store2(1),store3(1),store4(1),elvol(1),        &
 &                        elmass(1),rho(1),cnwt(1,1),cnmass(1,1),        &
 &                        rDelV(1,1),rDelM(1,1),rwork3(1,1),eluv(1,1),   &
-&                        elvv(1,1),rFlux(1,1),rwork1(1,1),rwork2(1,1),  &
+&                        elvv(1,1),rFlux(1,1),rwork1(1),rwork2(1),  &
 &                        zactive(1), &
 &                        d_ielel,d_ielsd,d_indstatus,d_indtype, &
 &                        d_store5,d_store6,d_store1,  &
