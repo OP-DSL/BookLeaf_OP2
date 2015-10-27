@@ -18,7 +18,19 @@
 #
 #
 # Object list
-
+ifeq ($(OPTARGET),meshgen)
+OBJ += data_gen.o        \
+       common_kernels.o       \
+       error.o       \
+       geometry.o    \
+       geometry_kernels.o    \
+       halt.o        \
+       init_gen.o        \
+       init_kernels.o        \
+       mesh.o        \
+       timers.o      \
+       utilities.o
+else
 ifndef OPTARGET
 OBJ += data.o        \
        common_kernels.o       \
@@ -62,4 +74,4 @@ ifeq ($(OPTARGET),mpi_cuda)
 OBJ += $(shell find . -maxdepth 1 -name "*_gpukernel.CUF" | sed s/\\.CUF/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
 endif
 endif
-
+endif

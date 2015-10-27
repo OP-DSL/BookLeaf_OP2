@@ -27,14 +27,14 @@ MODULE ale_getfvol_mod
 
 CONTAINS
 
-  SUBROUTINE alegetfvol(nshape,nnod,nel,nel2,dt,cut,indstatus,ielnd,    &
-&                       ndx,ndy,ndux,ndvy,rdelv, &
-&                       d_indstatus,d_ndx,d_ndy,d_ndux,d_ndvy,d_rdelv)
+  SUBROUTINE alegetfvol(nshape,nnod,nel,nel2,dt,cut,d_indstatus,d_ndx,d_ndy,d_ndux,d_ndvy,d_rdelv)
 
     USE kinds_mod,    ONLY: ink,rlk
     USE logicals_mod, ONLY: zeul
     USE timers_mod,   ONLY: bookleaf_times,get_time
-    USE op2_bookleaf
+    USE op2_bookleaf, ONLY: s_nodes
+    USE OP2_Fortran_Reference
+    use OP2_Fortran_RT_Support
     USE common_kernels
     USE ale_getfvol_kernels
 
@@ -42,11 +42,6 @@ CONTAINS
     INTEGER(KIND=ink),                       INTENT(IN)   :: nshape,nel,&
 &                                                            nnod,nel2
     REAL(KIND=rlk),                          INTENT(IN)   :: dt,cut
-    INTEGER(KIND=ink),DIMENSION(nnod),       INTENT(IN)   :: indstatus
-    INTEGER(KIND=ink),DIMENSION(nshape,nel2),INTENT(IN)   :: ielnd
-    REAL(KIND=rlk),   DIMENSION(nnod),       INTENT(INOUT):: ndx,ndy,   &
-&                                                            ndux,ndvy
-    REAL(KIND=rlk),   DIMENSION(nshape,nel2),INTENT(OUT)  :: rdelv
     type(op_dat) :: d_indstatus,d_ndx,d_ndy,d_ndux,d_ndvy,d_rdelv
     ! Local
     INTEGER(KIND=ink) :: iNd
@@ -82,9 +77,7 @@ CONTAINS
 &             op_arg_gbl(dt,1,'real(8)',OP_READ))
 
     ! construct flux volumes
-    CALL fvol(nshape,nnod,nel,nel2,cut,ielnd(1,1),ndx(1),ndy(1),ndux(1),&
-&             ndvy(1),rDelV(1,1), &
-&             d_ndx,d_ndy,d_ndux, &
+    CALL fvol(nshape,nnod,nel,nel2,cut,d_ndx,d_ndy,d_ndux, &
 &             d_ndvy,d_rDelV )
 
     ! update position
@@ -102,12 +95,12 @@ CONTAINS
 
   END SUBROUTINE alegetfvol
 
-  SUBROUTINE fvol(nshape,nnod,nel,nel2,cut,ielnd,ndx0,ndy0,ndx1,ndy1,   &
-&                 rdelv, &
-&                d_ndx0,d_ndy0,d_ndx1,d_ndy1,d_rdelv)
+  SUBROUTINE fvol(nshape,nnod,nel,nel2,cut,d_ndx0,d_ndy0,d_ndx1,d_ndy1,d_rdelv)
 
     USE kinds_mod,ONLY: ink,rlk
-    USE op2_bookleaf
+    USE op2_bookleaf, ONLY: s_elements,m_el2node
+    USE OP2_Fortran_Reference
+    use OP2_Fortran_RT_Support
     USE common_kernels
     USE ale_getfvol_kernels
 
@@ -115,10 +108,6 @@ CONTAINS
     INTEGER(KIND=ink),                       INTENT(IN) :: nshape,nnod, &
 &                                                          nel,nel2
     REAL(KIND=rlk),                          INTENT(IN) :: cut
-    INTEGER(KIND=ink),DIMENSION(nshape,nel2),INTENT(IN) :: ielnd
-    REAL(KIND=rlk),   DIMENSION(nnod),       INTENT(IN) :: ndx0,ndy0,   &
-&                                                          ndx1,ndy1
-    REAL(KIND=rlk),   DIMENSION(nshape,nel2),INTENT(OUT):: rdelv
     type(op_dat) :: d_ndx0,d_ndy0,d_ndx1,d_ndy1,d_rdelv
 
     ! Local

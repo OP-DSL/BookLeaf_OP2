@@ -208,7 +208,7 @@ MODULE timing_mod
      REAL(KIND=rlk) :: time_in_update_nd_var
      REAL(KIND=rlk) :: time_in_aleupdate
   END TYPE time_stats
-  TYPE(time_stats) :: bookleaf_times, get_time
+  TYPE(time_stats) :: bookleaf_times
 
   CONTAINS
 

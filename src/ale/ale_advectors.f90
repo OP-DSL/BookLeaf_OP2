@@ -26,10 +26,10 @@ MODULE ale_advectors_mod
 
 CONTAINS
 
-  SUBROUTINE flux_c1_VL(iD1,iD2,iShape,iLSize,iASize,iElEl,iElSd,       &
-&                       rCorner,rDel,rVar,rFlux, &
-&                       d_ielel,d_ielsd,d_rCorner,d_rDel,d_rVar,d_rFlux)
-      USE op2_bookleaf
+  SUBROUTINE flux_c1_VL(iD1,iD2,iShape,iLSize,iASize, d_ielel,d_ielsd,d_rCorner,d_rDel,d_rVar,d_rFlux)
+      USE op2_bookleaf, ONLY: s_elements,m_el2node,m_el2el
+    USE OP2_Fortran_Reference
+    use OP2_Fortran_RT_Support
       USE ale_advectors_kernels
       USE common_kernels
     ! Argument list
@@ -37,12 +37,6 @@ CONTAINS
 &                                                             iShape,   &
 &                                                             iLSize,   &
 &                                                             iASize
-    INTEGER(KIND=ink),DIMENSION(iShape,iASize),INTENT(IN)  :: iElEl,    &
-&                                                             iElSd
-    REAL(KIND=rlk),   DIMENSION(iShape,iASize),INTENT(IN)  :: rCorner,  &
-&                                                             rDel
-    REAL(KIND=rlk),   DIMENSION(iASize),       INTENT(IN)  :: rVar
-    REAL(KIND=rlk),   DIMENSION(iShape,iASize),INTENT(OUT) :: rFlux
     type(op_dat) :: d_ielel,d_ielsd,d_rCorner,d_rDel,d_rVar,d_rFlux
 
     ! Local
@@ -75,12 +69,12 @@ CONTAINS
 
   END SUBROUTINE flux_c1_VL
 
-  SUBROUTINE flux_n1_VL(iShape,iLSize,iASize,iElEl,iElSd,rCorner,rDel,  &
-&                       rVar,rFlux, &
-&                       d_iElEl,d_iElSd,d_rCorner,d_rDel,  &
+  SUBROUTINE flux_n1_VL(iShape,iLSize,iASize,d_iElEl,d_iElSd,d_rCorner,d_rDel,  &
 &                       d_rVar,d_rFlux)
 
-  USE op2_bookleaf
+  USE op2_bookleaf, ONLY: s_elements,m_el2node,m_el2el
+    USE OP2_Fortran_Reference
+    use OP2_Fortran_RT_Support
   USE common_kernels
   USE ale_advectors_kernels
 
@@ -88,11 +82,6 @@ CONTAINS
     INTEGER(KIND=ink),                         INTENT(IN)  :: iShape,   &
 &                                                             iLSize,   &
 &                                                             iASize
-    INTEGER(KIND=ink),DIMENSION(iShape,iASize),INTENT(IN)  :: iElEl,    &
-&                                                             iElSd
-    REAL(KIND=rlk),   DIMENSION(iShape,iASize),INTENT(IN)  :: rCorner,  &
-&                                                             rDel,rVar
-    REAL(KIND=rlk),   DIMENSION(iShape,iASize),INTENT(OUT) :: rFlux
     type(op_dat) ::                     d_iElEl,d_iElSd,d_rCorner,d_rDel,  &
 &                       d_rVar,d_rFlux
     ! Local
@@ -129,34 +118,24 @@ CONTAINS
 
   END SUBROUTINE flux_n1_VL
 
-  SUBROUTINE update_c1(iD1,iD2,iShape,iLSize,iASize,iElEl,iElSd,rBase0, &
-&                      rBase1,rCutOff,rFlux,rTotFlux,rVar, &
-&                      d_ielel,d_ielsd,d_rBase0,d_rBase1,d_rCutOff,d_rFlux, &
+  SUBROUTINE update_c1(iD1,iD2,iShape,iLSize,iASize,d_ielel,d_ielsd,d_rBase0,d_rBase1,d_rCutOff,d_rFlux, &
 &                      d_rTotFlux, d_rVar)
-      USE op2_bookleaf
+      USE op2_bookleaf, ONLY: s_elements,m_el2node
+    USE OP2_Fortran_Reference
+    use OP2_Fortran_RT_Support
       USE ale_advectors_kernels
     ! Argument list
     INTEGER(KIND=ink),                         INTENT(IN)    :: iD1,iD2,&
 &                                                               iShape, &
 &                                                               iLSize, &
 &                                                               iASize
-    INTEGER(KIND=ink),DIMENSION(iShape,iASize),INTENT(IN)    :: iElEl,  &
-&                                                               iElSd
-    REAL(KIND=rlk),   DIMENSION(iASize),       INTENT(IN)    :: rBase0, &
-&                                                               rBase1, &
-&                                                               rCutOff
-    REAL(KIND=rlk),   DIMENSION(iShape,iASize),INTENT(IN)    :: rFlux
-    REAL(KIND=rlk),   DIMENSION(iASize),       INTENT(OUT)   :: rTotFlux
-    REAL(KIND=rlk),   DIMENSION(iASize),       INTENT(INOUT) :: rVar
     type(op_dat) ::    d_ielel,d_ielsd,d_rBase0,d_rBase1,d_rCutOff,d_rFlux, &
 &                      d_rTotFlux, d_rVar
     ! Local
     INTEGER(KIND=ink) :: iEl
 
     ! calculate total flux
-    CALL sum_flux(iD1,iD2,iShape,iLSize,iASize,iElEl,iElSd,rFlux,       &
-&                 rTotFlux, &
-&                  d_iElEl,d_iElSd,d_rFlux,       &
+    CALL sum_flux(iD1,iD2,iShape,iLSize,iASize,d_iElEl,d_iElSd,d_rFlux,       &
 &                 d_rTotFlux)
 
     ! update variable
@@ -170,12 +149,11 @@ CONTAINS
 
   END SUBROUTINE update_c1
 
-  SUBROUTINE update_n1(iShape,iUSize,iESize,iCSize,iNSize,iElNd,iElSrt, &
-&                      zparallel,rBase0,rBase1,rCut,zActive,rFlux,      &
-&                      rTotFlux,rVar, &
-&                     d_rBase0,d_rBase1,d_rCut,d_zActive,d_rFlux,      &
+  SUBROUTINE update_n1(iShape,iUSize,iESize,iCSize,iNSize,d_rBase0,d_rBase1,d_rCut,d_zActive,d_rFlux,      &
 &                      d_rTotFlux_bad,d_rVar)
-    USE op2_bookleaf
+    USE op2_bookleaf, ONLY: s_elements,m_el2node,s_nodes,d_rscratch18
+    USE OP2_Fortran_Reference
+    use OP2_Fortran_RT_Support
     USE common_kernels
     USE ale_advectors_kernels
     ! Argument list
@@ -184,17 +162,6 @@ CONTAINS
 &                                                               iESize, &
 &                                                               iCSize, &
 &                                                               iNSize
-    INTEGER(KIND=ink),DIMENSION(iShape,iCSize),INTENT(IN)    :: iElNd
-    INTEGER(KIND=ink),DIMENSION(iCSize),       INTENT(IN)    :: iElSrt
-    LOGICAL(KIND=lok),                         INTENT(IN)    :: zparallel
-    REAL(KIND=rlk),   DIMENSION(iNSize),       INTENT(IN)    :: rBase0, &
-&                                                               rBase1, &
-&                                                               rCut
-    !LOGICAL(KIND=lok),DIMENSION(iNSize),       INTENT(IN)    :: zActive
-    INTEGER(KIND=ink),DIMENSION(iNSize),      INTENT(OUT)  :: zActive
-    REAL(KIND=rlk),   DIMENSION(iShape,iCSize),INTENT(IN)    :: rFlux
-    REAL(KIND=rlk),   DIMENSION(iNSize),       INTENT(OUT)   :: rTotFlux
-    REAL(KIND=rlk),   DIMENSION(iNSize),       INTENT(INOUT) :: rVar
     type(op_dat) ::    d_rBase0,d_rBase1,d_rCut,d_zActive,d_rFlux,      &
 &                      d_rTotFlux_bad,d_rVar
     ! Local
@@ -221,10 +188,10 @@ CONTAINS
 
   END SUBROUTINE update_n1
 
-  SUBROUTINE sum_flux(iD1,iD2,iShape,iLSize,iASize,iElEl,iElSd,  &
-&                     rFlux,rTotFlux, &
-&                     d_ielel,d_ielsd,d_rFlux,d_rTotFlux)
-    USE op2_bookleaf
+  SUBROUTINE sum_flux(iD1,iD2,iShape,iLSize,iASize,d_ielel,d_ielsd,d_rFlux,d_rTotFlux)
+    USE op2_bookleaf, ONLY: s_elements,m_el2node,d_elidx,m_el2el
+    USE OP2_Fortran_Reference
+    use OP2_Fortran_RT_Support
     USE common_kernels
     USE ale_advectors_kernels
 
@@ -233,10 +200,6 @@ CONTAINS
 &                                                               iShape, &
 &                                                               iLSize, &
 &                                                               iASize
-    INTEGER(KIND=ink),DIMENSION(iShape,iASize),INTENT(IN)    :: iElEl,  &
-&                                                               iElSd
-    REAL(KIND=rlk),   DIMENSION(iShape,iASize),INTENT(IN)    :: rFlux
-    REAL(KIND=rlk),   DIMENSION(iASize),       INTENT(OUT)   :: rTotFlux
     type(op_dat) :: d_ielel,d_ielsd,d_rFlux,d_rTotFlux
     ! Local
     INTEGER(KIND=ink) :: i1,i2,j1,j2,iEl,iE1,iE2,kk

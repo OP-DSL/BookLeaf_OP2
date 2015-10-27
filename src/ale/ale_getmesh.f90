@@ -24,7 +24,7 @@ MODULE ale_getmesh_mod
 
 CONTAINS
 
-  SUBROUTINE alegetmesh(nnod2,indstatus,d_indstatus)
+  SUBROUTINE alegetmesh(nnod2,d_indstatus)
 
     USE kinds_mod,    ONLY: ink,rlk
     USE logicals_mod, ONLY: zeul
@@ -34,7 +34,6 @@ CONTAINS
 
     ! Argument list
     INTEGER(KIND=ink),                 INTENT(IN)  :: nnod2
-    INTEGER(KIND=ink),DIMENSION(nnod2),INTENT(OUT) :: indstatus
     type(op_dat) :: d_indstatus
     ! Local
     INTEGER(KIND=ink) :: inod

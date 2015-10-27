@@ -19,7 +19,7 @@
 PROGRAM main
 
 ! Internal
-  USE kinds_mod,    ONLY: ink
+  USE kinds_mod,    ONLY: ink,lok,rlk
   USE error_mod,    ONLY: halt
   USE logicals_mod,  ONLY: zparallel,zmprocw
   USE integers_mod, ONLY: Nthread
@@ -111,13 +111,13 @@ PROGRAM main
   CALL init_parameters()
 
 ! setup memory
-  CALL init_mesh_memory()
+!  CALL init_mesh_memory()
 
 ! Transfer mesh onto solution arrays, populate connectivity arrays
-  CALL mesh_transfer(reg)
+!  CALL mesh_transfer(reg)
 
 ! setup memory
-  CALL init_memory()
+!   CALL init_memory()
 
 ! main initialisation
   CALL init()

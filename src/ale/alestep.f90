@@ -71,26 +71,17 @@ CONTAINS
     t0=get_time()
 
     ! select mesh to be moved
-    CALL alegetmesh(nnod2,indstatus(1),d_indstatus)
+    CALL alegetmesh(nnod2,d_indstatus)
 
     ! calculate flux volume
-    CALL alegetfvol(nshape,nnod,nel,nel2,dt,zerocut,indstatus(1), &
-&                   ielnd(1,1),ndx(1),ndy(1),store4(1),store5(1), &
-&                   rDelV(1,1), &
+    CALL alegetfvol(nshape,nnod,nel,nel2,dt,zerocut, &
 &                   d_indstatus,d_ndx,d_ndy,d_store4,d_store5,d_rDelV)
 
     ! advect independent variables
     SELECT CASE(adv_type)
       CASE(1_ink)
         CALL aleadvect(1_ink,2_ink,nshape,nel,nel1,nel2,nnod,nnod1,     &
-&                      nnod2,nsz,ielel(1,1),ielsd(1,1),ielsort1(1),     &
-&                      ielsort2(1),ielnd(1,1),indstatus(1),indtype(1),  &
-&                      dencut,zerocut,store5(1),store6(1),store1(1),    &
-&                      store2(1),store3(1),store4(1),elvol(1),elmass(1),&
-&                      rho(1),cnwt(1,1),cnmass(1,1),rDelV(1,1),         &
-&                      rDelM(1,1),rwork3(1,1),eluv(1,1),elvv(1,1),      &
-&                      rFlux(1,1),rwork1(1,1),rwork2(1,1),rwork11(1),rwork21(1),zactive(1), &
-&                      d_ielel,d_ielsd,d_indstatus,d_indtype,  &
+&                      nnod2,nsz,dencut,zerocut,d_ielel,d_ielsd,d_indstatus,d_indtype,  &
 &                      d_store5,d_store6,d_store1,    &
 &                      d_store2,d_store3,d_store4,d_elvol,d_elmass, &
 &                      d_rho,d_cnwt,d_cnmass,d_rDelV,         &
@@ -103,15 +94,7 @@ CONTAINS
         i3=i2-i1
         DO ii=i1,i2,i3
           CALL aleadvect(ii,ii,nshape,nel,nel1,nel2,nnod,nnod1,nnod2,   &
-&                        nsz,ielel(1,1),ielsd(1,1),ielsort1(1),         &
-&                        ielsort2(1),ielnd(1,1),indstatus(1),indtype(1),&
-&                        dencut,zerocut,store5(1),store6(1),store1(1),  &
-&                        store2(1),store3(1),store4(1),elvol(1),        &
-&                        elmass(1),rho(1),cnwt(1,1),cnmass(1,1),        &
-&                        rDelV(1,1),rDelM(1,1),rwork3(1,1),eluv(1,1),   &
-&                        elvv(1,1),rFlux(1,1),rwork1(1,1),rwork2(1,1),rwork11(1),rwork21(1),  &
-&                        zactive(1), &
-&                        d_ielel,d_ielsd,d_indstatus,d_indtype, &
+&                        nsz,dencut,zerocut,d_ielel,d_ielsd,d_indstatus,d_indtype, &
 &                        d_store5,d_store6,d_store1,  &
 &                        d_store2,d_store3,d_store4,d_elvol,        &
 &                        d_elmass,d_rho,d_cnwt,d_cnmass,        &
@@ -124,9 +107,7 @@ CONTAINS
     END SELECT
 
     ! update dependent variables
-    CALL aleupdate(nshape,nel,nnod,ndx(1),ndy(1),elx(1,1),ely(1,1),     &
-&                  elmass(1),rho(1),pre(1),ein(1),csqrd(1),ielmat(1), &
-&                  d_ndx,d_ndy,d_elx,d_ely,    &
+    CALL aleupdate(nshape,nel,nnod, d_ndx,d_ndy,d_elx,d_ely,    &
 &                  d_elmass,d_rho,d_pre,d_ein,d_csqrd)
 
     ! Timing data

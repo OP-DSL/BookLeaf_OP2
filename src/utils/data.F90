@@ -159,7 +159,7 @@ MODULE scratch_mod
 &                                                        rscratch28,    &
 &                                                        rscratch29
   INTEGER(KIND=ink),DIMENSION(:),  ALLOCATABLE,TARGET :: iscratch11
- ! LOGICAL(KIND=lok),DIMENSION(:),  ALLOCATABLE,TARGET :: zscratch11
+!  LOGICAL(KIND=lok),DIMENSION(:),  ALLOCATABLE,TARGET :: zscratch11
   INTEGER(KIND=ink),DIMENSION(:),  ALLOCATABLE,TARGET :: zscratch11
 
 END MODULE scratch_mod
@@ -208,7 +208,7 @@ MODULE timing_mod
      REAL(KIND=rlk) :: time_in_update_nd_var
      REAL(KIND=rlk) :: time_in_aleupdate
   END TYPE time_stats
-  TYPE(time_stats) :: bookleaf_times, get_time
+  TYPE(time_stats) :: bookleaf_times
 
   CONTAINS
 
@@ -257,131 +257,91 @@ MODULE op2_bookleaf
 &                         rscratch15,rscratch16,rscratch17,rscratch18,rscratch21,rscratch22,rscratch23, & !21-27 on elem
 &                         rscratch24,rscratch25,rscratch26,rscratch27,rscratch28, &
 &                         iscratch11,zscratch11
+  USE OP2_Fortran_hdf5_Declarations
 
   INTEGER(kind=ink) :: ii,jj
-  INTEGER(KIND=ink) :: ierr
+  INTEGER(KIND=ink) :: ierr, status
+  character(kind=c_char,len=10) :: fileName
+  character(kind=c_char,len=9) :: libName = C_CHAR_'PTSCOTCH'//C_NULL_CHAR
+  character(kind=c_char,len=5) :: routineName = C_CHAR_'KWAY'//C_NULL_CHAR
 
+  fileName = "mesh_hdf5"// CHAR(0)
   ! Let's declare OP2 stuff
-  call op_init(0)
-  call op_decl_set(nnod,s_nodes,'nodes')
-  call op_decl_set(nel,s_elements,'elements')
-  call op_decl_set(nreg,s_reg,'reg')
+  call op_decl_set_hdf5(s_nodes,fileName,'nodes')
+  call op_decl_set_hdf5(s_elements,fileName,'elements')
+  call op_decl_set_hdf5(s_reg,fileName,'reg')
 
-  ! Make a copy of the original mapping and decrement by 1, due to OP2's C backend
-  ALLOCATE(ielnod2(nshape,1:nel))
-  ielnod2(:,:) = ielnd(:,1:) - 1
-  call op_decl_map(s_elements,s_nodes,nshape,ielnod2,m_el2node,'el2node')
-  ALLOCATE(ielel2(nshape,1:nel))
-  ielel2(:,:) = ielel(:,1:) - 1
-  DO ii=1,nel
-    DO jj=1,nshape
-      IF (ielel2(jj,ii).eq.-1_ink) ielel2(jj,ii)= ii-1
-    END DO
-  END DO
-
-  ALLOCATE(ielel3(nshape,1:nel))
-  ielel3 = ielel2+1
-
-  call op_decl_map(s_elements,s_elements,nshape,ielel2,m_el2el,'el2el')
-!   ALLOCATE(ielmat2(1:nel))
-!   ielmat2(:) = ielmat(1:) - 1
-!   call op_decl_map(s_elements,s_mat,1,ielmat2,m_el2mat,'el2mat')
-  ALLOCATE(ielreg2(1:nel))
-  ielreg2(:) = ielreg(1:) - 1
-  call op_decl_map(s_elements,s_reg,1,ielreg2,m_el2reg,'el2reg')
-
-  ! This was originally not defined on reg, but had fixed size
-  ALLOCATE(zdtnotreg2(1:nreg))
-  zdtnotreg2 = zdtnotreg(1:nreg)
-  ALLOCATE(zmidlength2(1:nreg))
-  zmidlength2 = zmidlength(1:nreg)
-
-  ! Generate a dataset for element indices
-  ALLOCATE(elidx(1:nel))
-  DO ii=1,nel
-    elidx(ii) = ii
-  END DO
+  call op_decl_map_hdf5(s_elements,s_nodes,nshape,m_el2node,fileName,'el2node',status)
+  call op_decl_map_hdf5(s_elements,s_elements,nshape,m_el2el,fileName,'el2el',status)
+!   call op_decl_map_hdf5(s_elements,s_mat,1,ielmat2,m_el2mat,'el2mat')
+  call op_decl_map_hdf5(s_elements,s_reg,1,m_el2reg,fileName,'el2reg',status)
 
 
-
-!&          ielsort1(nel1),              &
-
-  call op_decl_dat(s_elements,1,'real(8)',rho,d_rho,'rho')
-  call op_decl_dat(s_elements,1,'real(8)',qq,d_qq,'qq')
-  call op_decl_dat(s_elements,1,'real(8)',csqrd,d_csqrd,'csqrd')
-  call op_decl_dat(s_elements,1,'real(8)',pre,d_pre,'pre')
-  call op_decl_dat(s_elements,1,'real(8)',ein,d_ein,'ein')
-  call op_decl_dat(s_elements,1,'real(8)',elmass,d_elmass,'elmass')
-  call op_decl_dat(s_elements,1,'real(8)',elvol,d_elvol,'elvol')
-  call op_decl_dat(s_elements,1,'real(8)',a1,d_a1,'a1')
-  call op_decl_dat(s_elements,1,'real(8)',a2,d_a2,'a2')
-  call op_decl_dat(s_elements,1,'real(8)',a3,d_a3,'a3')
-  call op_decl_dat(s_elements,1,'real(8)',b1,d_b1,'b1')
-  call op_decl_dat(s_elements,1,'real(8)',b2,d_b2,'b2')
-  call op_decl_dat(s_elements,1,'real(8)',b3,d_b3,'b3')
-  call op_decl_dat(s_elements,nshape,'real(8)',cnwt,d_cnwt,'cnwt')
-  call op_decl_dat(s_elements,nshape,'real(8)',cnmass,d_cnmass,'cnmass')
-  call op_decl_dat(s_elements,nshape,'real(8)',elx,d_elx,'elx')
-  call op_decl_dat(s_elements,nshape,'real(8)',ely,d_ely,'ely')
-  call op_decl_dat(s_elements,nshape,'real(8)',qx,d_qx,'qx')
-  call op_decl_dat(s_elements,nshape,'real(8)',qy,d_qy,'qy')
-  call op_decl_dat(s_elements,nshape,'integer(4)',ielsd,d_ielsd,'ielsd')
-  call op_decl_dat(s_elements,nshape,'integer(4)',ielel3,d_ielel,'ielel')
-  call op_decl_dat(s_elements,1,'integer(4)',elidx,d_elidx,'elidx')
-  call op_decl_dat(s_elements,1,'integer(4)',ielmat,d_ielmat,'ielmat')
-  call op_decl_dat(s_elements,1,'integer(4)',ielreg2,d_ielreg,'ielreg')
+  call op_decl_dat_hdf5(s_elements,1,d_rho,'real(8)',fileName,'rho',status)
+  call op_decl_dat_hdf5(s_elements,1,d_qq,'real(8)',fileName,'qq',status)
+  call op_decl_dat_hdf5(s_elements,1,d_csqrd,'real(8)',fileName,'csqrd',status)
+  call op_decl_dat_hdf5(s_elements,1,d_pre,'real(8)',fileName,'pre',status)
+  call op_decl_dat_hdf5(s_elements,1,d_ein,'real(8)',fileName,'ein',status)
+  call op_decl_dat_hdf5(s_elements,1,d_elmass,'real(8)',fileName,'elmass',status)
+  call op_decl_dat_hdf5(s_elements,1,d_elvol,'real(8)',fileName,'elvol',status)
+  call op_decl_dat_hdf5(s_elements,1,d_a1,'real(8)',fileName,'a1',status)
+  call op_decl_dat_hdf5(s_elements,1,d_a2,'real(8)',fileName,'a2',status)
+  call op_decl_dat_hdf5(s_elements,1,d_a3,'real(8)',fileName,'a3',status)
+  call op_decl_dat_hdf5(s_elements,1,d_b1,'real(8)',fileName,'b1',status)
+  call op_decl_dat_hdf5(s_elements,1,d_b2,'real(8)',fileName,'b2',status)
+  call op_decl_dat_hdf5(s_elements,1,d_b3,'real(8)',fileName,'b3',status)
+  call op_decl_dat_hdf5(s_elements,nshape,d_cnwt,'real(8)',fileName,'cnwt',status)
+  call op_decl_dat_hdf5(s_elements,nshape,d_cnmass,'real(8)',fileName,'cnmass',status)
+  call op_decl_dat_hdf5(s_elements,nshape,d_elx,'real(8)',fileName,'elx',status)
+  call op_decl_dat_hdf5(s_elements,nshape,d_ely,'real(8)',fileName,'ely',status)
+  call op_decl_dat_hdf5(s_elements,nshape,d_qx,'real(8)',fileName,'qx',status)
+  call op_decl_dat_hdf5(s_elements,nshape,d_qy,'real(8)',fileName,'qy',status)
+  call op_decl_dat_hdf5(s_elements,nshape,d_ielsd,'integer(4)',fileName,'ielsd',status)
+  call op_decl_dat_hdf5(s_elements,nshape,d_ielel,'integer(4)',fileName,'ielel',status)
+  call op_decl_dat_hdf5(s_elements,1,d_elidx,'integer(4)',fileName,'elidx',status)
+  call op_decl_dat_hdf5(s_elements,1,d_ielmat,'integer(4)',fileName,'ielmat',status)
+  call op_decl_dat_hdf5(s_elements,1,d_ielreg,'integer(4)',fileName,'ielreg',status)
   IF (ZSP) THEN
-    call op_decl_dat(s_elements,nshape,'real(8)',spmass,d_spmass,'spmass')
+    call op_decl_dat_hdf5(s_elements,nshape,d_spmass,'real(8)',fileName,'spmass',status)
   ENDIF
 
-  call op_decl_dat(s_nodes,1,'real(8)',ndu,d_ndu,'ndu')
-  call op_decl_dat(s_nodes,1,'real(8)',ndv,d_ndv,'ndv')
-  call op_decl_dat(s_nodes,1,'real(8)',ndx,d_ndx,'ndx')
-  call op_decl_dat(s_nodes,1,'real(8)',ndy,d_ndy,'ndy')
-  call op_decl_dat(s_nodes,1,'real(8)',ndmass,d_ndmass,'ndmass')
-  call op_decl_dat(s_nodes,1,'real(8)',ndarea,d_ndarea,'ndarea')
-  call op_decl_dat(s_nodes,1,'integer(4)',indtype,d_indtype,'indtype')
+  call op_decl_dat_hdf5(s_nodes,1,d_ndu,'real(8)',fileName,'ndu',status)
+  call op_decl_dat_hdf5(s_nodes,1,d_ndv,'real(8)',fileName,'ndv',status)
+  call op_decl_dat_hdf5(s_nodes,1,d_ndx,'real(8)',fileName,'ndx',status)
+  call op_decl_dat_hdf5(s_nodes,1,d_ndy,'real(8)',fileName,'ndy',status)
+  call op_decl_dat_hdf5(s_nodes,1,d_ndmass,'real(8)',fileName,'ndmass',status)
+  call op_decl_dat_hdf5(s_nodes,1,d_ndarea,'real(8)',fileName,'ndarea',status)
+  call op_decl_dat_hdf5(s_nodes,1,d_indtype,'integer(4)',fileName,'indtype',status)
 
-  call op_decl_dat(s_elements,1,'real(8)',rscratch11,  d_rscratch11,'rscratch11')
-  call op_decl_dat(s_elements,1,'real(8)',rscratch12,  d_rscratch12,'rscratch12')
-  call op_decl_dat(s_elements,1,'real(8)',rscratch13,  d_rscratch13,'rscratch13')
-  call op_decl_dat(s_nodes   ,1,'real(8)',rscratch14,  d_rscratch14,'rscratch14')
-  call op_decl_dat(s_nodes   ,1,'real(8)',rscratch15,  d_rscratch15,'rscratch15')
+  call op_decl_dat_hdf5(s_elements,1,d_rscratch11,'real(8)',fileName,'rscratch11',status)
+  call op_decl_dat_hdf5(s_elements,1,d_rscratch12,'real(8)',fileName,'rscratch12',status)
+  call op_decl_dat_hdf5(s_elements,1,d_rscratch13,'real(8)',fileName,'rscratch13',status)
+  call op_decl_dat_hdf5(s_nodes,1,d_rscratch14,'real(8)',fileName,'rscratch14',status)
+  call op_decl_dat_hdf5(s_nodes,1,d_rscratch15,'real(8)',fileName,'rscratch15',status)
   IF (zale) THEN
-  call op_decl_dat(s_elements,1,'real(8)',rscratch16,  d_rscratch16,'rscratch16')
-  call op_decl_dat(s_elements,1,'real(8)',rscratch17,  d_rscratch17,'rscratch17')
-  call op_decl_dat(s_elements,1,'real(8)',rscratch18,  d_rscratch18,'rscratch18')
-  call op_decl_dat(s_elements,1,'integer(4)',iscratch11,d_iscratch11,'iscratch11')
-  call op_decl_dat(s_elements,1,'integer(4)',zscratch11,d_zscratch11,'zscratch11')
+  call op_decl_dat_hdf5(s_elements,1,d_rscratch16,'real(8)',fileName,'rscratch16',status)
+  call op_decl_dat_hdf5(s_elements,1,d_rscratch17,'real(8)',fileName,'rscratch17',status)
+  call op_decl_dat_hdf5(s_elements,1,d_rscratch18,'real(8)',fileName,'rscratch18',status)
+  call op_decl_dat_hdf5(s_elements,1,d_iscratch11,'integer(4)',fileName,'iscratch11',status)
+  call op_decl_dat_hdf5(s_elements,1,d_zscratch11,'integer(4)',fileName,'zscratch11',status)
   ENDIF
-!   call op_decl_dat(s_mat   ,1,'real(8)',mat_rho,  d_mat_rho,'d_mat_rho')
-!   call op_decl_dat(s_mat   ,1,'real(8)',mat_ein,  d_mat_ein,'d_mat_ein')
-!   call op_decl_dat(s_mat   ,1,'integer(4)',eos_type,  d_eos_type,'d_eos_type')
-!   call op_decl_dat(s_mat   ,6,'real(8)',eos_param,  d_eos_param,'d_eos_param')
 
-  call op_decl_dat(s_reg   ,1,'integer(4)',zdtnotreg2,  d_zdtnotreg,'d_zdtnotreg')
-  call op_decl_dat(s_reg   ,1,'integer(4)',zmidlength2, d_zmidlength,'d_zmidlength')
-!   call op_decl_dat(s_reg   ,1,'real(8)',reg_vol, d_reg_vol,'d_reg_vol')
-!   call op_decl_dat(s_reg   ,1,'real(8)',reg_mass, d_reg_mass,'d_reg_mass')
-!   call op_decl_dat(s_reg   ,1,'real(8)',reg_ke, d_reg_ke,'d_reg_ke')
-!   call op_decl_dat(s_reg   ,1,'real(8)',reg_dmn, d_reg_dmn,'d_reg_dmn')
-!   call op_decl_dat(s_reg   ,1,'real(8)',reg_dmx, d_reg_dmx,'d_reg_dmx')
-!   call op_decl_dat(s_reg   ,1,'real(8)',reg_ie, d_reg_ie,'d_reg_ie')
-!   call op_decl_dat(s_reg   ,1,'real(8)',reg_pre, d_reg_pre,'d_reg_pre')
-!   call op_decl_dat(s_reg   ,1,'real(8)',reg_pmx, d_reg_pmx,'d_reg_pmx')
-!   call op_decl_dat(s_reg   ,1,'real(8)',reg_pmn, d_reg_pmn,'d_reg_pmn')
+  call op_decl_dat_hdf5(s_reg,1,d_zdtnotreg,'integer(4)',fileName,'d_zdtnotreg',status)
+  call op_decl_dat_hdf5(s_reg,1,d_zmidlength,'integer(4)',fileName,'d_zmidlength',status)
 
-  call op_decl_dat(s_elements,4,'real(8)',rscratch21,d_rscratch21,'rscratch21')
-  call op_decl_dat(s_elements,4,'real(8)',rscratch22,d_rscratch22,'rscratch22')
-  call op_decl_dat(s_elements,4,'real(8)',rscratch23,d_rscratch23,'rscratch23')
-  call op_decl_dat(s_elements,4,'real(8)',rscratch24,d_rscratch24,'rscratch24')
-  call op_decl_dat(s_elements,4,'real(8)',rscratch25,d_rscratch25,'rscratch25')
-  call op_decl_dat(s_elements,4,'real(8)',rscratch26,d_rscratch26,'rscratch26')
-  call op_decl_dat(s_elements,4,'real(8)',rscratch27,d_rscratch27,'rscratch27')
-IF (zale) THEN
-  call op_decl_dat(s_elements,4,'real(8)',rscratch28,d_rscratch28,'rscratch28')
-ENDIF
+  call op_decl_dat_hdf5(s_elements,4,d_rscratch21,'real(8)',fileName,'rscratch21',status)
+  call op_decl_dat_hdf5(s_elements,4,d_rscratch22,'real(8)',fileName,'rscratch22',status)
+  call op_decl_dat_hdf5(s_elements,4,d_rscratch23,'real(8)',fileName,'rscratch23',status)
+  call op_decl_dat_hdf5(s_elements,4,d_rscratch24,'real(8)',fileName,'rscratch24',status)
+  call op_decl_dat_hdf5(s_elements,4,d_rscratch25,'real(8)',fileName,'rscratch25',status)
+  call op_decl_dat_hdf5(s_elements,4,d_rscratch26,'real(8)',fileName,'rscratch26',status)
+  call op_decl_dat_hdf5(s_elements,4,d_rscratch27,'real(8)',fileName,'rscratch27',status)
+  IF (zale) THEN
+  call op_decl_dat_hdf5(s_elements,4,d_rscratch28,'real(8)',fileName,'rscratch28',status)
+  ENDIF
 
+  call op_partition(libName, routineName, s_elements, &
+     & m_el2node,  d_elx)
 
   END SUBROUTINE op2_bookleaf_declare
 END MODULE op2_bookleaf

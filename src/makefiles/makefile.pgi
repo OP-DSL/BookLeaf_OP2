@@ -28,7 +28,7 @@ ifeq ($(LEV),DEBUG)
   DBG     = -g -O0
   CDBG    = -g -O0
   CHECK   = -C
-  FLTTRAP = -Mchkstk -Ktrap=fp -Mchkfpstk -Mchkptr
+  FLTTRAP = #-Mchkstk -Ktrap=fp -Mchkfpstk -Mchkptr
   IEEE   +=
 endif
 ifeq ($(LEV),TV)

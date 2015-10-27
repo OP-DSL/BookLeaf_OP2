@@ -24,9 +24,7 @@ MODULE ale_update_mod
 
 CONTAINS
 
-  SUBROUTINE aleupdate(nshape,nel,nnod,ndx,ndy,elx,ely,elmass,rho,&
-&                      pre,ein,csqrd,ielmat, &
-&                      d_ndx,d_ndy,d_elx,d_ely,d_elmass,d_rho,&
+  SUBROUTINE aleupdate(nshape,nel,nnod,d_ndx,d_ndy,d_elx,d_ely,d_elmass,d_rho,&
 &                      d_pre,d_ein,d_csqrd)
 
     USE kinds_mod,    ONLY: ink,rlk
@@ -34,17 +32,14 @@ CONTAINS
     USE geometry_mod, ONLY: getgeom,getgeom2
     USE getpc_mod,    ONLY: getpc
     USE timing_mod,   ONLY: timer=>bookleaf_times,get_time
-    USE op2_bookleaf
+        use op2_bookleaf, ONLY:s_elements,s_nodes,m_el2node,m_el2el,d_elidx,d_elvol
+    USE OP2_Fortran_Reference
+    use OP2_Fortran_RT_Support
     USE ale_update_kernels
 
     ! Argument list
     INTEGER(KIND=ink),                      INTENT(IN)  :: nshape,nel,  &
 &                                                           nnod
-    REAL(KIND=rlk),   DIMENSION(nnod),      INTENT(IN)  :: ndx,ndy
-    REAL(KIND=rlk),   DIMENSION(nshape,nel),INTENT(OUT) :: elx,ely
-    REAL(KIND=rlk),   DIMENSION(nel),       INTENT(IN)  :: elmass,ein
-    REAL(KIND=rlk),   DIMENSION(nel),       INTENT(OUT) :: rho,pre,csqrd
-    INTEGER(KIND=ink),DIMENSION(nel),       INTENT(IN)  :: ielmat
     type(op_dat) :: d_ndx,d_ndy,d_elx,d_ely,d_elmass,d_rho,&
 &                      d_pre,d_ein,d_csqrd
     ! Local

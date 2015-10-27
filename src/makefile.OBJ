@@ -43,25 +43,7 @@ OBJ = getacc.o       \
 OP2_LIB = -lop2_for_seq -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5
 else
 ifeq ($(OPTARGET),meshgen)
-OBJ = banner.o       \
-      common_kernels.o         \
-      data_gen.o         \
-      error.o        \
-      eos.o          \
-      geometry.o     \
-      geometry_kernels.o     \
-      getpc_kernels.o        \
-      getpc.o        \
-      init.o         \
-      halt.o         \
-      init_kernels.o         \
-      main_gen.o         \
-      mesh.o         \
-      read.o         \
-      timers.o       \
-      utilities.o \
-      write_kernels.o    \
-      write.o
+OBJ = main_gen.o
 OP2_LIB = -lop2_for_seq -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5
 endif
 ifeq ($(OPTARGET),genseq)

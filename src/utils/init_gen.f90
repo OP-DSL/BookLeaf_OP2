@@ -43,7 +43,7 @@ SUBROUTINE init_memory()
   USE logicals_mod,ONLY: zsp,zale
   USE error_mod,   ONLY: halt
   USE pointers_mod,ONLY: ielreg,ielmat,ielnd,rho,qq,csqrd,pre,ein,cnwt, &
-&                        elmass,elvol,ndu,ndv,a1,a2,a3,b1,b2,b3,ndy,ndx,&
+&                        elmass,elvol,ndu,ndv,a1,a2,a3,b1,b2,b3,ndx,ndy,&
 &                        indtype,ielel,cnmass,elx,ely,qx,qy,spmass,     &
 &                        ielsd,ielsort1,ielsort2,ndmass,ndarea
   USE scratch_mod, ONLY: rscratch21,rscratch22,rscratch23,rscratch24,   &
@@ -93,7 +93,6 @@ SUBROUTINE init()
 &                         csqrd,ndx,ndy,elx,ely,ielel,ielnd,ielsd,cnwt, &
 &                         cnmass,spmass,indtype
   USE geometry_mod, ONLY: getgeom,getgeom2
-  USE getpc_mod,    ONLY: getpc
   USE utilities_mod,ONLY: getconn,getsconn,corrconn
   USE op2_bookleaf
   USE init_kernels
@@ -107,78 +106,40 @@ SUBROUTINE init()
 
   ! Local
   INTEGER(KIND=ink)                       :: iel,imat,ii,jj,j1,j2
-  INTEGER(KIND=ink),DIMENSION(0:nshape-1) :: nodes
+!   INTEGER(KIND=ink),DIMENSION(0:nshape-1) :: nodes
   REAL(KIND=rlk)                          :: x1,x2,x3,x4,y1,y2,y3,y4,w1,&
 &                                            w2,w3,w4
 
-   ! initialise connectivity
-   ielel(1:,1:nel1)=getconn(nel2,nshape,ielnd(1:,1:nel2))
-   ielsd(1:,1:nel1)=getsconn(nel2,nshape,ielel(1:,1:nel2))
-   CALL corrconn(nel2,nshape,ielel(1:,1:nel2),ielsd(1:,1:nel2))
+!    ! initialise connectivity
+!    ielel(1:,1:nel1)=getconn(nel2,nshape,ielnd(1:,1:nel2))
+!    ielsd(1:,1:nel1)=getsconn(nel2,nshape,ielel(1:,1:nel2))
+!    CALL corrconn(nel2,nshape,ielel(1:,1:nel2),ielsd(1:,1:nel2))
 
-     ! initialise node type
-   DO iel=1,nel2
-     nodes(0:nshape-1)=ielnd(1:nshape,iel)
-     IF (COUNT(indtype(nodes).LT.0_ink).EQ.3_ink) THEN
-       l1:DO ii=0,nshape-1
-         IF (indtype(nodes(ii)).GT.0_ink) EXIT l1
-       ENDDO l1
-       ii=MOD(ii+2_ink,nshape)
-       jj=nodes(ii)
-       IF (jj.LE.nnod) THEN
-         j1=nodes(MOD(ii+1_ink,nshape))
-         j2=nodes(MOD(ii+3_ink,nshape))
-         IF (((indtype(j1).EQ.-2_ink).AND.(indtype(j2).EQ.-1_ink)).OR.     &
- &           ((indtype(j2).EQ.-2_ink).AND.(indtype(j1).EQ.-1_ink))) THEN
-           indtype(jj)=-3_ink
-         ENDIF
-       ENDIF
-     ENDIF
-   ENDDO
+!      ! initialise node type
+!    DO iel=1,nel2
+!      nodes(0:nshape-1)=ielnd(1:nshape,iel)
+!      IF (COUNT(indtype(nodes).LT.0_ink).EQ.3_ink) THEN
+!        l1:DO ii=0,nshape-1
+!          IF (indtype(nodes(ii)).GT.0_ink) EXIT l1
+!        ENDDO l1
+!        ii=MOD(ii+2_ink,nshape)
+!        jj=nodes(ii)
+!        IF (jj.LE.nnod) THEN
+!          j1=nodes(MOD(ii+1_ink,nshape))
+!          j2=nodes(MOD(ii+3_ink,nshape))
+!          IF (((indtype(j1).EQ.-2_ink).AND.(indtype(j2).EQ.-1_ink)).OR.     &
+!  &           ((indtype(j2).EQ.-2_ink).AND.(indtype(j1).EQ.-1_ink))) THEN
+!            indtype(jj)=-3_ink
+!          ENDIF
+!        ENDIF
+!      ENDIF
+!    ENDDO
+
   !Now everything is declared hopefully, we can pass it on to OP2
   call op2_bookleaf_declare
   call bookleaf_op2_init_const
 !  call op_dump_to_hdf5 ("mesh_hdf5"//CHAR(0))
 
-  ! initialise time
-  time=time_start
-
-  ! initialise geometry
-  CALL getgeom2(d_ndx,d_ndy,d_elx,d_ely,timer%time_in_getgeomi)
-
-  ! initialise density, energy and mass
-  call op_par_loop_9(init_dem,s_elements, &
-&                    op_arg_dat(d_ielmat,-1,OP_ID,   1,'integer(4)',OP_READ), &
-&                    op_arg_gbl(mat_rho,LI,'real(8)',OP_READ), &
-&                    op_arg_gbl(mat_ein,LI,'real(8)',OP_READ), &
-&                    op_arg_dat(d_rho,   -1,OP_ID,   1,'real(8)',OP_WRITE), &
-&                    op_arg_dat(d_ein,   -1,OP_ID,   1,'real(8)',OP_WRITE), &
-&                    op_arg_dat(d_elmass,-1,OP_ID,   1,'real(8)',OP_READ), &
-&                    op_arg_dat(d_elvol, -1,OP_ID,   1,'real(8)',OP_READ), &
-&                    op_arg_dat(d_cnmass,-1,OP_ID,   4,'real(8)',OP_WRITE), &
-&                    op_arg_dat(d_cnwt,  -1,OP_ID,   4,'real(8)',OP_READ))
-
-
-
-  ! initialise subzonal pressure mass
-  IF (zsp) THEN
-      call op_par_loop_4(init_subz_pm,s_elements, &
-&                    op_arg_dat(d_elx, -1,OP_ID,   4,'real(8)',OP_READ), &
-&                    op_arg_dat(d_ely, -1,OP_ID,   4,'real(8)',OP_READ), &
-&                    op_arg_dat(d_rho, -1,OP_ID,   1,'real(8)',OP_READ), &
-&                    op_arg_dat(d_spmass,-1,OP_ID, 4,'real(8)',OP_WRITE))
-  ENDIF
-
-  ! initialise pressure and sound speed
-  CALL getpc(d_rho,d_ein,d_pre,d_csqrd,timer%time_in_getpci)
-
-  ! initialise artifical viscosity
-  call op_par_loop_1(set_zero1,s_elements, &
-&                    op_arg_dat(d_qq,-1,OP_ID,1,'real(8)',OP_WRITE))
-  call op_par_loop_1(set_zero4,s_elements, &
-&                    op_arg_dat(d_qx,-1,OP_ID,4,'real(8)',OP_WRITE))
-  call op_par_loop_1(set_zero4,s_elements, &
-&                    op_arg_dat(d_qy,-1,OP_ID,4,'real(8)',OP_WRITE))
 
 
 END SUBROUTINE init

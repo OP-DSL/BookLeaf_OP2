@@ -107,34 +107,35 @@ SUBROUTINE init()
 
   ! Local
   INTEGER(KIND=ink)                       :: iel,imat,ii,jj,j1,j2
-  INTEGER(KIND=ink),DIMENSION(0:nshape-1) :: nodes
+!   INTEGER(KIND=ink),DIMENSION(0:nshape-1) :: nodes
   REAL(KIND=rlk)                          :: x1,x2,x3,x4,y1,y2,y3,y4,w1,&
 &                                            w2,w3,w4
 
-   ! initialise connectivity
-   ielel(1:,1:nel1)=getconn(nel2,nshape,ielnd(1:,1:nel2))
-   ielsd(1:,1:nel1)=getsconn(nel2,nshape,ielel(1:,1:nel2))
-   CALL corrconn(nel2,nshape,ielel(1:,1:nel2),ielsd(1:,1:nel2))
+!    ! initialise connectivity
+!    ielel(1:,1:nel1)=getconn(nel2,nshape,ielnd(1:,1:nel2))
+!    ielsd(1:,1:nel1)=getsconn(nel2,nshape,ielel(1:,1:nel2))
+!    CALL corrconn(nel2,nshape,ielel(1:,1:nel2),ielsd(1:,1:nel2))
 
-     ! initialise node type
-   DO iel=1,nel2
-     nodes(0:nshape-1)=ielnd(1:nshape,iel)
-     IF (COUNT(indtype(nodes).LT.0_ink).EQ.3_ink) THEN
-       l1:DO ii=0,nshape-1
-         IF (indtype(nodes(ii)).GT.0_ink) EXIT l1
-       ENDDO l1
-       ii=MOD(ii+2_ink,nshape)
-       jj=nodes(ii)
-       IF (jj.LE.nnod) THEN
-         j1=nodes(MOD(ii+1_ink,nshape))
-         j2=nodes(MOD(ii+3_ink,nshape))
-         IF (((indtype(j1).EQ.-2_ink).AND.(indtype(j2).EQ.-1_ink)).OR.     &
- &           ((indtype(j2).EQ.-2_ink).AND.(indtype(j1).EQ.-1_ink))) THEN
-           indtype(jj)=-3_ink
-         ENDIF
-       ENDIF
-     ENDIF
-   ENDDO
+!      ! initialise node type
+!    DO iel=1,nel2
+!      nodes(0:nshape-1)=ielnd(1:nshape,iel)
+!      IF (COUNT(indtype(nodes).LT.0_ink).EQ.3_ink) THEN
+!        l1:DO ii=0,nshape-1
+!          IF (indtype(nodes(ii)).GT.0_ink) EXIT l1
+!        ENDDO l1
+!        ii=MOD(ii+2_ink,nshape)
+!        jj=nodes(ii)
+!        IF (jj.LE.nnod) THEN
+!          j1=nodes(MOD(ii+1_ink,nshape))
+!          j2=nodes(MOD(ii+3_ink,nshape))
+!          IF (((indtype(j1).EQ.-2_ink).AND.(indtype(j2).EQ.-1_ink)).OR.     &
+!  &           ((indtype(j2).EQ.-2_ink).AND.(indtype(j1).EQ.-1_ink))) THEN
+!            indtype(jj)=-3_ink
+!          ENDIF
+!        ENDIF
+!      ENDIF
+!    ENDDO
+
   !Now everything is declared hopefully, we can pass it on to OP2
   call op2_bookleaf_declare
   call bookleaf_op2_init_const
