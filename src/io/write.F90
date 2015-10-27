@@ -70,7 +70,43 @@ CONTAINS
     tot_mom_u=0.0_rlk
     tot_mom_v=0.0_rlk
 
+!     DO iel=1,nel
+!       ! Info
+!       ireg=ABS(ielreg(iel))
+!       ! Condition
+!       c1=dencut*elvol(iel)
+!       ! Scatter element contributions to region
+!       reg_vol(ireg)=reg_vol(ireg)+elvol(iel)
+!       IF (elmass(iel).GT.c1) THEN
+!         w2=elmass(iel)
+!         reg_mass(ireg)=reg_mass(ireg)+w2
+!         w3=ein(iel)
+!         w3=w3*w2
+!         reg_ie(ireg)=reg_ie(ireg)+w3
+!         w4=pre(iel)
+!         w3=w2*w4
+!         reg_pre(ireg)=reg_pre(ireg)+w3
+!         IF (w4.GT.reg_pmx(ireg)) reg_pmx(ireg)=w4
+!         IF (w4.LT.reg_pmn(ireg)) reg_pmn(ireg)=w4
+!         w4=rho(iel)
+!         IF (w4.GT.reg_dmx(ireg)) reg_dmx(ireg)=w4
+!         IF (w4.LT.reg_dmn(ireg)) reg_dmn(ireg)=w4
+!       ENDIF
+!       DO ii=1,nshape
+!         inod=ielnd(ii,iel)
+!         w2=ndu(inod)
+!         w3=ndv(inod)
+!         IF (elmass(iel).GT.c1) THEN
+!           reg_ke(ireg)=0.5_rlk*cnmass(ii,iel)*(w2*w2+w3*w3)+reg_ke(ireg)
+!         ENDIF
+!         w4=rho(iel)*cnwt(ii,iel)
+!         tot_mom_u=tot_mom_u+w2*w4
+!         tot_mom_v=tot_mom_v+w3*w4
+!       ENDDO
+!     ENDDO
+
     DO ireg=1,nreg
+
 call op_par_loop_28(write_regvalues, s_elements, &
 &      op_arg_dat(d_elvol,  -1,OP_ID,1,'real(8)',OP_READ), &
 &      op_arg_dat(d_elmass, -1,OP_ID,1,'real(8)',OP_READ), &
@@ -111,15 +147,15 @@ call op_par_loop_28(write_regvalues, s_elements, &
     ENDIF
 
     t2=get_time()
-    reg_vol=reg_vol_gl
-    reg_mass=reg_mass_gl
-    reg_ie=reg_ie_gl
-    reg_ke=reg_ke_gl
-    reg_pre=reg_pre_gl
-    reg_pmn=reg_pmn_gl
-    reg_pmx=reg_pmx_gl
-    reg_dmn=reg_dmn_gl
-    reg_dmx=reg_dmx_gl
+    reg_vol_gl = reg_vol
+    reg_mass_gl = reg_mass
+    reg_ie_gl = reg_ie
+    reg_ke_gl = reg_ke
+    reg_pre_gl = reg_pre
+    reg_pmn_gl = reg_pmn
+    reg_pmx_gl = reg_pmx
+    reg_dmn_gl = reg_dmn
+    reg_dmx_gl = reg_dmx
     t3=get_time()
     t3=t3-t2
     bookleaf_times%time_in_colls=bookleaf_times%time_in_colls+t3

@@ -148,7 +148,12 @@ CONTAINS
       elvol(iel)=4.0_rlk*(a1(iel)*b3(iel)-a3(iel)*b1(iel))
     ENDDO
     ierr=0_ink
-    ierr=MINVAL(MINLOC(elvol(1:nel),MASK=(elvol(1:nel).LT.0.0_rlk)))
+    !ierr=MINVAL(MINLOC(elvol(1:nel),MASK=(elvol(1:nel).LT.0.0_rlk)))
+    DO iel=1,nel
+        IF (elvol(iel).LT.0.0_rlk) THEN
+        ierr = iel
+        ENDIF
+    END DO
     IF (ierr.NE.0_ink) CALL halt("ERROR: cell volume < 0",1)
 
     ! Timing data

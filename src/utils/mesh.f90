@@ -217,6 +217,7 @@ CONTAINS
       SELECT CASE(region_vel_typ(i1))
         CASE(0_ink)
           ! pick up from defaults
+          reg(i1)%vel_typ=0_ink
         CASE(1_ink)
           reg(i1)%vel_typ=1_ink
           reg(i1)%vel(1)=region_vel(i1,1)

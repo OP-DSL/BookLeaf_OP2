@@ -92,7 +92,7 @@ SUBROUTINE init()
   USE pointers_mod, ONLY: ielmat,rho,ein,elmass,elvol,qq,qx,qy,pre,     &
 &                         csqrd,ndx,ndy,elx,ely,ielel,ielnd,ielsd,cnwt, &
 &                         cnmass,spmass,indtype
-  USE geometry_mod, ONLY: getgeom
+  USE geometry_mod, ONLY: getgeom,getgeom2
   USE getpc_mod,    ONLY: getpc
   USE utilities_mod,ONLY: getconn,getsconn,corrconn
   USE op2_bookleaf
@@ -101,39 +101,40 @@ SUBROUTINE init()
   USE parameters_mod,ONLY: LI
   USE op2_constants
   USE OP2_Fortran_hdf5_Declarations
+  USE timing_mod,   ONLY: timer=>bookleaf_times, get_time
 
   IMPLICIT NONE
 
   ! Local
   INTEGER(KIND=ink)                       :: iel,imat,ii,jj,j1,j2
+  INTEGER(KIND=ink),DIMENSION(0:nshape-1) :: nodes
   REAL(KIND=rlk)                          :: x1,x2,x3,x4,y1,y2,y3,y4,w1,&
 &                                            w2,w3,w4
 
-  ! initialise connectivity
-  ielel(1:,1:nel1)=getconn(nel1,nshape,ielnod(1:,1:nel1))
-  ielsd(1:,1:nel1)=getsconn(nel1,nshape,ielel(1:,1:nel1))
-  CALL corrconn(nel2,nshape,ielel(1:,1:nel2),ielsd(1:,1:nel2))
+   ! initialise connectivity
+   ielel(1:,1:nel1)=getconn(nel2,nshape,ielnd(1:,1:nel2))
+   ielsd(1:,1:nel1)=getsconn(nel2,nshape,ielel(1:,1:nel2))
+   CALL corrconn(nel2,nshape,ielel(1:,1:nel2),ielsd(1:,1:nel2))
 
-    ! initialise node type
-  DO iel=1,nel2
-    nodes(0:nshape-1)=ielnd(1:nshape,iel)
-    IF (COUNT(indtype(nodes).LT.0_ink).EQ.3_ink) THEN
-      l1:DO ii=0,nshape-1
-        IF (indtype(nodes(ii)).GT.0_ink) EXIT l1
-      ENDDO l1
-      ii=MOD(ii+2_ink,nshape)
-      jj=nodes(ii)
-      IF (jj.LE.nnod) THEN
-        j1=nodes(MOD(ii+1_ink,nshape))
-        j2=nodes(MOD(ii+3_ink,nshape))
-        IF (((indtype(j1).EQ.-2_ink).AND.(indtype(j2).EQ.-1_ink)).OR.     &
-&           ((indtype(j2).EQ.-2_ink).AND.(indtype(j1).EQ.-1_ink))) THEN
-          indtype(jj)=-3_ink
-        ENDIF
-      ENDIF
-    ENDIF
-  ENDDO
-
+     ! initialise node type
+   DO iel=1,nel2
+     nodes(0:nshape-1)=ielnd(1:nshape,iel)
+     IF (COUNT(indtype(nodes).LT.0_ink).EQ.3_ink) THEN
+       l1:DO ii=0,nshape-1
+         IF (indtype(nodes(ii)).GT.0_ink) EXIT l1
+       ENDDO l1
+       ii=MOD(ii+2_ink,nshape)
+       jj=nodes(ii)
+       IF (jj.LE.nnod) THEN
+         j1=nodes(MOD(ii+1_ink,nshape))
+         j2=nodes(MOD(ii+3_ink,nshape))
+         IF (((indtype(j1).EQ.-2_ink).AND.(indtype(j2).EQ.-1_ink)).OR.     &
+ &           ((indtype(j2).EQ.-2_ink).AND.(indtype(j1).EQ.-1_ink))) THEN
+           indtype(jj)=-3_ink
+         ENDIF
+       ENDIF
+     ENDIF
+   ENDDO
   !Now everything is declared hopefully, we can pass it on to OP2
   call op2_bookleaf_declare
   call bookleaf_op2_init_const
@@ -143,7 +144,7 @@ SUBROUTINE init()
   time=time_start
 
   ! initialise geometry
-  CALL getgeom2(d_ndx,d_ndy,d_elx,d_ely)
+  CALL getgeom2(d_ndx,d_ndy,d_elx,d_ely,timer%time_in_getgeomi)
 
   ! initialise density, energy and mass
   call op_par_loop_9(init_dem,s_elements, &
@@ -169,7 +170,7 @@ SUBROUTINE init()
   ENDIF
 
   ! initialise pressure and sound speed
-  CALL getpc(d_rho,d_ein,d_pre,d_csqrd)
+  CALL getpc(d_rho,d_ein,d_pre,d_csqrd,timer%time_in_getpci)
 
   ! initialise artifical viscosity
   call op_par_loop_1(set_zero1,s_elements, &
@@ -297,16 +298,16 @@ SUBROUTINE init_parallel()
   ! space
   nprocs=1_ink !nprocw
   ranks=1_ink !rankw
-!   ierr=set_comm(comms)
+  !ierr=set_comm(comms)
   ! replicates
   nprocr=0_ink
   rankr=-1_ink
-!   ierr=set_comm_self(commr)
+  !ierr=set_comm_self(commr)
   ! global settings
   zparallel=.FALSE._lok
-!   IF (nprocw.GT.1_ink) zparallel=.TRUE._lok
-  zmprocw=.FALSE._lok
-!   IF (rankw.EQ.0_ink) zmprocw=.TRUE._lok
+  !IF (nprocw.GT.1_ink) zparallel=.TRUE._lok
+  zmprocw=.TRUE._lok
+  !IF (rankw.EQ.0_ink) zmprocw=.TRUE._lok
 
 END SUBROUTINE init_parallel
 

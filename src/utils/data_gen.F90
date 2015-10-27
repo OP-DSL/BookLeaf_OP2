@@ -242,7 +242,7 @@ MODULE op2_bookleaf
 
   USE kinds_mod,    ONLY: rlk,ink,lok
   USE parameters_mod,ONLY: LI
-  USE logicals_mod,ONLY: zsp,zdtnotreg,zmidlength
+  USE logicals_mod,ONLY: zsp,zdtnotreg,zmidlength,zale
   USE reals_mod,    ONLY: mat_rho,mat_ein,eos_param
   USE integers_mod, ONLY: nel,nnod,nshape,nel1,nnod1,eos_type,nreg
   USE pointers_mod, ONLY: rho,elmass,elvol,ielmat,ein,pre,csqrd,      &
@@ -344,9 +344,13 @@ MODULE op2_bookleaf
   call op_decl_dat(s_elements,1,'real(8)',rscratch13,  d_rscratch13,'rscratch13')
   call op_decl_dat(s_nodes   ,1,'real(8)',rscratch14,  d_rscratch14,'rscratch14')
   call op_decl_dat(s_nodes   ,1,'real(8)',rscratch15,  d_rscratch15,'rscratch15')
+  IF (zale) THEN
   call op_decl_dat(s_elements,1,'real(8)',rscratch16,  d_rscratch16,'rscratch16')
   call op_decl_dat(s_elements,1,'integer(4)',iscratch11,d_iscratch11,'iscratch11')
-  call op_decl_dat(s_elements,1,'integer(4)',zscratch11,d_zscratch11,'zscratch11')
+!WARNING MISSING
+#warning Missing zscratch
+!  call op_decl_dat(s_elements,1,'integer(4)',zscratch11,d_zscratch11,'zscratch11')
+  ENDIF
 !   call op_decl_dat(s_mat   ,1,'real(8)',mat_rho,  d_mat_rho,'d_mat_rho')
 !   call op_decl_dat(s_mat   ,1,'real(8)',mat_ein,  d_mat_ein,'d_mat_ein')
 !   call op_decl_dat(s_mat   ,1,'integer(4)',eos_type,  d_eos_type,'d_eos_type')
@@ -371,7 +375,9 @@ MODULE op2_bookleaf
   call op_decl_dat(s_elements,4,'real(8)',rscratch25,d_rscratch25,'rscratch25')
   call op_decl_dat(s_elements,4,'real(8)',rscratch26,d_rscratch26,'rscratch26')
   call op_decl_dat(s_elements,4,'real(8)',rscratch27,d_rscratch27,'rscratch27')
+IF (zale) THEN
   call op_decl_dat(s_elements,4,'real(8)',rscratch28,d_rscratch28,'rscratch28')
+ENDIF
 
 
   END SUBROUTINE op2_bookleaf_declare
