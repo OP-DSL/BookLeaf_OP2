@@ -59,13 +59,13 @@ CONTAINS
     CALL getgeom2(d_ndx,d_ndy,d_elx,d_ely,timer%time_in_getgeoma)
 
     ! update density to be consistent with geometry
-!     call op_par_loop_3(ale_update_rho, s_elements, &
-! &           op_arg_dat(d_rho,-1,OP_ID,1,'real(8)',OP_WRITE), &
-! &           op_arg_dat(d_elmass,-1,OP_ID,1,'real(8)',OP_READ), &
-! &           op_arg_dat(d_elvol,-1,OP_ID,1,'real(8)',OP_READ))
-    DO iel=1,nel
-      rho(iel)=elmass(iel)/elvol(iel)
-    ENDDO
+    call op_par_loop_3(ale_update_rho, s_elements, &
+&           op_arg_dat(d_rho,-1,OP_ID,1,'real(8)',OP_WRITE), &
+&           op_arg_dat(d_elmass,-1,OP_ID,1,'real(8)',OP_READ), &
+&           op_arg_dat(d_elvol,-1,OP_ID,1,'real(8)',OP_READ))
+!     DO iel=1,nel
+!       rho(iel)=elmass(iel)/elvol(iel)
+!     ENDDO
 
     ! update EoS
 !     CALL getpc(nel,ielmat(1),rho(1),ein(1),pre(1),csqrd(1),              &

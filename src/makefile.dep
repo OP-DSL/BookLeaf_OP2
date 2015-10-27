@@ -1,3 +1,4 @@
+getpc_kernels.o: data.o 
 getq_kernels.o: data.o 
 ale_advectors.o: ale_advectors_kernels.o data.o common_kernels.o 
 sod.o: sod_kernels.o data.o 
@@ -18,8 +19,9 @@ getein.o: data.o getein_kernels.o
 ale_getmesh.o: data.o ale_getmesh_kernels.o 
 ale_update_kernels.o: data.o 
 data.o: 
+write_kernels.o: data.o 
 gethg_kernels.o: data.o 
-write.o: data.o mesh.o 
+write.o: data.o write_kernels.o mesh.o 
 init.o: data.o init_kernels.o common_kernels.o utilities.o getpc.o \
 	geometry.o error.o 
 getsp_kernels.o: data.o 
@@ -32,7 +34,7 @@ halt.o: data.o write.o timers.o
 common_kernels.o: data.o 
 read.o: data.o utilities.o error.o 
 utilities.o: data.o common_kernels.o 
-getpc.o: data.o eos.o 
+getpc.o: getpc_kernels.o data.o eos.o 
 mesh.o: data.o utilities.o error.o 
 getein_kernels.o: data.o 
 ale_advect_kernels.o: data.o 

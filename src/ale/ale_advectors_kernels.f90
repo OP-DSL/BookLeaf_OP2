@@ -120,7 +120,7 @@ MODULE ale_advectors_kernels
       IF (iFaceL.EQ.1_ink) THEN
         w6=rCorner1(iLNNdL)+rCorner1(iLNNdR)
         w1=rV-rVar1(iLNNdL)
-      ELSEIF (iFaceL.EQ.1_ink) THEN
+      ELSEIF (iFaceL.EQ.2_ink) THEN
         w6=rCorner2(iLNNdL)+rCorner2(iLNNdR)
         w1=rV-rVar2(iLNNdL)
       ENDIF
