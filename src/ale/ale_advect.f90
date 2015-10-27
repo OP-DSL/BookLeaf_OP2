@@ -34,11 +34,11 @@ CONTAINS
 &                      nsz,ielel,ielsd,ielsrt1,ielsrt2,ielnd,indstatus, &
 &                      indtype,dencut,cut,cutv,cutm,elv0ndm1,elm0ndm0,  &
 &                      elr0ndv0,ndv1,elv1,elm1,elr1,cnv0,cnm1,dfv,dfm,  &
-&                      cnm0,eluv,elvv,flux,work1,work2,zactive, &
+&                      cnm0,eluv,elvv,flux,work1,work2,work11,work21,zactive, &
 &                      d_ielel,d_ielsd,d_indstatus, &
 &                      d_indtype,d_cutv,d_cutm,d_elv0ndm1,d_elm0ndm0,  &
 &                      d_elr0ndv0,d_ndv1,d_elv1,d_elm1,d_elr1,d_cnv0,d_cnm1,d_dfv,d_dfm,  &
-&                      d_cnm0,d_eluv,d_elvv,d_flux,d_work1,d_work2,d_zactive)
+&                      d_cnm0,d_eluv,d_elvv,d_flux,d_work1,d_work2,d_work11,d_work21,d_zactive)
 
     USE logicals_mod, ONLY: zparallel
     USE pointers_mod, ONLY: ndu,ndv
@@ -58,7 +58,7 @@ CONTAINS
     type(op_dat) :: d_ielel,d_ielsd,d_indstatus, &
 &                      d_indtype,d_cutv,d_cutm,d_elv0ndm1,d_elm0ndm0,  &
 &                      d_elr0ndv0,d_ndv1,d_elv1,d_elm1,d_elr1,d_cnv0,d_cnm1,d_dfv,d_dfm,  &
-&                      d_cnm0,d_eluv,d_elvv,d_flux,d_work1,d_work2,d_zactive
+&                      d_cnm0,d_eluv,d_elvv,d_flux,d_work1,d_work2,d_work11,d_work21,d_zactive
     INTEGER(KIND=ink),DIMENSION(nel1),       INTENT(IN)   :: ielsrt1
     INTEGER(KIND=ink),DIMENSION(nel2),       INTENT(IN)   :: ielsrt2
     INTEGER(KIND=ink),DIMENSION(nnod2),      INTENT(IN)   :: indstatus, &
@@ -69,7 +69,7 @@ CONTAINS
 &                                                            elr0ndv0,  &
 &                                                            ndv1
     REAL(KIND=rlk),   DIMENSION(nel2),       INTENT(INOUT):: elv1,elm1, &
-&                                                            elr1
+&                                                            elr1,work11,work21
     REAL(KIND=rlk),   DIMENSION(nshape,nel2),INTENT(INOUT):: cnv0,cnm1, &
 &                                                            dfv,dfm
     REAL(KIND=rlk),   DIMENSION(nshape,nel2),INTENT(OUT)  :: cnm0,work1,&
@@ -93,12 +93,12 @@ CONTAINS
 &                     elm0ndm0(1),elr0ndv0(1),elv1(1),elm1(1),elr1(1),  &
 &                     cutv(1),cutm(1),cnv0(1,1),cnm1(1,1),dfv(1,1),     &
 &                     dfm(1,1),flux(1,1),ielel(1,1),ielsd(1,1),         &
-&                     work1(1,1),work2(1,1), &
+&                     work11(1),work21(1), &
 &                     d_elv0ndm1,         &
 &                     d_elm0ndm0,d_elr0ndv0,d_elv1,d_elm1,d_elr1,  &
 &                     d_cutv,d_cutm,d_cnv0,d_cnm1,d_dfv,     &
 &                     d_dfm,d_flux,d_ielel,d_ielsd,         &
-&                     d_work1,d_work2)
+&                     d_work11,d_work21)
 
 !    CALL gather(nshape,nel,nnod,ielnd(1,1),ndu(1),eluv(1,1))
 !    CALL gather(nshape,nel,nnod,ielnd(1,1),ndv(1),elvv(1,1))
@@ -154,11 +154,10 @@ CONTAINS
 &                                                            cutv,cutm, &
 &                                                            elrpr,     &
 &                                                            elmpr
-    REAL(KIND=rlk),   DIMENSION(nel2),       INTENT(INOUT):: elv,elm,elr
+    REAL(KIND=rlk),   DIMENSION(nel2),       INTENT(INOUT):: elv,elm,elr,work1,work2
     REAL(KIND=rlk),   DIMENSION(nshape,nel2),INTENT(IN)   :: delv,cnv,  &
 &                                                            cnm
-    REAL(KIND=rlk),   DIMENSION(nshape,nel2),INTENT(OUT)  :: delm,flux, &
-&                                                            work1,work2
+    REAL(KIND=rlk),   DIMENSION(nshape,nel2),INTENT(OUT)  :: delm,flux
     type(op_dat) ::      d_elvpr, d_elmpr,d_elrpr,d_elv,d_elm,d_elr,  &
 &                     d_cutv,d_cutm,d_cnv,d_cnm,d_delv,     &
 &                     d_delm,d_flux,d_ielel,d_ielsd,         &
@@ -173,7 +172,7 @@ CONTAINS
     CALL update_el_basis(id1,id2,nshape,nel,nel1,nel2,elvpr(1),elmpr(1),&
 &                        elrpr(1),elv(1),elm(1),elr(1),cutv(1),cutm(1), &
 &                        cnv(1,1),cnm(1,1),delv(1,1),delm(1,1),         &
-&                        ielel(1,1),ielsd(1,1),work1(1,1),work2(1,1), &
+&                        ielel(1,1),ielsd(1,1),work1(1),work2(1), &
 &                        d_elvpr,d_elmpr,&
 &                        d_elrpr,d_elv,d_elm,d_elr,d_cutv,d_cutm, &
 &                        d_cnv,d_cnm,d_delv,d_delm,         &
@@ -183,7 +182,7 @@ CONTAINS
     CALL update_el_var(id1,id2,nshape,nel,nel1,nel2,ielel(1,1),         &
 &                      ielsd(1,1),elvpr(1),elmpr(1),elv(1),elm(1),      &
 &                      cutv(1),cutm(1),cnv(1,1),cnm(1,1),delv(1,1),     &
-&                      delm(1,1),flux(1,1),work1(1,1), &
+&                      delm(1,1),flux(1,1),work1(1), &
 &                      d_ielel,         &
 &                      d_ielsd,d_elvpr,d_elmpr,d_elv,d_elm,      &
 &                      d_cutv,d_cutm,d_cnv,d_cnm,d_delv,     &
