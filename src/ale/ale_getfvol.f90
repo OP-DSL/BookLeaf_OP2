@@ -68,8 +68,6 @@ CONTAINS
 &             op_arg_dat(d_ndvy,-1,OP_ID,1,'real(8)',OP_WRITE), &
 &             op_arg_dat(d_ndvy,-1,OP_ID,1,'real(8)',OP_READ), &
 &             op_arg_gbl(m1,1,'real(8)',OP_READ))
-!       ndux=-ndux
-!       ndvy=-ndvy
     ELSE
       !# Exchange MESH_MOTION ndx,ndy, Ndux,ndvy to nnod1
       ! Other options
@@ -82,10 +80,6 @@ CONTAINS
 &             op_arg_dat(d_ndx,-1,OP_ID,1,'real(8)',OP_READ), &
 &             op_arg_dat(d_ndy,-1,OP_ID,1,'real(8)',OP_READ), &
 &             op_arg_gbl(dt,1,'real(8)',OP_READ))
-!     DO iNd=1,nNod
-!       ndux(iNd)=ndx(iNd)+dt*ndux(iNd)
-!       ndvy(iNd)=ndy(iNd)+dt*ndvy(iNd)
-!     ENDDO
 
     ! construct flux volumes
     CALL fvol(nshape,nnod,nel,nel2,cut,ielnd(1,1),ndx(1),ndy(1),ndux(1),&
@@ -100,11 +94,6 @@ CONTAINS
     call op_par_loop_2(a_eq_b, s_nodes, &
 &             op_arg_dat(d_ndy,-1,OP_ID,1,'real(8)',OP_WRITE), &
 &             op_arg_dat(d_ndvy,-1,OP_ID,1,'real(8)',OP_READ))
-!     DO iNd=1,nNod
-!       ndx(iNd)=ndux(iNd)
-!       ndy(iNd)=ndvy(iNd)
-!     ENDDO
-
     ! Timing data
     t1=get_time()
     t1=t1-t0
@@ -137,7 +126,6 @@ CONTAINS
     REAL(KIND=rlk)    :: x1,x2,x3,x4,y1,y2,y3,y4,a1,a3,b1,b3
 
     ! initialise
-!     rdelv=0.0_rlk
     call op_par_loop_1(set_zero4,s_elements, &
 &           op_arg_dat(d_rdelv,-1,OP_ID,4,'real(8)',OP_WRITE))
 
@@ -161,28 +149,6 @@ CONTAINS
 &           op_arg_dat(d_ndy1,4,m_el2node,1,'real(8)',OP_READ), &
 &           op_arg_dat(d_rdelv,-1,OP_ID,4,'real(8)',OP_WRITE), &
 &           op_arg_gbl(cut,1,'real(8)',OP_READ))
-
-!     DO iel=1,nel
-!       DO jj=1,nshape
-!         jp=MOD(jj,nshape)+1_ink
-!         n1=ielnd(jj,iel)
-!         n2=ielnd(jp,iel)
-!         x1=ndx0(n1)
-!         x2=ndx0(n2)
-!         y1=ndy0(n1)
-!         y2=ndy0(n2)
-!         x3=ndx1(n2)
-!         x4=ndx1(n1)
-!         y3=ndy1(n2)
-!         y4=ndy1(n1)
-!         a1=0.25_rlk*(-x1+x2+x3-x4)
-!         a3=0.25_rlk*(-x1-x2+x3+x4)
-!         b1=0.25_rlk*(-y1+y2+y3-y4)
-!         b3=0.25_rlk*(-y1-y2+y3+y4)
-!         rdelv(jj,iel)=4.0_rlk*(a1*b3-a3*b1)
-!         IF (rdelv(jj,iel).LT.cut) rdelv(jj,iel)=0.0_rlk
-!       ENDDO
-!     ENDDO
 
     END SUBROUTINE fvol
 

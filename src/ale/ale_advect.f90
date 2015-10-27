@@ -83,11 +83,6 @@ CONTAINS
     ! Timer
     t0=get_time()
 
-    ! MPI parallelism
-!     IF (zparallel) THEN
-!       CALL exchange(ADV_EXCH_EL)
-!     ENDIF
-
     ! Advect element quantities
     CALL aleadvect_el(id1,id2,nshape,nel,nel1,nel2,elv0ndm1(1),         &
 &                     elm0ndm0(1),elr0ndv0(1),elv1(1),elm1(1),elr1(1),  &
@@ -100,15 +95,9 @@ CONTAINS
 &                     d_dfm,d_flux,d_ielel,d_ielsd,         &
 &                     d_work11,d_work21)
 
-!    CALL gather(nshape,nel,nnod,ielnd(1,1),ndu(1),eluv(1,1))
-!    CALL gather(nshape,nel,nnod,ielnd(1,1),ndv(1),elvv(1,1))
+
     CALL gather2(s_elements,m_el2node,d_ndu,d_eluv)
     CALL gather2(s_elements,m_el2node,d_ndv,d_elvv)
-
-!     ! MPI parallelism
-!     IF (zparallel) THEN
-!       CALL exchange(ADV_EXCH_ND)
-!     ENDIF
 
     ! Advect nodal quantities
     CALL aleadvect_nd(id1,id2,nshape,nel,nel1,nel2,nnod,nnod1,nnod2,nsz,&
@@ -349,22 +338,6 @@ CONTAINS
 &        op_arg_dat(d_totv,-1,OP_ID,1,'real(8)',OP_READ), &
 &        op_arg_dat(d_totm,-1,OP_ID,1,'real(8)',OP_READ))
 
-!     DO iel=1,nel
-!       ! store basis variables
-!       elvpr(iel)=elv(iel)
-!       elmpr(iel)=elm(iel)
-!       elrpr(iel)=elr(iel)
-!       ! construct cut-off's
-!       cutv(iel)=zerocut
-!       cutm(iel)=elvpr(iel)*dencut
-!       ! volume
-!       elv(iel)=elv(iel)+totv(iel)
-!       ! mass
-!       elm(iel)=elm(iel)+totm(iel)
-!       ! density
-!       elr(iel)=elm(iel)/elv(iel)
-!     ENDDO
-
     ! Timing data
     t1=get_time()
     t1=t1-t0
@@ -475,11 +448,7 @@ CONTAINS
 &           op_arg_dat(d_ndv1,-1,OP_ID,1,'real(8)',OP_WRITE))
     call op_par_loop_1(set_zero1,s_nodes, &
 &           op_arg_dat(d_ndm0,-1,OP_ID,1,'real(8)',OP_WRITE))
-!     DO ind=1,nnod2
-!       ndv0(ind)=0.0_rlk
-!       ndv1(ind)=0.0_rlk
-!       ndm0(ind)=0.0_rlk
-!     ENDDO
+
 
     ! construct pre/post nodal volumes and pre nodal/corner mass
     call op_par_loop_16(ale_advect_prevolmass,s_elements, &
@@ -499,40 +468,6 @@ CONTAINS
 &           op_arg_dat(d_ndv0, 4,m_el2node,1,'real(8)',OP_INC), &
 &           op_arg_dat(d_ndv1, 4,m_el2node,1,'real(8)',OP_INC), &
 &           op_arg_dat(d_ndm0, 4,m_el2node,1,'real(8)',OP_INC))
-!     DO ii=1,nel2
-!       IF (zparallel) THEN
-!         iel=ielsrt(ii)
-!       ELSE
-!         iel=ii
-!       ENDIF
-!       w1=0.25_rlk*elv0ndm1(iel)
-!       w2=0.25_rlk*elv1(iel)
-!       w3=cnm1(1,iel)
-!       cnm0(1,iel)=w3
-!       ind=ielnd(1,iel)
-!       ndv0(ind)=ndv0(ind)+w1
-!       ndv1(ind)=ndv1(ind)+w2
-!       ndm0(ind)=ndm0(ind)+w3
-!       w3=cnm1(2,iel)
-!       cnm0(2,iel)=w3
-!       ind=ielnd(2,iel)
-!       ndv0(ind)=ndv0(ind)+w1
-!       ndv1(ind)=ndv1(ind)+w2
-!       ndm0(ind)=ndm0(ind)+w3
-!       w3=cnm1(3,iel)
-!       cnm0(3,iel)=w3
-!       ind=ielnd(3,iel)
-!       ndv0(ind)=ndv0(ind)+w1
-!       ndv1(ind)=ndv1(ind)+w2
-!       ndm0(ind)=ndm0(ind)+w3
-!       w3=cnm1(4,iel)
-!       cnm0(4,iel)=w3
-!       ind=ielnd(4,iel)
-!       ndv0(ind)=ndv0(ind)+w1
-!       ndv1(ind)=ndv1(ind)+w2
-!       ndm0(ind)=ndm0(ind)+w3
-!     ENDDO
-
 
     ! construct volume and mass flux
     call op_par_loop_1(set_zero4,s_elements, &
@@ -558,49 +493,6 @@ CONTAINS
 &           op_arg_gbl(i1,1,'integer(4)',OP_READ))
     ENDDO
 
-!     flux=0.0_rlk
-!     DO i1=id1,id2
-!       i2=i1+2_ink
-!       DO ii=1,nel2
-!         IF (zparallel) THEN
-!           iel=ielsrt(ii)
-!         ELSE
-!           iel=ii
-!         ENDIF
-!         ie1=ielel(i1,iel)
-!         ie2=ielel(i2,iel)
-!         is1=ielsd(i1,iel)
-!         is2=ielsd(i2,iel)
-!         w1=delv(is1,ie1)
-!         w2=delv(is2,ie2)
-!         w3=delm(is1,ie1)
-!         w4=delm(is2,ie2)
-!         IF (ie1.EQ.iel) THEN
-!           w1=0.0_rlk
-!           w3=0.0_rlk
-!         ENDIF
-!         IF (ie2.EQ.iel) THEN
-!           w2=0.0_rlk
-!           w4=0.0_rlk
-!         ENDIF
-!         w1=w1-delv(i1,iel)
-!         w2=w2-delv(i2,iel)
-!         w1=0.25_rlk*(w1-w2)
-!         dndv(i1,iel)=w1
-!         dndv(i2,iel)=w1
-!         w1=w3-delm(i1,iel)
-!         w2=w4-delm(i2,iel)
-!         w3=0.25_rlk*(w1-w2)
-!         dndm(i1,iel)=w3
-!         dndm(i2,iel)=w3
-!         w3=0.25_rlk*(w1+w2)
-!         flux(1,iel)=flux(1,iel)+w3
-!         flux(2,iel)=flux(2,iel)+w3
-!         flux(3,iel)=flux(3,iel)+w3
-!         flux(4,iel)=flux(4,iel)+w3
-!       ENDDO
-!     ENDDO
-
     ! construct post nodal/corner mass
 
     call op_par_loop_2(a_eq_b,s_nodes, &
@@ -614,41 +506,12 @@ CONTAINS
 &           op_arg_dat(d_elv0ndm1,3,m_el2node,1,'real(8)',OP_INC), &
 &           op_arg_dat(d_elv0ndm1,4,m_el2node,1,'real(8)',OP_INC))
 
-!     DO ind=1,nnod2
-!       elv0ndm1(ind)=ndm0(ind)
-!     ENDDO
-!     DO ii=1,nel2
-!       IF (zparallel) THEN
-!         iel=ielsrt(ii)
-!       ELSE
-!         iel=ii
-!       ENDIF
-!       cnm1(1,iel)=cnm1(1,iel)+flux(1,iel)
-!       cnm1(2,iel)=cnm1(2,iel)+flux(2,iel)
-!       cnm1(3,iel)=cnm1(3,iel)+flux(3,iel)
-!       cnm1(4,iel)=cnm1(4,iel)+flux(4,iel)
-!       ind=ielnd(1,iel)
-!       elv0ndm1(ind)=elv0ndm1(ind)+flux(1,iel)
-!       ind=ielnd(2,iel)
-!       elv0ndm1(ind)=elv0ndm1(ind)+flux(2,iel)
-!       ind=ielnd(3,iel)
-!       elv0ndm1(ind)=elv0ndm1(ind)+flux(3,iel)
-!       ind=ielnd(4,iel)
-!       elv0ndm1(ind)=elv0ndm1(ind)+flux(4,iel)
-!     ENDDO
-
     ! construct cut-offs
     call op_par_loop_4(ale_advect_cutoff,s_nodes, &
 &           op_arg_dat(d_cutv,   -1,OP_ID,1,'real(8)',OP_WRITE), &
 &           op_arg_dat(d_cutm,   -1,OP_ID,1,'real(8)',OP_WRITE), &
 &           op_arg_dat(d_ndv0,   -1,OP_ID,1,'real(8)',OP_READ), &
 &           op_arg_gbl(cut,1,'real(8)',OP_READ))
-
-
-!     DO ind=1,nnod2
-!       cutv(ind)=cut
-!       cutm(ind)=dencut*ndv0(ind)
-!     ENDDO
 
     ! Timing data
     t1=get_time()
@@ -714,14 +577,6 @@ CONTAINS
 &           op_arg_dat(d_indtype,   -1, OP_ID, 1, 'integer(4)', OP_READ), &
 &           op_arg_dat(d_zactive,   -1, OP_ID, 1, 'integer(4)', OP_WRITE))
 
-!     DO ind=1,nnod2
-!       IF ((indstatus(ind).GT.0_ink).AND.(indtype(ind).NE.-1_ink).AND.   &
-! &         (indtype(ind).NE.-3_ink)) THEN
-!         zactive(ind)=1_ink !.TRUE._lok
-!       ELSE
-!         zactive(ind)=0_ink !.FALSE._lok
-!       ENDIF
-!     ENDDO
     CALL flux_n1_VL(nshape,nel1,nel2,ielel(1,1),ielsd(1,1),cnm(1,1),    &
 &                   delm(1,1),eluv(1,1),flux(1,1), &
 &                   d_ielel,d_ielsd,d_cnm,    &
@@ -739,14 +594,6 @@ CONTAINS
 &           op_arg_dat(d_indtype,   -1, OP_ID, 1, 'integer(4)', OP_READ), &
 &           op_arg_dat(d_zactive,   -1, OP_ID, 1, 'integer(4)', OP_WRITE))
 
-!     DO ind=1,nnod2
-!       IF ((indstatus(ind).GT.0_ink).AND.(indtype(ind).NE.-2_ink).AND.   &
-! &         (indtype(ind).NE.-3_ink)) THEN
-!         zactive(ind)=1_ink !.TRUE._lok
-!       ELSE
-!         zactive(ind)=0_ink !.FALSE._lok
-!       ENDIF
-!     ENDDO
     CALL flux_n1_VL(nshape,nel1,nel2,ielel(1,1),ielsd(1,1),cnm(1,1),    &
 &                   delm(1,1),elvv(1,1),flux(1,1), &
 &                   d_ielel,d_ielsd,d_cnm,    &

@@ -72,38 +72,6 @@ CONTAINS
 &           op_arg_dat(d_ielsd,-1,OP_ID,4,'integer(4)',OP_READ), &
 &           op_arg_gbl(i1,1,'integer(4)',OP_READ))
     ENDDO
-!     DO i1=iD1,iD2
-!       i2=i1+2_ink
-!       DO iEl=1,iLSize
-!         iE2=iElEl(i2,iEl)
-!         j2=iElSd(i2,iEl)
-!         j1=MOD(i2,iShape)+1_ink
-!         r3=rCorner(i2,iEl)+rCorner(j1,iEl)
-!         j1=MOD(j2,iShape)+1_ink
-!         w5=r3+rCorner(j2,iE2)+rCorner(j1,iE2)
-!         iE1=iElEl(i1,iEl)
-!         j2=iElSd(i1,iEl)
-!         j1=i1+1_ink
-!         r4=rCorner(i1,iEl)+rCorner(j1,iEl)
-!         j1=MOD(j2,iShape)+1_ink
-!         w6=r4+rCorner(j2,iE1)+rCorner(j1,iE1)
-!         rV=rVar(iEl)
-!         r1=rDel(i1,iEl)
-!         r2=rDel(i2,iEl)
-!         w1=rV-rVar(iE2)
-!         w2=rVar(iE1)-rV
-!         w3=ABS(w1)
-!         w4=ABS(w2)
-!         w7=SIGN(1.0_rlk,w2)
-!         w8=(w4*w6*w6+w3*w5*w5)/(w5*w6*(w5+w6))
-!         rGrad=w7*MIN(ABS(w8),w3/w5,w4/w6)
-!         IF (w1*w2.LE.0.0_rlk) rGrad=0.0_rlk
-!         r1=r1*(rV+rGrad*(r3-0.5_rlk*r1))
-!         r2=r2*(rV-rGrad*(r4-0.5_rlk*r2))
-!         rFlux(i1,iel)=r1
-!         rFlux(i2,iel)=r2
-!       ENDDO
-!     ENDDO
 
   END SUBROUTINE flux_c1_VL
 
@@ -158,57 +126,6 @@ CONTAINS
 &           op_arg_gbl(iCorner,1,'integer(4)',OP_READ))
       ENDDO
     ENDDO
-!     DO iFaceL=1,2
-!       iFaceR=iFaceL+2_ink
-!       DO iCorner=1,2
-!         iLNdL=iFaceL+iCorner-1_ink
-!         iLNdR=MOD(iFaceR-iCorner+1,iShape)+1_ink
-!         DO iEl=1,iLSize
-!           rD=0.0_rlk
-!           iElL=iElEl(iFaceL,iEl)
-!           iElR=iElEl(iFaceR,iEl)
-!           iSdL=iElSd(iFaceL,iEl)
-!           iSdR=iElSd(iFaceR,iEl)
-!           ii=iFaceL+2_ink*(iCorner-1_ink)
-!           IF (rDel(ii,iEl).GT.0.0_rlk) THEN
-!             iLNNdL=MOD(iSdL+iCorner,iShape)+1_ink
-!             iLNNdR=MOD(iSdL-iCorner+1,iShape)+1_ink
-!             rV=rVar(iLndL,iEl)
-!             rD=rCorner(iLNdL,iEl)-0.5_rlk*rDel(ii,iEl)
-!             w5=rCorner(iLNdL,iEl)+rCorner(iLNdR,iEl)
-!             w6=rCorner(iLNNdL,iElL)+rCorner(iLNNdR,iElL)
-!             w1=rV-rVar(iLNNdL,iElL)
-!             w2=rVar(iLNdR,iEl)-rV
-!             w3=ABS(w1)
-!             w4=ABS(w2)
-!             w7=SIGN(1.0_rlk,w2)
-!             w8=(w4*w6*w6+w3*w5*w5)/(w5*w6*(w5+w6))
-!             rGrad=w7*MIN(ABS(w8),w3/w5,w4/w6)
-!             IF (w1*w2.LE.0.0_rlk) rGrad=0.0_rlk
-!             rD=rDel(ii,iEl)*(rV+rGrad*rD)
-!           ENDIF
-!           IF (rDel(ii,iEl).LT.0.0_rlk) THEN
-!             iLNNdL=MOD(iSdR+iCorner-2,iShape)+1_ink
-!             iLNNdR=MODULO(iSdR-iCorner-1,iShape)+1_ink
-!             rV=rVar(iLNdR,iEl)
-!             rD=rCorner(iLNdR,iEl)+0.5_rlk*rDel(ii,iEl)
-!             w5=rCorner(iLNdL,iEl)+rCorner(iLNdR,iEl)
-!             w6=rCorner(iLNNdL,iElR)+rCorner(iLNNdR,iElR)  ! nel2
-!             w1=rV-rVar(iLNdL,iEl)
-!             w2=rVar(iLNNdR,iElR)-rV   ! nel2
-!             w3=ABS(w1)
-!             w4=ABS(w2)
-!             w7=SIGN(1.0_rlk,w2)
-!             w8=(w4*w6*w6+w3*w5*w5)/(w5*w6*(w5+w6))
-!             rGrad=-w7*MIN(ABS(w8),w3/w5,w4/w6)
-!             IF (w1*w2.LE.0.0_rlk) rGrad=0.0_rlk
-!             rD=rDel(ii,iel)*(rV+rGrad*rD)
-!           ENDIF
-!           rFlux(iLNdL,iEl)=rFlux(iLNdL,iEl)-rD ! nel1
-!           rFlux(iLNdR,iEl)=rFlux(iLNdR,iEl)+rD
-!         ENDDO
-!       ENDDO
-!     ENDDO
 
   END SUBROUTINE flux_n1_VL
 
@@ -250,11 +167,6 @@ CONTAINS
 &           op_arg_dat(d_rCutOff,-1,OP_ID,1,'real(8)',OP_READ), &
 &           op_arg_dat(d_rTotFlux,-1,OP_ID,1,'real(8)',OP_READ), &
 &           op_arg_dat(d_rVar,-1,OP_ID,1,'real(8)',OP_WRITE))
-!     DO iEl=1,iLSize
-!       IF (rBase1(iEl).GT.rCutOff(iEl)) THEN
-!         rVar(iEl)=(rVar(iEl)*rBase0(iEl)+rTotFlux(iEl))/rBase1(iEl)
-!       ENDIF
-!     ENDDO
 
   END SUBROUTINE update_c1
 
@@ -289,7 +201,6 @@ CONTAINS
     INTEGER(KIND=ink) :: iEl,iNd,ii,jj
 
     ! construct total flux
-!     rTotFlux=0.0_rlk
     call op_par_loop_1(set_zero1,s_nodes, &
 &           op_arg_dat(d_rscratch18,-1,OP_ID,1,'real(8)',OP_WRITE))
     call op_par_loop_5(ale_advectors_totflux,s_elements, &
@@ -299,18 +210,6 @@ CONTAINS
 &           op_arg_dat(d_rscratch18,3,m_el2node,1,'real(8)',OP_INC), &
 &           op_arg_dat(d_rscratch18,4,m_el2node,1,'real(8)',OP_INC))
 
-!     DO jj=1,iESize
-!       IF (zparallel) THEN
-!         iEl=iElSrt(jj)
-!       ELSE
-!         iEl=jj
-!       ENDIF
-!       DO ii=1,iShape
-!         iNd=iElNd(ii,iEl)
-!         rTotFlux(iNd)=rTotFlux(iNd)+rFlux(ii,iEl)
-!       ENDDO
-!     ENDDO
-
     ! update variable
     call op_par_loop_6(ale_advectors_update_n1,s_nodes, &
 &           op_arg_dat(d_rBase0, -1,OP_ID,1,'real(8)',OP_READ), &
@@ -319,12 +218,6 @@ CONTAINS
 &           op_arg_dat(d_rscratch18,-1,OP_ID,1,'real(8)',OP_READ), &
 &           op_arg_dat(d_rVar,-1,OP_ID,1,'real(8)',OP_WRITE), &
 &           op_arg_dat(d_zActive,-1,OP_ID,1,'integer(4)',OP_READ))
-!     DO iNd=1,iUSize
-!       IF ((zActive(iNd).EQ.1_ink).AND.(rBase1(iNd).GT.rCut(iNd))) THEN
-!         rVar(iNd)=(rVar(iNd)*rBase0(iNd)+rTotFlux(iNd))/rBase1(iNd)
-!       ENDIF
-!     ENDDO
-!     rTotFlux=0.0_rlk
 
   END SUBROUTINE update_n1
 
@@ -351,7 +244,7 @@ CONTAINS
 
     call op_par_loop_1(set_zero1,s_elements, &
 &           op_arg_dat(d_rTotFlux,-1,OP_ID,1,'real(8)',OP_WRITE))
-!     rTotFlux=0.0_rlk
+
     DO i1=iD1,iD2
     call op_par_loop_10(ale_advectors_sumflux,s_elements, &
 &           op_arg_dat(d_rFlux,-1,OP_ID,4,'real(8)',OP_READ), &
@@ -365,21 +258,6 @@ CONTAINS
 &           op_arg_dat(d_elidx,-1,OP_ID,1,'integer(4)',OP_READ), &
 &           op_arg_gbl(i1,1,'integer(4)',OP_READ))
     ENDDO
-
-!     DO i1=iD1,iD2
-!       i2=i1+2_ink
-!       DO iEl=1,iLSize
-!         iE1=iElEl(i1,iEl)
-!         iE2=iElEl(i2,iEl)
-!         j1=iElSd(i1,iEl)
-!         j2=iElSd(i2,iEl)
-!         w1=rFlux(j1,iE1)
-!         w2=rFlux(j2,iE2)
-!         IF (iE1.EQ.iEl) w1=0.0_rlk
-!         IF (iE2.EQ.iEl) w2=0.0_rlk
-!         rTotFlux(iEl)=rTotFlux(iEl)-rFlux(i1,iEl)-rFlux(i2,iEl)+w1+w2
-!       ENDDO
-!     ENDDO
 
   END SUBROUTINE sum_flux
 
