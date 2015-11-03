@@ -393,8 +393,8 @@ MODULE op2_constants
 &    s_elements%setPtr%exec_size + s_elements%setPtr%nonexec_size
     nodes_stride_OP2 = s_nodes%setPtr%size + &
 &    s_nodes%setPtr%exec_size + s_nodes%setPtr%nonexec_size
-    reg_stride_OP2 = s_reg%setPtr%size + &
-&    s_reg%setPtr%exec_size + s_reg%setPtr%nonexec_size
+!    reg_stride_OP2 = s_reg%setPtr%size + &
+!&    s_reg%setPtr%exec_size + s_reg%setPtr%nonexec_size
     call op_decl_const(dt_min, 1, 'dt_min')
     call op_decl_const(dt_initial, 1, 'dt_initial')
     call op_decl_const(dt_max, 1, 'dt_max')
