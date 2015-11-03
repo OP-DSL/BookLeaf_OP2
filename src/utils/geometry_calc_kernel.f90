@@ -179,7 +179,7 @@ opArgArray(9) = opArg9
 opArgArray(10) = opArg10
 
 returnSetKernelTiming = setKernelTime(31 , userSubroutine//C_NULL_CHAR, &
-& 0.d0, 0.00000,0.00000, 0)
+& 0.d0, 0.00000_4,0.00000_4, 0)
 call op_timers_core(startTime)
 
 n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -251,6 +251,6 @@ n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
   dataTransfer = dataTransfer + opArg9%size * getSetSizeFromOpArg(opArg9)
   dataTransfer = dataTransfer + opArg10%size * getSetSizeFromOpArg(opArg10)
   returnSetKernelTiming = setKernelTime(31 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, dataTransfer, 0.00000, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
 END SUBROUTINE
 END MODULE

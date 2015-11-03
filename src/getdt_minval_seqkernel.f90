@@ -78,7 +78,7 @@ SUBROUTINE getdt_minval_host( userSubroutine, set, &
   opArgArray(2) = opArg2
 
   returnSetKernelTiming = setKernelTime(42 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000,0.00000, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -103,6 +103,6 @@ SUBROUTINE getdt_minval_host( userSubroutine, set, &
   call op_timers_core(endTime)
 
   returnSetKernelTiming = setKernelTime(42 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime,0.00000,0.00000, 1)
+  & endTime-startTime,0.00000_4,0.00000_4, 1)
 END SUBROUTINE
 END MODULE

@@ -21,7 +21,6 @@ USE CUDACONFIGURATIONPARAMS
 
 
 
-#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -49,17 +48,16 @@ attributes (device) subroutine set_zero4_gpu(a)
 
     REAL(KIND=rlk), DIMENSION(4), INTENT(OUT) :: a
 
-    OP2_SOA(a,1, elements_stride_OP2) = 0.0_rlk
-    OP2_SOA(a,2, elements_stride_OP2) = 0.0_rlk
-    OP2_SOA(a,3, elements_stride_OP2) = 0.0_rlk
-    OP2_SOA(a,4, elements_stride_OP2) = 0.0_rlk
+    a(1) = 0.0_rlk
+    a(2) = 0.0_rlk
+    a(3) = 0.0_rlk
+    a(4) = 0.0_rlk
 
   END SUBROUTINE set_zero4_gpu
 
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_set_zero4( &
-  &  soa_stride,      &
   & opDat1Deviceset_zero4, &
   & setSize)
 
@@ -69,7 +67,6 @@ attributes (global) SUBROUTINE op_cuda_set_zero4( &
   real(8), DEVICE :: opDat1Deviceset_zero4(*)
 
 
-  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
 
@@ -79,7 +76,7 @@ attributes (global) SUBROUTINE op_cuda_set_zero4( &
 ! kernel call
 
     CALL set_zero4_gpu( &
-    & opDat1Deviceset_zero4(1 + i1) &
+    & opDat1Deviceset_zero4(i1 * (4) + 1: i1 * (4) + 4) &
     & )
   END DO
 
@@ -162,7 +159,6 @@ attributes (host) SUBROUTINE set_zero4_host_gpu( userSubroutine, set, &
 
 
   CALL op_cuda_set_zero4 <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>>( &
-  & getSetSizeFromOpArg(opArg1), &
   & opDat1Deviceset_zero4, &
   set%setPtr%size)
 

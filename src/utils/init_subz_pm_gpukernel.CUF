@@ -21,7 +21,6 @@ USE CUDACONFIGURATIONPARAMS
 
 
 
-#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -76,23 +75,23 @@ attributes (device) subroutine init_subz_pm_gpu(elx,ely,rho,spmass)
     REAL(KIND=rlk) :: x1,x2,x3,x4,y1,y2,y3,y4,w1,w2,w3,w4
     INTEGER(KIND=ink) :: j1,j2
 
-    x3=0.25_rlk*(OP2_SOA(elx,1, elements_stride_OP2)+OP2_SOA(elx,2, elements_stride_OP2)+OP2_SOA(elx,3, elements_stride_OP2)+OP2_SOA(elx,4, elements_stride_OP2))
-    y3=0.25_rlk*(OP2_SOA(ely,1, elements_stride_OP2)+OP2_SOA(ely,2, elements_stride_OP2)+OP2_SOA(ely,3, elements_stride_OP2)+OP2_SOA(ely,4, elements_stride_OP2))
+    x3=0.25_rlk*(elx(1)+elx(2)+elx(3)+elx(4))
+    y3=0.25_rlk*(ely(1)+ely(2)+ely(3)+ely(4))
     DO j1=1,N_SHAPE
-      x1=OP2_SOA(elx,j1, elements_stride_OP2)
-      y1=OP2_SOA(ely,j1, elements_stride_OP2)
+      x1=elx(j1)
+      y1=ely(j1)
       j2=MOD(j1,N_SHAPE)+1_ink
-      x2=0.5_rlk*(x1+OP2_SOA(elx,j2, elements_stride_OP2))
-      y2=0.5_rlk*(y1+OP2_SOA(ely,j2, elements_stride_OP2))
+      x2=0.5_rlk*(x1+elx(j2))
+      y2=0.5_rlk*(y1+ely(j2))
       j2=MOD(j1+2,N_SHAPE)+1_ink
-      x4=0.5_rlk*(x1+OP2_SOA(elx,j2, elements_stride_OP2))
-      y4=0.5_rlk*(y1+OP2_SOA(ely,j2, elements_stride_OP2))
+      x4=0.5_rlk*(x1+elx(j2))
+      y4=0.5_rlk*(y1+ely(j2))
       !# Axi-symmetric alternative
       w1=0.25_rlk*(-x1+x2+x3-x4)
       w2=0.25_rlk*(-x1-x2+x3+x4)
       w3=0.25_rlk*(-y1+y2+y3-y4)
       w4=0.25_rlk*(-y1-y2+y3+y4)
-      OP2_SOA(spmass,j1, elements_stride_OP2)=4.0_rlk*rho*(w1*w4-w2*w3)
+      spmass(j1)=4.0_rlk*rho*(w1*w4-w2*w3)
     ENDDO
 
 
@@ -101,7 +100,6 @@ attributes (device) subroutine init_subz_pm_gpu(elx,ely,rho,spmass)
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_init_subz_pm( &
-  &  soa_stride,      &
   & opDat1Deviceinit_subz_pm, &
   & opDat2Deviceinit_subz_pm, &
   & opDat3Deviceinit_subz_pm, &
@@ -117,7 +115,6 @@ attributes (global) SUBROUTINE op_cuda_init_subz_pm( &
   real(8), DEVICE :: opDat4Deviceinit_subz_pm(*)
 
 
-  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
 
@@ -127,10 +124,10 @@ attributes (global) SUBROUTINE op_cuda_init_subz_pm( &
 ! kernel call
 
     CALL init_subz_pm_gpu( &
-    & opDat1Deviceinit_subz_pm(1 + i1), &
-    & opDat2Deviceinit_subz_pm(1 + i1), &
+    & opDat1Deviceinit_subz_pm(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat2Deviceinit_subz_pm(i1 * (4) + 1: i1 * (4) + 4), &
     & opDat3Deviceinit_subz_pm(i1 + 1), &
-    & opDat4Deviceinit_subz_pm(1 + i1) &
+    & opDat4Deviceinit_subz_pm(i1 * (4) + 1: i1 * (4) + 4) &
     & )
   END DO
 
@@ -243,7 +240,6 @@ attributes (host) SUBROUTINE init_subz_pm_host_gpu( userSubroutine, set, &
 
 
   CALL op_cuda_init_subz_pm <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>>( &
-  & getSetSizeFromOpArg(opArg1), &
   & opDat1Deviceinit_subz_pm, &
   & opDat2Deviceinit_subz_pm, &
   & opDat3Deviceinit_subz_pm, &

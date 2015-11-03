@@ -22,7 +22,6 @@ USE CUDACONFIGURATIONPARAMS
 
 TYPE ( c_ptr )  :: planRet_ale_advect_prevolmass
 
-#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -87,26 +86,26 @@ attributes (device) subroutine ale_advect_prevolmass_gpu(elv0ndm1,elv1,cnm0,cnm1
     w1=0.25_rlk*elv0ndm1
     w2=0.25_rlk*elv1
     !1st
-    w3=OP2_SOA(cnm1,1, elements_stride_OP2)
-    OP2_SOA(cnm0,1, elements_stride_OP2)=w3
+    w3=cnm1(1)
+    cnm0(1)=w3
     ndv00=ndv00+w1
     ndv10=ndv10+w2
     ndm00=ndm00+w3
     !2nd
-    w3=OP2_SOA(cnm1,2, elements_stride_OP2)
-    OP2_SOA(cnm0,2, elements_stride_OP2)=w3
+    w3=cnm1(2)
+    cnm0(2)=w3
     ndv01=ndv01+w1
     ndv11=ndv11+w2
     ndm01=ndm01+w3
     !3rd
-    w3=OP2_SOA(cnm1,3, elements_stride_OP2)
-    OP2_SOA(cnm0,3, elements_stride_OP2)=w3
+    w3=cnm1(3)
+    cnm0(3)=w3
     ndv02=ndv02+w1
     ndv12=ndv12+w2
     ndm02=ndm02+w3
     !4th
-    w3=OP2_SOA(cnm1,4, elements_stride_OP2)
-    OP2_SOA(cnm0,4, elements_stride_OP2)=w3
+    w3=cnm1(4)
+    cnm0(4)=w3
     ndv03=ndv03+w1
     ndv13=ndv13+w2
     ndm03=ndm03+w3
@@ -116,7 +115,6 @@ attributes (device) subroutine ale_advect_prevolmass_gpu(elv0ndm1,elv1,cnm0,cnm1
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_ale_advect_prevolmass( &
-  &  soa_stride,      &
   & opDat5Deviceale_advect_prevolmass, &
   & opDat6Deviceale_advect_prevolmass, &
   & opDat7Deviceale_advect_prevolmass, &
@@ -147,7 +145,6 @@ attributes (global) SUBROUTINE op_cuda_ale_advect_prevolmass( &
 
   INTEGER(kind=4) map5idx, map8idx, map11idx, map14idx
 
-  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pblkMap
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: poffset
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pnelems
@@ -220,8 +217,8 @@ attributes (global) SUBROUTINE op_cuda_ale_advect_prevolmass( &
       CALL ale_advect_prevolmass_gpu( &
       & opDat1Deviceale_advect_prevolmass((i3 + threadBlockOffset) * (1) +1), &
       & opDat2Deviceale_advect_prevolmass((i3 + threadBlockOffset) * (1) +1), &
-      & opDat3Deviceale_advect_prevolmass(1 + (i3 + threadBlockOffset)), &
-      & opDat4Deviceale_advect_prevolmass(1 + (i3 + threadBlockOffset)), &
+      & opDat3Deviceale_advect_prevolmass((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+      & opDat4Deviceale_advect_prevolmass((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
       & opDat5Local, &
       & opDat6Local, &
       & opDat7Local, &
@@ -564,7 +561,6 @@ attributes (host) SUBROUTINE ale_advect_prevolmass_host_gpu( userSubroutine, set
     dynamicSharedMemorySize = reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock
 
     CALL op_cuda_ale_advect_prevolmass <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>> (&
-    & getSetSizeFromOpArg(opArg3), &
     & opDat5Deviceale_advect_prevolmass, &
     & opDat6Deviceale_advect_prevolmass, &
     & opDat7Deviceale_advect_prevolmass, &

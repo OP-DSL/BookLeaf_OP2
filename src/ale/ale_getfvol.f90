@@ -54,7 +54,7 @@ CONTAINS
 
     ! calculate mesh velocity
     IF (zeul) THEN
-      call_op_par_loop_2(ale_getfvol_min1, s_nodes, &
+      call op_par_loop_2(ale_getfvol_min1, s_nodes, &
 &             op_arg_dat(d_ndux,-1,OP_ID,1,'real(8)',OP_RW), &
 &             op_arg_dat(d_ndvy,-1,OP_ID,1,'real(8)',OP_RW))
     ELSE

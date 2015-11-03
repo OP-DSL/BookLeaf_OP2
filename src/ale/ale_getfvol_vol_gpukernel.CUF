@@ -22,7 +22,6 @@ USE CUDACONFIGURATIONPARAMS
 
 TYPE ( c_ptr )  :: planRet_ale_getfvol_vol
 
-#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -141,7 +140,7 @@ attributes (device) subroutine ale_getfvol_vol_gpu(ndx01,ndx02,ndx03,ndx04, &
     b1=0.25_rlk*(-y1+y2+y3-y4)
     b3=0.25_rlk*(-y1-y2+y3+y4)
     rdelv(jj)=4.0_rlk*(a1*b3-a3*b1)
-    IF (OP2_SOA(rdelv,jj, elements_stride_OP2).LT.cut) OP2_SOA(rdelv,jj, elements_stride_OP2)=0.0_rlk
+    IF (rdelv(jj).LT.cut) rdelv(jj)=0.0_rlk
     !2.
     jj=2_ink
     x1=ndx02
@@ -156,8 +155,8 @@ attributes (device) subroutine ale_getfvol_vol_gpu(ndx01,ndx02,ndx03,ndx04, &
     a3=0.25_rlk*(-x1-x2+x3+x4)
     b1=0.25_rlk*(-y1+y2+y3-y4)
     b3=0.25_rlk*(-y1-y2+y3+y4)
-    OP2_SOA(rdelv,jj, elements_stride_OP2)=4.0_rlk*(a1*b3-a3*b1)
-    IF (OP2_SOA(rdelv,jj, elements_stride_OP2).LT.cut) OP2_SOA(rdelv,jj, elements_stride_OP2)=0.0_rlk
+    rdelv(jj)=4.0_rlk*(a1*b3-a3*b1)
+    IF (rdelv(jj).LT.cut) rdelv(jj)=0.0_rlk
     !3.
     jj=3_ink
     x1=ndx03
@@ -172,8 +171,8 @@ attributes (device) subroutine ale_getfvol_vol_gpu(ndx01,ndx02,ndx03,ndx04, &
     a3=0.25_rlk*(-x1-x2+x3+x4)
     b1=0.25_rlk*(-y1+y2+y3-y4)
     b3=0.25_rlk*(-y1-y2+y3+y4)
-    OP2_SOA(rdelv,jj, elements_stride_OP2)=4.0_rlk*(a1*b3-a3*b1)
-    IF (OP2_SOA(rdelv,jj, elements_stride_OP2).LT.cut) OP2_SOA(rdelv,jj, elements_stride_OP2)=0.0_rlk
+    rdelv(jj)=4.0_rlk*(a1*b3-a3*b1)
+    IF (rdelv(jj).LT.cut) rdelv(jj)=0.0_rlk
     !4.
     jj=4_ink
     x1=ndx04
@@ -188,15 +187,14 @@ attributes (device) subroutine ale_getfvol_vol_gpu(ndx01,ndx02,ndx03,ndx04, &
     a3=0.25_rlk*(-x1-x2+x3+x4)
     b1=0.25_rlk*(-y1+y2+y3-y4)
     b3=0.25_rlk*(-y1-y2+y3+y4)
-    OP2_SOA(rdelv,jj, elements_stride_OP2)=4.0_rlk*(a1*b3-a3*b1)
-    IF (OP2_SOA(rdelv,jj, elements_stride_OP2).LT.cut) OP2_SOA(rdelv,jj, elements_stride_OP2)=0.0_rlk
+    rdelv(jj)=4.0_rlk*(a1*b3-a3*b1)
+    IF (rdelv(jj).LT.cut) rdelv(jj)=0.0_rlk
 
   END SUBROUTINE ale_getfvol_vol_gpu
 
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_ale_getfvol_vol( &
-  &  soa_stride,      &
   & opDat1Deviceale_getfvol_vol, &
   & opDat5Deviceale_getfvol_vol, &
   & opDat9Deviceale_getfvol_vol, &
@@ -225,7 +223,6 @@ attributes (global) SUBROUTINE op_cuda_ale_getfvol_vol( &
   real(8), VALUE :: opGblDat18Deviceale_getfvol_vol
   INTEGER(kind=4) map1idx, map2idx, map3idx, map4idx
 
-  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pblkMap
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: poffset
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pnelems
@@ -287,7 +284,7 @@ attributes (global) SUBROUTINE op_cuda_ale_getfvol_vol( &
       & opDat13Deviceale_getfvol_vol(1 + map2idx), &
       & opDat13Deviceale_getfvol_vol(1 + map3idx), &
       & opDat13Deviceale_getfvol_vol(1 + map4idx), &
-      & opDat17Deviceale_getfvol_vol(1 + (i3 + threadBlockOffset)), &
+      & opDat17Deviceale_getfvol_vol((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
       & opGblDat18Deviceale_getfvol_vol &
       & )
 
@@ -590,7 +587,6 @@ attributes (host) SUBROUTINE ale_getfvol_vol_host_gpu( userSubroutine, set, &
     dynamicSharedMemorySize = reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock
 
     CALL op_cuda_ale_getfvol_vol <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>> (&
-    & getSetSizeFromOpArg(opArg17), &
     & opDat1Deviceale_getfvol_vol, &
     & opDat5Deviceale_getfvol_vol, &
     & opDat9Deviceale_getfvol_vol, &

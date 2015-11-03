@@ -124,20 +124,22 @@ CONTAINS
 attributes (host) subroutine getdt_mindt_reg(elidx,ielreg,idx,reg)
     USE kinds_mod,ONLY: rlk,ink
     implicit none
-    INTEGER(KIND=ink), INTENT(IN) :: elidx,ielreg,idx
+    INTEGER(KIND=ink), INTENT(IN) :: elidx,ielreg
+    INTEGER(KIND=ink) :: idx
     INTEGER(KIND=ink), INTENT(INOUT) :: reg
     IF (idx.EQ.elidx) then
-      reg = ielreg
+      reg = ielreg+1
     ENDIF
   END SUBROUTINE getdt_mindt_reg
 
 attributes (device) subroutine getdt_mindt_reg_gpu(elidx,ielreg,idx,reg)
     USE kinds_mod,ONLY: rlk,ink
     implicit none
-    INTEGER(KIND=ink), INTENT(IN) :: elidx,ielreg,idx
+    INTEGER(KIND=ink), INTENT(IN) :: elidx,ielreg
+    INTEGER(KIND=ink) :: idx
     INTEGER(KIND=ink), INTENT(INOUT) :: reg
     IF (idx.EQ.elidx) then
-      reg = ielreg
+      reg = ielreg+1
     ENDIF
   END SUBROUTINE getdt_mindt_reg_gpu
 

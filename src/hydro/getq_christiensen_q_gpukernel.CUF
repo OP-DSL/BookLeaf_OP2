@@ -21,7 +21,6 @@ USE CUDACONFIGURATIONPARAMS
 
 
 
-#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -99,16 +98,16 @@ attributes (device) subroutine getq_christiensen_q_gpu(elx,ely,elu,elv,qx,qy,qq)
     DO iside=1,N_SHAPE
       ins=MOD(iside,N_SHAPE)+1_ink
 
-      w1=OP2_SOA(elx,iside, elements_stride_OP2)
-      w2=OP2_SOA(elx,ins, elements_stride_OP2)
+      w1=elx(iside)
+      w2=elx(ins)
       w3=0.5_rlk*(w1+w2)
       w1=w2-w1
-      w2=0.25_rlk*(OP2_SOA(elx,1, elements_stride_OP2)+OP2_SOA(elx,2, elements_stride_OP2)+OP2_SOA(elx,3, elements_stride_OP2)+OP2_SOA(elx,4, elements_stride_OP2))
-      w4=OP2_SOA(ely,iside, elements_stride_OP2)
-      w5=OP2_SOA(ely,ins, elements_stride_OP2)
+      w2=0.25_rlk*(elx(1)+elx(2)+elx(3)+elx(4))
+      w4=ely(iside)
+      w5=ely(ins)
       w6=0.5_rlk*(w4+w5)
       w4=w5-w4
-      w5=0.25_rlk*(OP2_SOA(ely,1, elements_stride_OP2)+OP2_SOA(ely,2, elements_stride_OP2)+OP2_SOA(ely,3, elements_stride_OP2)+OP2_SOA(ely,4, elements_stride_OP2))
+      w5=0.25_rlk*(ely(1)+ely(2)+ely(3)+ely(4))
       w7=SQRT((w2-w3)*(w2-w3)+(w5-w6)*(w5-w6))
       w8=SQRT(w1*w1+w4*w4)
       den=1.0_rlk/w7
@@ -121,20 +120,20 @@ attributes (device) subroutine getq_christiensen_q_gpu(elx,ely,elu,elv,qx,qy,qq)
       den=-SIGN(1.0_rlk,w3)*w7
       xhat=xhat*den
       yhat=yhat*den
-      uhat=OP2_SOA(elu,ins, elements_stride_OP2)-OP2_SOA(elu,iside, elements_stride_OP2)
-      vhat=OP2_SOA(elv,ins, elements_stride_OP2)-OP2_SOA(elv,iside, elements_stride_OP2)
+      uhat=elu(ins)-elu(iside)
+      vhat=elv(ins)-elv(iside)
       w5=SQRT((uhat*uhat)+(vhat*vhat))
       w6=uhat*xhat+vhat*yhat
       den=w6/MAX(w5,zerocut_OP2)
-      OP2_SOA(qx,iside, elements_stride_OP2)=OP2_SOA(qx,iside, elements_stride_OP2)*uhat*den
-      OP2_SOA(qy,iside, elements_stride_OP2)=OP2_SOA(qy,iside, elements_stride_OP2)*vhat*den
+      qx(iside)=qx(iside)*uhat*den
+      qy(iside)=qy(iside)*vhat*den
       IF ((w5.LE.zerocut_OP2).OR.(w6.LE.zerocut_OP2).OR.(w7.LE.zerocut_OP2).OR.   &
 &           (w8.LE.zerocut_OP2)) THEN
-        OP2_SOA(qx,iside, elements_stride_OP2)=0.0_rlk
-        OP2_SOA(qy,iside, elements_stride_OP2)=0.0_rlk
+        qx(iside)=0.0_rlk
+        qy(iside)=0.0_rlk
       ENDIF
-      qq=qq+0.25_rlk*SQRT(OP2_SOA(qx,iside, elements_stride_OP2)*OP2_SOA(qx,iside, elements_stride_OP2)+      &
-&               OP2_SOA(qy,iside, elements_stride_OP2)*OP2_SOA(qy,iside, elements_stride_OP2))
+      qq=qq+0.25_rlk*SQRT(qx(iside)*qx(iside)+      &
+&               qy(iside)*qy(iside))
 
     ENDDO
 
@@ -143,7 +142,6 @@ attributes (device) subroutine getq_christiensen_q_gpu(elx,ely,elu,elv,qx,qy,qq)
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_getq_christiensen_q( &
-  &  soa_stride,      &
   & opDat1Devicegetq_christiensen_q, &
   & opDat2Devicegetq_christiensen_q, &
   & opDat3Devicegetq_christiensen_q, &
@@ -165,7 +163,6 @@ attributes (global) SUBROUTINE op_cuda_getq_christiensen_q( &
   real(8), DEVICE :: opDat7Devicegetq_christiensen_q(*)
 
 
-  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
 
@@ -175,12 +172,12 @@ attributes (global) SUBROUTINE op_cuda_getq_christiensen_q( &
 ! kernel call
 
     CALL getq_christiensen_q_gpu( &
-    & opDat1Devicegetq_christiensen_q(1 + i1), &
-    & opDat2Devicegetq_christiensen_q(1 + i1), &
-    & opDat3Devicegetq_christiensen_q(1 + i1), &
-    & opDat4Devicegetq_christiensen_q(1 + i1), &
-    & opDat5Devicegetq_christiensen_q(1 + i1), &
-    & opDat6Devicegetq_christiensen_q(1 + i1), &
+    & opDat1Devicegetq_christiensen_q(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat2Devicegetq_christiensen_q(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat3Devicegetq_christiensen_q(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat4Devicegetq_christiensen_q(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat5Devicegetq_christiensen_q(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat6Devicegetq_christiensen_q(i1 * (4) + 1: i1 * (4) + 4), &
     & opDat7Devicegetq_christiensen_q(i1 + 1) &
     & )
   END DO
@@ -324,7 +321,6 @@ attributes (host) SUBROUTINE getq_christiensen_q_host_gpu( userSubroutine, set, 
 
 
   CALL op_cuda_getq_christiensen_q <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>>( &
-  & getSetSizeFromOpArg(opArg1), &
   & opDat1Devicegetq_christiensen_q, &
   & opDat2Devicegetq_christiensen_q, &
   & opDat3Devicegetq_christiensen_q, &

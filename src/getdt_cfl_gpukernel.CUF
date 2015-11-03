@@ -19,40 +19,41 @@ USE CUDACONFIGURATIONPARAMS
 
 ! getdt_cflvariable declarations
 
+integer(4), DIMENSION(:), DEVICE, ALLOCATABLE :: opGblDat9Devicegetdt_cfl
+integer(4), DIMENSION(:), DEVICE, ALLOCATABLE :: opGblDat10Devicegetdt_cfl
 
-TYPE ( c_ptr )  :: planRet_getdt_cfl
 
-#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
 !DEC$ ATTRIBUTES FORCEINLINE :: getdt_cfl
-attributes (host) subroutine getdt_cfl(rscratch11,rscratch12,rho,csqrd,qq,elx,ely,zdtnotreg,zmidlength)
+attributes (host) subroutine getdt_cfl(rscratch11,rscratch12,rho,csqrd,qq,elx,ely,ielreg,zdtnotreg,zmidlength)
 
     USE kinds_mod,ONLY: rlk,ink
 !    USE geometry_mod,    ONLY: dlm,dln
     USE reals_mod,       ONLY: ccut,zcut,dt_max
-    USE parameters_mod,ONLY: N_SHAPE
+    USE parameters_mod,ONLY: N_SHAPE,LI
 
     implicit none
 
     REAL(KIND=rlk), DIMENSION(4), INTENT(IN) :: elx,ely
     REAL(KIND=rlk), INTENT(IN) :: rho,csqrd,qq
     REAL(KIND=rlk), INTENT(OUT) :: rscratch11,rscratch12
-    INTEGER(KIND=ink), INTENT(IN) :: zdtnotreg,zmidlength !need to inline this
+    INTEGER(KIND=ink), DIMENSION(LI) :: zdtnotreg,zmidlength !need to inline this
+    INTEGER(KIND=ink) :: ielreg
 
     REAL(KIND=rlk) :: w1,w2,w3
     !For dlm and dln
     REAL(KIND=rlk)                              :: x1,x2,y1,y2
     REAL(KIND=rlk),DIMENSION(N_SHAPE)            :: res
 
-    IF (zdtnotreg) THEN
+    IF (zdtnotreg(ielreg+1)) THEN
       rscratch11=dt_max
       rscratch12=TINY(1.0_rlk)
     ELSE
       w1=MAX(rho,zcut)
       w2=MAX(ccut,csqrd)+2.0_rlk*qq/w1
-      IF (zmidlength) THEN
+      IF (zmidlength(ielreg+1)) THEN
         x1=elx(1)+elx(2)
         x2=elx(3)+elx(4)
         y1=ely(1)+ely(2)
@@ -159,43 +160,44 @@ attributes (host) subroutine getdt_cfl(rscratch11,rscratch12,rho,csqrd,qq,elx,el
 
   END SUBROUTINE getdt_cfl
 
-attributes (device) subroutine getdt_cfl_gpu(rscratch11,rscratch12,rho,csqrd,qq,elx,ely,zdtnotreg,zmidlength)
+attributes (device) subroutine getdt_cfl_gpu(rscratch11,rscratch12,rho,csqrd,qq,elx,ely,ielreg,zdtnotreg,zmidlength)
 
     USE kinds_mod,ONLY: rlk,ink
 !    USE geometry_mod,    ONLY: dlm,dln
     USE reals_mod,       ONLY: ccut,zcut,dt_max
-    USE parameters_mod,ONLY: N_SHAPE
+    USE parameters_mod,ONLY: N_SHAPE,LI
 
     implicit none
 
     REAL(KIND=rlk), DIMENSION(4), INTENT(IN) :: elx,ely
     REAL(KIND=rlk), INTENT(IN) :: rho,csqrd,qq
     REAL(KIND=rlk), INTENT(OUT) :: rscratch11,rscratch12
-    INTEGER(KIND=ink), INTENT(IN) :: zdtnotreg,zmidlength !need to inline this
+    INTEGER(KIND=ink), DIMENSION(LI) :: zdtnotreg,zmidlength !need to inline this
+    INTEGER(KIND=ink) :: ielreg
 
     REAL(KIND=rlk) :: w1,w2,w3
     !For dlm and dln
     REAL(KIND=rlk)                              :: x1,x2,y1,y2
     REAL(KIND=rlk),DIMENSION(N_SHAPE)            :: res
 
-    IF (zdtnotreg) THEN
+    IF (zdtnotreg(ielreg+1)) THEN
       rscratch11=dt_max_OP2
       rscratch12=TINY(1.0_rlk)
     ELSE
       w1=MAX(rho,zcut_OP2)
       w2=MAX(ccut_OP2,csqrd)+2.0_rlk*qq/w1
-      IF (zmidlength) THEN
-        x1=OP2_SOA(elx,1, elements_stride_OP2)+OP2_SOA(elx,2, elements_stride_OP2)
-        x2=OP2_SOA(elx,3, elements_stride_OP2)+OP2_SOA(elx,4, elements_stride_OP2)
-        y1=OP2_SOA(ely,1, elements_stride_OP2)+OP2_SOA(ely,2, elements_stride_OP2)
-        y2=OP2_SOA(ely,3, elements_stride_OP2)+OP2_SOA(ely,4, elements_stride_OP2)
+      IF (zmidlength(ielreg+1)) THEN
+        x1=elx(1)+elx(2)
+        x2=elx(3)+elx(4)
+        y1=ely(1)+ely(2)
+        y2=ely(3)+ely(4)
         x1=0.5_rlk*(x1-x2)
         y1=0.5_rlk*(y1-y2)
         res(1)=x1*x1+y1*y1
-        x1=OP2_SOA(elx,3, elements_stride_OP2)+OP2_SOA(elx,2, elements_stride_OP2)
-        x2=OP2_SOA(elx,1, elements_stride_OP2)+OP2_SOA(elx,4, elements_stride_OP2)
-        y1=OP2_SOA(ely,3, elements_stride_OP2)+OP2_SOA(ely,2, elements_stride_OP2)
-        y2=OP2_SOA(ely,1, elements_stride_OP2)+OP2_SOA(ely,4, elements_stride_OP2)
+        x1=elx(3)+elx(2)
+        x2=elx(1)+elx(4)
+        y1=ely(3)+ely(2)
+        y2=ely(1)+ely(4)
         x1=0.5_rlk*(x1-x2)
         y1=0.5_rlk*(y1-y2)
         res(2)=x1*x1+y1*y1
@@ -203,82 +205,82 @@ attributes (device) subroutine getdt_cfl_gpu(rscratch11,rscratch12,rho,csqrd,qq,
         res(4)=res(2)
         w1=MIN(res(1),res(2),res(3),res(4))
       ELSE
-        w3=(OP2_SOA(ely,3, elements_stride_OP2)-OP2_SOA(ely,4, elements_stride_OP2))* &
-    &      (OP2_SOA(ely,3, elements_stride_OP2)-OP2_SOA(ely,4, elements_stride_OP2))+ &
-    &      (OP2_SOA(elx,3, elements_stride_OP2)-OP2_SOA(elx,4, elements_stride_OP2))* &
-    &      (OP2_SOA(elx,3, elements_stride_OP2)-OP2_SOA(elx,4, elements_stride_OP2))
+        w3=(ely(3)-ely(4))* &
+    &      (ely(3)-ely(4))+ &
+    &      (elx(3)-elx(4))* &
+    &      (elx(3)-elx(4))
         !denom(elx(3),ely(3),elx(4),ely(4))
         IF (w3.LT.zcut_OP2) THEN
-          res(1)=(0.5_rlk*(OP2_SOA(elx,1, elements_stride_OP2)+OP2_SOA(elx,2, elements_stride_OP2)) &
-    &           -OP2_SOA(elx,3, elements_stride_OP2))*(0.5_rlk*(OP2_SOA(elx,1, elements_stride_OP2)+OP2_SOA(elx,2, elements_stride_OP2))-OP2_SOA(elx,3, elements_stride_OP2))+ &
-    &         (0.5_rlk*(OP2_SOA(ely,1, elements_stride_OP2)+OP2_SOA(ely,2, elements_stride_OP2))-OP2_SOA(ely,3, elements_stride_OP2))* &
-    &         (0.5_rlk*(OP2_SOA(ely,1, elements_stride_OP2)+OP2_SOA(ely,2, elements_stride_OP2))-OP2_SOA(ely,3, elements_stride_OP2))
+          res(1)=(0.5_rlk*(elx(1)+elx(2)) &
+    &           -elx(3))*(0.5_rlk*(elx(1)+elx(2))-elx(3))+ &
+    &         (0.5_rlk*(ely(1)+ely(2))-ely(3))* &
+    &         (0.5_rlk*(ely(1)+ely(2))-ely(3))
           !distpp(elx(1),ely(1),elx(2),ely(2),elx(3),ely(3))
         ELSE
-          res(1)= 0.5_rlk*(OP2_SOA(ely,3, elements_stride_OP2)-OP2_SOA(ely,4, elements_stride_OP2))* &
-    &             (OP2_SOA(elx,1, elements_stride_OP2)+OP2_SOA(elx,2, elements_stride_OP2))+0.5_rlk* &
-    &             (OP2_SOA(ely,1, elements_stride_OP2)+OP2_SOA(ely,2, elements_stride_OP2))*(OP2_SOA(elx,4, elements_stride_OP2)-OP2_SOA(elx,3, elements_stride_OP2))+ &
-    &              OP2_SOA(ely,4, elements_stride_OP2)*OP2_SOA(elx,3, elements_stride_OP2)-OP2_SOA(ely,3, elements_stride_OP2)*OP2_SOA(elx,4, elements_stride_OP2)
+          res(1)= 0.5_rlk*(ely(3)-ely(4))* &
+    &             (elx(1)+elx(2))+0.5_rlk* &
+    &             (ely(1)+ely(2))*(elx(4)-elx(3))+ &
+    &              ely(4)*elx(3)-ely(3)*elx(4)
           res(1) = res(1)*res(1)/w3
     !      distpl(elx(1),ely(1),elx(2),ely(2),elx(3),ely(3),elx(4),   &
     !&                   ely(4))/w3
         ENDIF
-        w3=(OP2_SOA(ely,4, elements_stride_OP2)-OP2_SOA(ely,1, elements_stride_OP2))* &
-    &      (OP2_SOA(ely,4, elements_stride_OP2)-OP2_SOA(ely,1, elements_stride_OP2))+ &
-    &      (OP2_SOA(elx,4, elements_stride_OP2)-OP2_SOA(elx,1, elements_stride_OP2))* &
-    &      (OP2_SOA(elx,4, elements_stride_OP2)-OP2_SOA(elx,1, elements_stride_OP2))
+        w3=(ely(4)-ely(1))* &
+    &      (ely(4)-ely(1))+ &
+    &      (elx(4)-elx(1))* &
+    &      (elx(4)-elx(1))
         !denom(elx(4),ely(4),elx(1),ely(1))
         IF (w3.LT.zcut_OP2) THEN
-          res(2)=(0.5_rlk*(OP2_SOA(elx,2, elements_stride_OP2)+OP2_SOA(elx,3, elements_stride_OP2)) &
-    &           -OP2_SOA(elx,4, elements_stride_OP2))*(0.5_rlk*(OP2_SOA(elx,2, elements_stride_OP2)+OP2_SOA(elx,3, elements_stride_OP2))-OP2_SOA(elx,4, elements_stride_OP2))+ &
-    &         (0.5_rlk*(OP2_SOA(ely,2, elements_stride_OP2)+OP2_SOA(ely,3, elements_stride_OP2))-OP2_SOA(ely,4, elements_stride_OP2))* &
-    &         (0.5_rlk*(OP2_SOA(ely,2, elements_stride_OP2)+OP2_SOA(ely,3, elements_stride_OP2))-OP2_SOA(ely,4, elements_stride_OP2))
+          res(2)=(0.5_rlk*(elx(2)+elx(3)) &
+    &           -elx(4))*(0.5_rlk*(elx(2)+elx(3))-elx(4))+ &
+    &         (0.5_rlk*(ely(2)+ely(3))-ely(4))* &
+    &         (0.5_rlk*(ely(2)+ely(3))-ely(4))
           !distpp(elx(2),ely(2),elx(3),ely(3),elx(4),ely(4))
         ELSE
-          res(2)= 0.5_rlk*(OP2_SOA(ely,4, elements_stride_OP2)-OP2_SOA(ely,1, elements_stride_OP2))* &
-    &             (OP2_SOA(elx,2, elements_stride_OP2)+OP2_SOA(elx,3, elements_stride_OP2))+0.5_rlk* &
-    &             (OP2_SOA(ely,2, elements_stride_OP2)+OP2_SOA(ely,3, elements_stride_OP2))*(OP2_SOA(elx,1, elements_stride_OP2)-OP2_SOA(elx,4, elements_stride_OP2))+ &
-    &              OP2_SOA(ely,1, elements_stride_OP2)*OP2_SOA(elx,4, elements_stride_OP2)-OP2_SOA(ely,4, elements_stride_OP2)*OP2_SOA(elx,1, elements_stride_OP2)
+          res(2)= 0.5_rlk*(ely(4)-ely(1))* &
+    &             (elx(2)+elx(3))+0.5_rlk* &
+    &             (ely(2)+ely(3))*(elx(1)-elx(4))+ &
+    &              ely(1)*elx(4)-ely(4)*elx(1)
           res(2) = res(2)*res(2)/w3
     !      distpl(elx(2),ely(2),elx(3),ely(3),elx(4),ely(4),elx(1),   &
     !&                   ely(1))/w3
         ENDIF
-        w3=(OP2_SOA(ely,1, elements_stride_OP2)-OP2_SOA(ely,2, elements_stride_OP2))* &
-    &      (OP2_SOA(ely,1, elements_stride_OP2)-OP2_SOA(ely,2, elements_stride_OP2))+ &
-    &      (OP2_SOA(elx,1, elements_stride_OP2)-OP2_SOA(elx,2, elements_stride_OP2))* &
-    &      (OP2_SOA(elx,1, elements_stride_OP2)-OP2_SOA(elx,2, elements_stride_OP2))
+        w3=(ely(1)-ely(2))* &
+    &      (ely(1)-ely(2))+ &
+    &      (elx(1)-elx(2))* &
+    &      (elx(1)-elx(2))
         !denom(elx(1),ely(1),elx(2),ely(2))
         IF (w3.LT.zcut_OP2) THEN
-          res(3)=(0.5_rlk*(OP2_SOA(elx,3, elements_stride_OP2)+OP2_SOA(elx,4, elements_stride_OP2)) &
-    &           -OP2_SOA(elx,1, elements_stride_OP2))*(0.5_rlk*(OP2_SOA(elx,3, elements_stride_OP2)+OP2_SOA(elx,4, elements_stride_OP2))-OP2_SOA(elx,1, elements_stride_OP2))+ &
-    &         (0.5_rlk*(OP2_SOA(ely,3, elements_stride_OP2)+OP2_SOA(ely,4, elements_stride_OP2))-OP2_SOA(ely,1, elements_stride_OP2))* &
-    &         (0.5_rlk*(OP2_SOA(ely,3, elements_stride_OP2)+OP2_SOA(ely,4, elements_stride_OP2))-OP2_SOA(ely,1, elements_stride_OP2))
+          res(3)=(0.5_rlk*(elx(3)+elx(4)) &
+    &           -elx(1))*(0.5_rlk*(elx(3)+elx(4))-elx(1))+ &
+    &         (0.5_rlk*(ely(3)+ely(4))-ely(1))* &
+    &         (0.5_rlk*(ely(3)+ely(4))-ely(1))
           !distpp(elx(3),ely(3),elx(4),ely(4),elx(1),ely(1))
         ELSE
-          res(3)= 0.5_rlk*(OP2_SOA(ely,1, elements_stride_OP2)-OP2_SOA(ely,2, elements_stride_OP2))* &
-    &             (OP2_SOA(elx,3, elements_stride_OP2)+OP2_SOA(elx,4, elements_stride_OP2))+0.5_rlk* &
-    &             (OP2_SOA(ely,3, elements_stride_OP2)+OP2_SOA(ely,4, elements_stride_OP2))*(OP2_SOA(elx,2, elements_stride_OP2)-OP2_SOA(elx,1, elements_stride_OP2))+ &
-    &              OP2_SOA(ely,2, elements_stride_OP2)*OP2_SOA(elx,1, elements_stride_OP2)-OP2_SOA(ely,1, elements_stride_OP2)*OP2_SOA(elx,2, elements_stride_OP2)
+          res(3)= 0.5_rlk*(ely(1)-ely(2))* &
+    &             (elx(3)+elx(4))+0.5_rlk* &
+    &             (ely(3)+ely(4))*(elx(2)-elx(1))+ &
+    &              ely(2)*elx(1)-ely(1)*elx(2)
           res(3) = res(3)*res(3)/w3
     !      distpl(elx(3),ely(3),elx(4),ely(4),elx(1),ely(1),elx(2),   &
     !&                   ely(2))/w3
         ENDIF
-        w3=(OP2_SOA(ely,2, elements_stride_OP2)-OP2_SOA(ely,3, elements_stride_OP2))* &
-    &      (OP2_SOA(ely,2, elements_stride_OP2)-OP2_SOA(ely,3, elements_stride_OP2))+ &
-    &      (OP2_SOA(elx,2, elements_stride_OP2)-OP2_SOA(elx,3, elements_stride_OP2))* &
-    &      (OP2_SOA(elx,2, elements_stride_OP2)-OP2_SOA(elx,3, elements_stride_OP2))
+        w3=(ely(2)-ely(3))* &
+    &      (ely(2)-ely(3))+ &
+    &      (elx(2)-elx(3))* &
+    &      (elx(2)-elx(3))
         !denom(elx(2),ely(2),elx(3),ely(3))
         IF (w3.LT.zcut_OP2) THEN
-          res(4)=(0.5_rlk*(OP2_SOA(elx,4, elements_stride_OP2)+OP2_SOA(elx,1, elements_stride_OP2)) &
-    &           -OP2_SOA(elx,2, elements_stride_OP2))*(0.5_rlk*(OP2_SOA(elx,4, elements_stride_OP2)+OP2_SOA(elx,1, elements_stride_OP2))-OP2_SOA(elx,2, elements_stride_OP2))+ &
-    &         (0.5_rlk*(OP2_SOA(ely,4, elements_stride_OP2)+OP2_SOA(ely,1, elements_stride_OP2))-OP2_SOA(ely,2, elements_stride_OP2))* &
-    &         (0.5_rlk*(OP2_SOA(ely,4, elements_stride_OP2)+OP2_SOA(ely,1, elements_stride_OP2))-OP2_SOA(ely,2, elements_stride_OP2))
+          res(4)=(0.5_rlk*(elx(4)+elx(1)) &
+    &           -elx(2))*(0.5_rlk*(elx(4)+elx(1))-elx(2))+ &
+    &         (0.5_rlk*(ely(4)+ely(1))-ely(2))* &
+    &         (0.5_rlk*(ely(4)+ely(1))-ely(2))
           !distpp(elx(4),ely(4),elx(1),ely(1),elx(2),ely(2))
         ELSE
-          res(4)=0.5_rlk*(OP2_SOA(ely,2, elements_stride_OP2)-OP2_SOA(ely,3, elements_stride_OP2))*( &
-    &             OP2_SOA(elx,4, elements_stride_OP2)+OP2_SOA(elx,1, elements_stride_OP2))+0.5_rlk*( &
-    &             OP2_SOA(ely,4, elements_stride_OP2)+OP2_SOA(ely,1, elements_stride_OP2))*(OP2_SOA(elx,3, elements_stride_OP2)-OP2_SOA(elx,2, elements_stride_OP2))+ &
-    &             OP2_SOA(ely,3, elements_stride_OP2)*OP2_SOA(elx,2, elements_stride_OP2)-OP2_SOA(ely,2, elements_stride_OP2)*OP2_SOA(elx,3, elements_stride_OP2)
+          res(4)=0.5_rlk*(ely(2)-ely(3))*( &
+    &             elx(4)+elx(1))+0.5_rlk*( &
+    &             ely(4)+ely(1))*(elx(3)-elx(2))+ &
+    &             ely(3)*elx(2)-ely(2)*elx(3)
           res(4) = res(4)*res(4)/w3
     !      distpl(elx(4),ely(4),elx(1),ely(1),elx(2),ely(2),elx(3),   &
     !&                   ely(3))/w3
@@ -294,10 +296,6 @@ attributes (device) subroutine getdt_cfl_gpu(rscratch11,rscratch12,rho,csqrd,qq,
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_getdt_cfl( &
-  &  soa_stride,      &
-  & opDat8Devicegetdt_cfl, &
-  & opDat9Devicegetdt_cfl, &
-  & opDat8Map, &
   & opDat1Devicegetdt_cfl, &
   & opDat2Devicegetdt_cfl, &
   & opDat3Devicegetdt_cfl, &
@@ -305,20 +303,12 @@ attributes (global) SUBROUTINE op_cuda_getdt_cfl( &
   & opDat5Devicegetdt_cfl, &
   & opDat6Devicegetdt_cfl, &
   & opDat7Devicegetdt_cfl, &
-  & pblkMap, &
-  & poffset, &
-  & pnelems, &
-  & pnthrcol, &
-  & pthrcol, &
-  & setSize, &
-  & blockOffset)
+  & opDat8Devicegetdt_cfl, &
+  & setSize)
 
   IMPLICIT NONE
 
 ! local variables
-  integer(4), DEVICE :: opDat8Devicegetdt_cfl(*)
-  integer(4), DEVICE :: opDat9Devicegetdt_cfl(*)
-  INTEGER(kind=4), DEVICE, INTENT(IN) :: opDat8Map(*)
   real(8), DEVICE :: opDat1Devicegetdt_cfl(*)
   real(8), DEVICE :: opDat2Devicegetdt_cfl(*)
   real(8), DEVICE, INTENT(IN) :: opDat3Devicegetdt_cfl(*)
@@ -326,67 +316,30 @@ attributes (global) SUBROUTINE op_cuda_getdt_cfl( &
   real(8), DEVICE, INTENT(IN) :: opDat5Devicegetdt_cfl(*)
   real(8), DEVICE, INTENT(IN) :: opDat6Devicegetdt_cfl(*)
   real(8), DEVICE, INTENT(IN) :: opDat7Devicegetdt_cfl(*)
+  integer(4), DEVICE, INTENT(IN) :: opDat8Devicegetdt_cfl(*)
 
-  INTEGER(kind=4) map8idx
 
-  INTEGER(kind=4), VALUE :: soa_stride
-  INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pblkMap
-  INTEGER(kind=4), DIMENSION(0:*), DEVICE :: poffset
-  INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pnelems
-  INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pnthrcol
-  INTEGER(kind=4), DIMENSION(0:*), DEVICE, INTENT(IN) :: pthrcol
-  INTEGER(kind=4), VALUE :: blockOffset
   INTEGER(kind=4), VALUE :: setSize
-
-
-  INTEGER(kind=4), SHARED :: numOfColours
-  INTEGER(kind=4), SHARED :: numberOfActiveThreadsCeiling
-  INTEGER(kind=4), SHARED :: blockID
-  INTEGER(kind=4), SHARED :: threadBlockOffset
-  INTEGER(kind=4), SHARED :: numberOfActiveThreads
-  INTEGER(kind=4) :: colour1
-  INTEGER(kind=4) :: colour2
-  INTEGER(kind=4) :: n1
   INTEGER(kind=4) :: i1
-  INTEGER(kind=4) :: i2
-  INTEGER(kind=4) :: i3
 
 
-  IF (threadIdx%x - 1 .EQ. 0) THEN
-    blockID = pblkMap(blockIdx%x - 1 + blockOffset)
-    numberOfActiveThreads = pnelems(blockID)
-    numberOfActiveThreadsCeiling = blockDim%x * (1 + (numberOfActiveThreads - 1) / blockDim%x)
-    numOfColours = pnthrcol(blockID)
-    threadBlockOffset = poffset(blockID)
-
-  END IF
-
-  CALL syncthreads()
-
-  i1 = threadIdx%x - 1
-
-  DO WHILE (i1 < numberOfActiveThreadsCeiling )
-    IF (i1 < numberOfActiveThreads) THEN
-      i3 = i1
-      map8idx = opDat8Map(1 + i3 + threadBlockOffset + setSize * 0)
+  DO i1 = threadIdx%x - 1 + (blockIdx%x - 1) * blockDim%x, setSize - 1, blockDim%x * gridDim%x
 
 ! kernel call
-      CALL getdt_cfl_gpu( &
-      & opDat1Devicegetdt_cfl((i3 + threadBlockOffset) * (1) +1), &
-      & opDat2Devicegetdt_cfl((i3 + threadBlockOffset) * (1) +1), &
-      & opDat3Devicegetdt_cfl((i3 + threadBlockOffset) * (1) +1), &
-      & opDat4Devicegetdt_cfl((i3 + threadBlockOffset) * (1) +1), &
-      & opDat5Devicegetdt_cfl((i3 + threadBlockOffset) * (1) +1), &
-      & opDat6Devicegetdt_cfl(1 + (i3 + threadBlockOffset)), &
-      & opDat7Devicegetdt_cfl(1 + (i3 + threadBlockOffset)), &
-      & opDat8Devicegetdt_cfl(1 + map8idx), &
-      & opDat9Devicegetdt_cfl(1 + map8idx) &
-      & )
 
-    END IF
-    i1 = i1 + blockDim%x
+    CALL getdt_cfl_gpu( &
+    & opDat1Devicegetdt_cfl(i1 + 1), &
+    & opDat2Devicegetdt_cfl(i1 + 1), &
+    & opDat3Devicegetdt_cfl(i1 + 1), &
+    & opDat4Devicegetdt_cfl(i1 + 1), &
+    & opDat5Devicegetdt_cfl(i1 + 1), &
+    & opDat6Devicegetdt_cfl(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat7Devicegetdt_cfl(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat8Devicegetdt_cfl(i1 + 1), &
+    & opGblDat9Devicegetdt_cfl, &
+    & opGblDat10Devicegetdt_cfl &
+    & )
   END DO
-
 
 
 END SUBROUTINE
@@ -400,7 +353,8 @@ attributes (host) SUBROUTINE getdt_cfl_host( userSubroutine, set, &
   & opArg6, &
   & opArg7, &
   & opArg8, &
-  & opArg9 )
+  & opArg9, &
+  & opArg10 )
 
   IMPLICIT NONE
   character(len=9), INTENT(IN) :: userSubroutine
@@ -415,6 +369,7 @@ attributes (host) SUBROUTINE getdt_cfl_host( userSubroutine, set, &
   TYPE ( op_arg ) , INTENT(IN) :: opArg7
   TYPE ( op_arg ) , INTENT(IN) :: opArg8
   TYPE ( op_arg ) , INTENT(IN) :: opArg9
+  TYPE ( op_arg ) , INTENT(IN) :: opArg10
 
   IF (getHybridGPU()) THEN
     CALL getdt_cfl_host_gpu( userSubroutine, set, &
@@ -426,7 +381,8 @@ attributes (host) SUBROUTINE getdt_cfl_host( userSubroutine, set, &
     & opArg6, &
     & opArg7, &
     & opArg8, &
-    & opArg9 )
+    & opArg9, &
+    & opArg10 )
   END IF
 END SUBROUTINE
 
@@ -442,7 +398,8 @@ attributes (host) SUBROUTINE getdt_cfl_host_gpu( userSubroutine, set, &
   & opArg6, &
   & opArg7, &
   & opArg8, &
-  & opArg9 )
+  & opArg9, &
+  & opArg10 )
 
   IMPLICIT NONE
   character(len=9), INTENT(IN) :: userSubroutine
@@ -457,8 +414,9 @@ attributes (host) SUBROUTINE getdt_cfl_host_gpu( userSubroutine, set, &
   TYPE ( op_arg ) , INTENT(IN) :: opArg7
   TYPE ( op_arg ) , INTENT(IN) :: opArg8
   TYPE ( op_arg ) , INTENT(IN) :: opArg9
+  TYPE ( op_arg ) , INTENT(IN) :: opArg10
 
-  TYPE ( op_arg ) , DIMENSION(9) :: opArgArray
+  TYPE ( op_arg ) , DIMENSION(10) :: opArgArray
   INTEGER(kind=4) :: numberOfOpDats
   INTEGER(kind=4) :: n_upper
   INTEGER(kind=4), DIMENSION(1:8) :: timeArrayStart
@@ -468,10 +426,6 @@ attributes (host) SUBROUTINE getdt_cfl_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: returnSetKernelTiming
 
 
-  integer(4), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat8Devicegetdt_cfl
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: opMap8Devicegetdt_cfl
-  integer(4), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat9Devicegetdt_cfl
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: opMap9Devicegetdt_cfl
   real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Devicegetdt_cfl
   real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat2Devicegetdt_cfl
   real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat3Devicegetdt_cfl
@@ -479,11 +433,8 @@ attributes (host) SUBROUTINE getdt_cfl_host_gpu( userSubroutine, set, &
   real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat5Devicegetdt_cfl
   real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat6Devicegetdt_cfl
   real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat7Devicegetdt_cfl
+  integer(4), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat8Devicegetdt_cfl
 
-  INTEGER(kind=4) :: opDat8Cardinality
-  INTEGER(kind=4) :: opMap8Cardinality
-  INTEGER(kind=4) :: opDat9Cardinality
-  INTEGER(kind=4) :: opMap9Cardinality
   INTEGER(kind=4) :: opDat1Cardinality
   INTEGER(kind=4) :: opDat2Cardinality
   INTEGER(kind=4) :: opDat3Cardinality
@@ -491,45 +442,26 @@ attributes (host) SUBROUTINE getdt_cfl_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: opDat5Cardinality
   INTEGER(kind=4) :: opDat6Cardinality
   INTEGER(kind=4) :: opDat7Cardinality
-
-  TYPE ( op_plan ) , POINTER :: actualPlan_getdt_cfl
+  INTEGER(kind=4) :: opDat8Cardinality
+  INTEGER(kind=4) :: opDat9Cardinality
+  INTEGER(kind=4) :: opDat10Cardinality
 
   INTEGER(kind=4) :: blocksPerGrid
   INTEGER(kind=4) :: threadsPerBlock
   INTEGER(kind=4) :: dynamicSharedMemorySize
   INTEGER(kind=4) :: threadSynchRet
-  INTEGER(kind=4), DIMENSION(1:9) :: opDatArray
-  INTEGER(kind=4), DIMENSION(1:9) :: mappingIndicesArray
-  INTEGER(kind=4), DIMENSION(1:9) :: mappingArray
-  INTEGER(kind=4), DIMENSION(1:9) :: accessDescriptorArray
-  INTEGER(kind=4), DIMENSION(1:9) :: indirectionDescriptorArray
-
-  INTEGER(kind=4) :: mappingArray8Size
-  INTEGER(kind=4) :: mappingArray9Size
-
-  INTEGER(kind=4) :: numberOfIndirectOpDats
-  INTEGER(kind=4) :: blockOffset
-  INTEGER(kind=4) :: pblkMapSize
-  INTEGER(kind=4) :: poffsetSize
-  INTEGER(kind=4) :: pnelemsSize
-  INTEGER(kind=4) :: pnthrcolSize
-  INTEGER(kind=4) :: pthrcolSize
-  INTEGER(kind=4), POINTER, DIMENSION(:) :: ncolblk
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pblkMap
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: poffset
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pnelems
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pnthrcol
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pthrcol
-  INTEGER(kind=4) :: partitionSize
-  INTEGER(kind=4) :: blockSize
+  INTEGER(kind=4), SAVE :: calledTimes
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
   INTEGER(kind=4) :: i10
-  INTEGER(kind=4), SAVE :: calledTimes
+  INTEGER(kind=4) :: i20
+  REAL(kind=4) :: dataTransfer
 
   INTEGER(kind=4) :: istat
+  integer(4), DIMENSION(:), POINTER :: opDat9Host
+  integer(4), DIMENSION(:), POINTER :: opDat10Host
 
-  numberOfOpDats = 9
+  numberOfOpDats = 10
 
   opArgArray(1) = opArg1
   opArgArray(2) = opArg2
@@ -540,6 +472,7 @@ attributes (host) SUBROUTINE getdt_cfl_host_gpu( userSubroutine, set, &
   opArgArray(7) = opArg7
   opArgArray(8) = opArg8
   opArgArray(9) = opArg9
+  opArgArray(10) = opArg10
 
   returnSetKernelTiming = setKernelTime(41 , userSubroutine//C_NULL_CHAR, &
   & 0.d0, 0.00000_4,0.00000_4, 0)
@@ -547,33 +480,11 @@ attributes (host) SUBROUTINE getdt_cfl_host_gpu( userSubroutine, set, &
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
 
-  indirectionDescriptorArray(1) = -1
-  indirectionDescriptorArray(2) = -1
-  indirectionDescriptorArray(3) = -1
-  indirectionDescriptorArray(4) = -1
-  indirectionDescriptorArray(5) = -1
-  indirectionDescriptorArray(6) = -1
-  indirectionDescriptorArray(7) = -1
-  indirectionDescriptorArray(8) = 0
-  indirectionDescriptorArray(9) = 1
 
-  numberOfIndirectOpDats = 2
+  blocksPerGrid = 600
+  threadsPerBlock = getBlockSize(userSubroutine//C_NULL_CHAR,set%setPtr%size)
+  dynamicSharedMemorySize = reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock
 
-  partitionSize = getPartitionSize(userSubroutine//C_NULL_CHAR,set%setPtr%size)
-
-  planRet_getdt_cfl = FortranPlanCaller( &
-  & userSubroutine//C_NULL_CHAR, &
-  & set%setCPtr, &
-  & partitionSize, &
-  & numberOfOpDats, &
-  & opArgArray, &
-  & numberOfIndirectOpDats, &
-  & indirectionDescriptorArray,2)
-
-  opDat8Cardinality = opArg8%dim * getSetSizeFromOpArg(opArg8)
-  opMap8Cardinality = set%setPtr%size * getMapDimFromOpArg(opArg8)
-  opDat9Cardinality = opArg9%dim * getSetSizeFromOpArg(opArg9)
-  opMap9Cardinality = set%setPtr%size * getMapDimFromOpArg(opArg9)
   opDat1Cardinality = opArg1%dim * getSetSizeFromOpArg(opArg1)
   opDat2Cardinality = opArg2%dim * getSetSizeFromOpArg(opArg2)
   opDat3Cardinality = opArg3%dim * getSetSizeFromOpArg(opArg3)
@@ -581,12 +492,11 @@ attributes (host) SUBROUTINE getdt_cfl_host_gpu( userSubroutine, set, &
   opDat5Cardinality = opArg5%dim * getSetSizeFromOpArg(opArg5)
   opDat6Cardinality = opArg6%dim * getSetSizeFromOpArg(opArg6)
   opDat7Cardinality = opArg7%dim * getSetSizeFromOpArg(opArg7)
+  opDat8Cardinality = opArg8%dim * getSetSizeFromOpArg(opArg8)
+  opDat9Cardinality = opArg9%dim
+  opDat10Cardinality = opArg10%dim
 
 
-  CALL c_f_pointer(opArg8%data_d,opDat8Devicegetdt_cfl,(/opDat8Cardinality/))
-  CALL c_f_pointer(opArg8%map_data_d,opMap8Devicegetdt_cfl,(/opMap8Cardinality/))
-  CALL c_f_pointer(opArg9%data_d,opDat9Devicegetdt_cfl,(/opDat9Cardinality/))
-  CALL c_f_pointer(opArg9%map_data_d,opMap9Devicegetdt_cfl,(/opMap9Cardinality/))
   CALL c_f_pointer(opArg1%data_d,opDat1Devicegetdt_cfl,(/opDat1Cardinality/))
   CALL c_f_pointer(opArg2%data_d,opDat2Devicegetdt_cfl,(/opDat2Cardinality/))
   CALL c_f_pointer(opArg3%data_d,opDat3Devicegetdt_cfl,(/opDat3Cardinality/))
@@ -594,51 +504,29 @@ attributes (host) SUBROUTINE getdt_cfl_host_gpu( userSubroutine, set, &
   CALL c_f_pointer(opArg5%data_d,opDat5Devicegetdt_cfl,(/opDat5Cardinality/))
   CALL c_f_pointer(opArg6%data_d,opDat6Devicegetdt_cfl,(/opDat6Cardinality/))
   CALL c_f_pointer(opArg7%data_d,opDat7Devicegetdt_cfl,(/opDat7Cardinality/))
+  CALL c_f_pointer(opArg8%data_d,opDat8Devicegetdt_cfl,(/opDat8Cardinality/))
+  CALL c_f_pointer(opArg9%data,opDat9Host,(/opDat9Cardinality/))
+  CALL c_f_pointer(opArg10%data,opDat10Host,(/opDat10Cardinality/))
 
-  CALL c_f_pointer(planRet_getdt_cfl,actualPlan_getdt_cfl)
-  CALL c_f_pointer(actualPlan_getdt_cfl%ncolblk,ncolblk,(/set%setPtr%size/))
-  pblkMapSize = actualPlan_getdt_cfl%nblocks
-  CALL c_f_pointer(actualPlan_getdt_cfl%blkmap_d,pblkMap,(/pblkMapSize/))
-  poffsetSize = actualPlan_getdt_cfl%nblocks
-  CALL c_f_pointer(actualPlan_getdt_cfl%offset_d,poffset,(/poffsetSize/))
-  pnelemsSize = actualPlan_getdt_cfl%nblocks
-  CALL c_f_pointer(actualPlan_getdt_cfl%nelems_d,pnelems,(/pnelemsSize/))
-  pnthrcolSize = actualPlan_getdt_cfl%nblocks
-  CALL c_f_pointer(actualPlan_getdt_cfl%nthrcol,pnthrcol,(/pnthrcolSize/))
-  pthrcolSize = set%setPtr%size
-  CALL c_f_pointer(actualPlan_getdt_cfl%thrcol,pthrcol,(/pthrcolSize/))
+  IF (.not. allocated(opGblDat9Devicegetdt_cfl)) THEN
+    allocate(opGblDat9Devicegetdt_cfl(opArg9%dim))
+  END IF
+  opGblDat9Devicegetdt_cfl(1:opArg9%dim) = opDat9Host(1:opArg9%dim)
+  IF (.not. allocated(opGblDat10Devicegetdt_cfl)) THEN
+    allocate(opGblDat10Devicegetdt_cfl(opArg10%dim))
+  END IF
+  opGblDat10Devicegetdt_cfl(1:opArg10%dim) = opDat10Host(1:opArg10%dim)
 
-
-  blockOffset = 0
-
-  threadsPerBlock = getBlockSize(userSubroutine//C_NULL_CHAR,set%setPtr%size)
-  DO i2 = 0, actualPlan_getdt_cfl%ncolors - 1, 1
-    IF (i2 .EQ. actualPlan_getdt_cfl%ncolors_core) THEN
-      CALL op_mpi_wait_all_cuda(numberOfOpDats,opArgArray)
-    END IF
-
-    blocksPerGrid = ncolblk(i2 + 1)
-    dynamicSharedMemorySize = reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock
-
-    CALL op_cuda_getdt_cfl <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>> (&
-    & getSetSizeFromOpArg(opArg6), &
-    & opDat8Devicegetdt_cfl, &
-    & opDat9Devicegetdt_cfl, &
-    & opMap8Devicegetdt_cfl, &
-    & opDat1Devicegetdt_cfl, &
-    & opDat2Devicegetdt_cfl, &
-    & opDat3Devicegetdt_cfl, &
-    & opDat4Devicegetdt_cfl, &
-    & opDat5Devicegetdt_cfl, &
-    & opDat6Devicegetdt_cfl, &
-    & opDat7Devicegetdt_cfl, &
-    & pblkMap, &
-    & poffset,pnelems,pnthrcol,pthrcol, &
-    & set%setPtr%size+set%setPtr%exec_size, blockOffset)
-
-    blockOffset = blockOffset + blocksPerGrid
-  END DO
-
+  CALL op_cuda_getdt_cfl <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>>( &
+  & opDat1Devicegetdt_cfl, &
+  & opDat2Devicegetdt_cfl, &
+  & opDat3Devicegetdt_cfl, &
+  & opDat4Devicegetdt_cfl, &
+  & opDat5Devicegetdt_cfl, &
+  & opDat6Devicegetdt_cfl, &
+  & opDat7Devicegetdt_cfl, &
+  & opDat8Devicegetdt_cfl, &
+  set%setPtr%size)
 
   IF ((n_upper .EQ. 0) .OR. (n_upper .EQ. set%setPtr%core_size)) THEN
     CALL op_mpi_wait_all_cuda(numberOfOpDats,opArgArray)
@@ -650,8 +538,19 @@ attributes (host) SUBROUTINE getdt_cfl_host_gpu( userSubroutine, set, &
   istat = cudaDeviceSynchronize()
   call op_timers_core(endTime)
 
+  dataTransfer = 0.0
+  dataTransfer = dataTransfer + opArg1%size * getSetSizeFromOpArg(opArg1)
+  dataTransfer = dataTransfer + opArg2%size * getSetSizeFromOpArg(opArg2)
+  dataTransfer = dataTransfer + opArg3%size * getSetSizeFromOpArg(opArg3)
+  dataTransfer = dataTransfer + opArg4%size * getSetSizeFromOpArg(opArg4)
+  dataTransfer = dataTransfer + opArg5%size * getSetSizeFromOpArg(opArg5)
+  dataTransfer = dataTransfer + opArg6%size * getSetSizeFromOpArg(opArg6)
+  dataTransfer = dataTransfer + opArg7%size * getSetSizeFromOpArg(opArg7)
+  dataTransfer = dataTransfer + opArg8%size * getSetSizeFromOpArg(opArg8)
+  dataTransfer = dataTransfer + opArg9%size
+  dataTransfer = dataTransfer + opArg10%size
   returnSetKernelTiming = setKernelTime(41 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, actualPlan_getdt_cfl%transfer,actualPlan_getdt_cfl%transfer2, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
   calledTimes = calledTimes + 1
 END SUBROUTINE
 

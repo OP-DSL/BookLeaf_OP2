@@ -18,10 +18,11 @@ CONTAINS
 SUBROUTINE getdt_mindt_reg(elidx,ielreg,idx,reg)
     USE kinds_mod,ONLY: rlk,ink
     implicit none
-    INTEGER(KIND=ink), INTENT(IN) :: elidx,ielreg,idx
+    INTEGER(KIND=ink), INTENT(IN) :: elidx,ielreg
+    INTEGER(KIND=ink) :: idx
     INTEGER(KIND=ink), INTENT(INOUT) :: reg
     IF (idx.EQ.elidx) then
-      reg = ielreg
+      reg = ielreg+1
     ENDIF
   END SUBROUTINE getdt_mindt_reg
 
@@ -99,7 +100,7 @@ opArgArray(3) = opArg3
 opArgArray(4) = opArg4
 
 returnSetKernelTiming = setKernelTime(48 , userSubroutine//C_NULL_CHAR, &
-& 0.d0, 0.00000,0.00000, 0)
+& 0.d0, 0.00000_4,0.00000_4, 0)
 call op_timers_core(startTime)
 
 n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -159,6 +160,6 @@ n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
   dataTransfer = dataTransfer + opArg3%size
   dataTransfer = dataTransfer + opArg4%size * 2.d0
   returnSetKernelTiming = setKernelTime(48 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, dataTransfer, 0.00000, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
 END SUBROUTINE
 END MODULE

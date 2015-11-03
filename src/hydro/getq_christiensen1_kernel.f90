@@ -335,7 +335,7 @@ opArgArray(22) = opArg22
 opArgArray(23) = opArg23
 
 returnSetKernelTiming = setKernelTime(24 , userSubroutine//C_NULL_CHAR, &
-& 0.d0, 0.00000,0.00000, 0)
+& 0.d0, 0.00000_4,0.00000_4, 0)
 call op_timers_core(startTime)
 
 n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)

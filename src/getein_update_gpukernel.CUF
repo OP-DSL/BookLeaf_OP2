@@ -21,7 +21,6 @@ USE CUDACONFIGURATIONPARAMS
 
 
 
-#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -64,10 +63,10 @@ attributes (device) subroutine getein_update_gpu(elfx,elfy,elu,elv,elmass,ein,ei
 
     REAL(KIND=rlk) :: w1
 
-    w1=OP2_SOA(elfx,1, elements_stride_OP2)*OP2_SOA(elu,1, elements_stride_OP2)+OP2_SOA(elfy,1, elements_stride_OP2)*OP2_SOA(elv,1, elements_stride_OP2)+                 &
-&   OP2_SOA(elfx,2, elements_stride_OP2)*OP2_SOA(elu,2, elements_stride_OP2)+OP2_SOA(elfy,2, elements_stride_OP2)*OP2_SOA(elv,2, elements_stride_OP2)+                 &
-&   OP2_SOA(elfx,3, elements_stride_OP2)*OP2_SOA(elu,3, elements_stride_OP2)+OP2_SOA(elfy,3, elements_stride_OP2)*OP2_SOA(elv,3, elements_stride_OP2)+                 &
-&   OP2_SOA(elfx,4, elements_stride_OP2)*OP2_SOA(elu,4, elements_stride_OP2)+OP2_SOA(elfy,4, elements_stride_OP2)*OP2_SOA(elv,4, elements_stride_OP2)
+    w1=elfx(1)*elu(1)+elfy(1)*elv(1)+                 &
+&   elfx(2)*elu(2)+elfy(2)*elv(2)+                 &
+&   elfx(3)*elu(3)+elfy(3)*elv(3)+                 &
+&   elfx(4)*elu(4)+elfy(4)*elv(4)
       !# Missing code here that can't be merged
     w1=-w1/MAX(elmass,zerocut_OP2)
     ein_out=ein+w1*dt
@@ -77,7 +76,6 @@ attributes (device) subroutine getein_update_gpu(elfx,elfy,elu,elv,elmass,ein,ei
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_getein_update( &
-  &  soa_stride,      &
   & opDat1Devicegetein_update, &
   & opDat2Devicegetein_update, &
   & opDat3Devicegetein_update, &
@@ -101,7 +99,6 @@ attributes (global) SUBROUTINE op_cuda_getein_update( &
 
   real(8), VALUE :: opGblDat8Devicegetein_update
 
-  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
 
@@ -111,10 +108,10 @@ attributes (global) SUBROUTINE op_cuda_getein_update( &
 ! kernel call
 
     CALL getein_update_gpu( &
-    & opDat1Devicegetein_update(1 + i1), &
-    & opDat2Devicegetein_update(1 + i1), &
-    & opDat3Devicegetein_update(1 + i1), &
-    & opDat4Devicegetein_update(1 + i1), &
+    & opDat1Devicegetein_update(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat2Devicegetein_update(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat3Devicegetein_update(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat4Devicegetein_update(i1 * (4) + 1: i1 * (4) + 4), &
     & opDat5Devicegetein_update(i1 + 1), &
     & opDat6Devicegetein_update(i1 + 1), &
     & opDat7Devicegetein_update(i1 + 1), &
@@ -271,7 +268,6 @@ attributes (host) SUBROUTINE getein_update_host_gpu( userSubroutine, set, &
 
 
   CALL op_cuda_getein_update <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>>( &
-  & getSetSizeFromOpArg(opArg1), &
   & opDat1Devicegetein_update, &
   & opDat2Devicegetein_update, &
   & opDat3Devicegetein_update, &

@@ -21,7 +21,6 @@ USE CUDACONFIGURATIONPARAMS
 
 
 
-#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -69,29 +68,28 @@ attributes (device) subroutine getq_gradcon_gpu(du,dv,dx,dy,elu,elv,elx,ely)
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(IN) :: elu,elv,elx,ely
 
 
-    OP2_SOA(du,1, elements_stride_OP2)=OP2_SOA(elu,2, elements_stride_OP2)-OP2_SOA(elu,1, elements_stride_OP2)
-    OP2_SOA(du,2, elements_stride_OP2)=OP2_SOA(elu,3, elements_stride_OP2)-OP2_SOA(elu,2, elements_stride_OP2)
-    OP2_SOA(du,3, elements_stride_OP2)=OP2_SOA(elu,4, elements_stride_OP2)-OP2_SOA(elu,3, elements_stride_OP2)
-    OP2_SOA(du,4, elements_stride_OP2)=OP2_SOA(elu,1, elements_stride_OP2)-OP2_SOA(elu,4, elements_stride_OP2)
-    OP2_SOA(dv,1, elements_stride_OP2)=OP2_SOA(elv,2, elements_stride_OP2)-OP2_SOA(elv,1, elements_stride_OP2)
-    OP2_SOA(dv,2, elements_stride_OP2)=OP2_SOA(elv,3, elements_stride_OP2)-OP2_SOA(elv,2, elements_stride_OP2)
-    OP2_SOA(dv,3, elements_stride_OP2)=OP2_SOA(elv,4, elements_stride_OP2)-OP2_SOA(elv,3, elements_stride_OP2)
-    OP2_SOA(dv,4, elements_stride_OP2)=OP2_SOA(elv,1, elements_stride_OP2)-OP2_SOA(elv,4, elements_stride_OP2)
-    OP2_SOA(dx,1, elements_stride_OP2)=OP2_SOA(elx,2, elements_stride_OP2)-OP2_SOA(elx,1, elements_stride_OP2)
-    OP2_SOA(dx,2, elements_stride_OP2)=OP2_SOA(elx,3, elements_stride_OP2)-OP2_SOA(elx,2, elements_stride_OP2)
-    OP2_SOA(dx,3, elements_stride_OP2)=OP2_SOA(elx,4, elements_stride_OP2)-OP2_SOA(elx,3, elements_stride_OP2)
-    OP2_SOA(dx,4, elements_stride_OP2)=OP2_SOA(elx,1, elements_stride_OP2)-OP2_SOA(elx,4, elements_stride_OP2)
-    OP2_SOA(dy,1, elements_stride_OP2)=OP2_SOA(ely,2, elements_stride_OP2)-OP2_SOA(ely,1, elements_stride_OP2)
-    OP2_SOA(dy,2, elements_stride_OP2)=OP2_SOA(ely,3, elements_stride_OP2)-OP2_SOA(ely,2, elements_stride_OP2)
-    OP2_SOA(dy,3, elements_stride_OP2)=OP2_SOA(ely,4, elements_stride_OP2)-OP2_SOA(ely,3, elements_stride_OP2)
-    OP2_SOA(dy,4, elements_stride_OP2)=OP2_SOA(ely,1, elements_stride_OP2)-OP2_SOA(ely,4, elements_stride_OP2)
+    du(1)=elu(2)-elu(1)
+    du(2)=elu(3)-elu(2)
+    du(3)=elu(4)-elu(3)
+    du(4)=elu(1)-elu(4)
+    dv(1)=elv(2)-elv(1)
+    dv(2)=elv(3)-elv(2)
+    dv(3)=elv(4)-elv(3)
+    dv(4)=elv(1)-elv(4)
+    dx(1)=elx(2)-elx(1)
+    dx(2)=elx(3)-elx(2)
+    dx(3)=elx(4)-elx(3)
+    dx(4)=elx(1)-elx(4)
+    dy(1)=ely(2)-ely(1)
+    dy(2)=ely(3)-ely(2)
+    dy(3)=ely(4)-ely(3)
+    dy(4)=ely(1)-ely(4)
 
   END SUBROUTINE getq_gradcon_gpu
 
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_getq_gradcon( &
-  &  soa_stride,      &
   & opDat1Devicegetq_gradcon, &
   & opDat2Devicegetq_gradcon, &
   & opDat3Devicegetq_gradcon, &
@@ -115,7 +113,6 @@ attributes (global) SUBROUTINE op_cuda_getq_gradcon( &
   real(8), DEVICE, INTENT(IN) :: opDat8Devicegetq_gradcon(*)
 
 
-  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
 
@@ -125,14 +122,14 @@ attributes (global) SUBROUTINE op_cuda_getq_gradcon( &
 ! kernel call
 
     CALL getq_gradcon_gpu( &
-    & opDat1Devicegetq_gradcon(1 + i1), &
-    & opDat2Devicegetq_gradcon(1 + i1), &
-    & opDat3Devicegetq_gradcon(1 + i1), &
-    & opDat4Devicegetq_gradcon(1 + i1), &
-    & opDat5Devicegetq_gradcon(1 + i1), &
-    & opDat6Devicegetq_gradcon(1 + i1), &
-    & opDat7Devicegetq_gradcon(1 + i1), &
-    & opDat8Devicegetq_gradcon(1 + i1) &
+    & opDat1Devicegetq_gradcon(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat2Devicegetq_gradcon(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat3Devicegetq_gradcon(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat4Devicegetq_gradcon(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat5Devicegetq_gradcon(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat6Devicegetq_gradcon(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat7Devicegetq_gradcon(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat8Devicegetq_gradcon(i1 * (4) + 1: i1 * (4) + 4) &
     & )
   END DO
 
@@ -285,7 +282,6 @@ attributes (host) SUBROUTINE getq_gradcon_host_gpu( userSubroutine, set, &
 
 
   CALL op_cuda_getq_gradcon <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>>( &
-  & getSetSizeFromOpArg(opArg1), &
   & opDat1Devicegetq_gradcon, &
   & opDat2Devicegetq_gradcon, &
   & opDat3Devicegetq_gradcon, &

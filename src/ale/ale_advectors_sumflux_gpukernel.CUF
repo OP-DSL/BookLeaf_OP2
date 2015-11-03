@@ -22,7 +22,6 @@ USE CUDACONFIGURATIONPARAMS
 
 TYPE ( c_ptr )  :: planRet_ale_advectors_sumflux
 
-#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -76,27 +75,26 @@ attributes (device) subroutine ale_advectors_sumflux_gpu(rFlux,rFlux1,rFlux2,rFl
     REAL(KIND=rlk) :: w1,w2
 
     i2 = i1+2_ink
-    iE1=OP2_SOA(iElEl,i1, elements_stride_OP2)
-    iE2=OP2_SOA(iElEl,i2, elements_stride_OP2)
-    j1=OP2_SOA(iElSd,i1, elements_stride_OP2)
-    j2=OP2_SOA(iElSd,i2, elements_stride_OP2)
+    iE1=iElEl(i1)
+    iE2=iElEl(i2)
+    j1=iElSd(i1)
+    j2=iElSd(i2)
     IF (i1.EQ.1_ink) THEN
-      w1=OP2_SOA(rFlux1,j1, elements_stride_OP2)
-      w2=OP2_SOA(rFlux3,j2, elements_stride_OP2)
+      w1=rFlux1(j1)
+      w2=rFlux3(j2)
     ELSEIF (i1.EQ.2_ink) THEN
-      w1=OP2_SOA(rFlux2,j1, elements_stride_OP2)
-      w2=OP2_SOA(rFlux4,j2, elements_stride_OP2)
+      w1=rFlux2(j1)
+      w2=rFlux4(j2)
     ENDIF
 
     IF (iE1.EQ.iEl) w1=0.0_rlk
     IF (iE2.EQ.iEl) w2=0.0_rlk
-    rTotFlux=rTotFlux-OP2_SOA(rFlux,i1, elements_stride_OP2)-OP2_SOA(rFlux,i2, elements_stride_OP2)+w1+w2
+    rTotFlux=rTotFlux-rFlux(i1)-rFlux(i2)+w1+w2
   END SUBROUTINE ale_advectors_sumflux_gpu
 
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_ale_advectors_sumflux( &
-  &  soa_stride,      &
   & opDat2Deviceale_advectors_sumflux, &
   & opDat2Map, &
   & opDat1Deviceale_advectors_sumflux, &
@@ -127,7 +125,6 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_sumflux( &
   integer(4), VALUE :: opGblDat10Deviceale_advectors_sumflux
   INTEGER(kind=4) map2idx, map3idx, map4idx, map5idx
 
-  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pblkMap
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: poffset
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pnelems
@@ -173,14 +170,14 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_sumflux( &
 
 ! kernel call
       CALL ale_advectors_sumflux_gpu( &
-      & opDat1Deviceale_advectors_sumflux(1 + (i3 + threadBlockOffset)), &
-      & opDat2Deviceale_advectors_sumflux(1 + map2idx), &
-      & opDat2Deviceale_advectors_sumflux(1 + map3idx), &
-      & opDat2Deviceale_advectors_sumflux(1 + map4idx), &
-      & opDat2Deviceale_advectors_sumflux(1 + map5idx), &
+      & opDat1Deviceale_advectors_sumflux((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+      & opDat2Deviceale_advectors_sumflux(1 + map2idx * (4):     map2idx * (4) + 4), &
+      & opDat2Deviceale_advectors_sumflux(1 + map3idx * (4):     map3idx * (4) + 4), &
+      & opDat2Deviceale_advectors_sumflux(1 + map4idx * (4):     map4idx * (4) + 4), &
+      & opDat2Deviceale_advectors_sumflux(1 + map5idx * (4):     map5idx * (4) + 4), &
       & opDat6Deviceale_advectors_sumflux((i3 + threadBlockOffset) * (1) +1), &
-      & opDat7Deviceale_advectors_sumflux(1 + (i3 + threadBlockOffset)), &
-      & opDat8Deviceale_advectors_sumflux(1 + (i3 + threadBlockOffset)), &
+      & opDat7Deviceale_advectors_sumflux((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+      & opDat8Deviceale_advectors_sumflux((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
       & opDat9Deviceale_advectors_sumflux((i3 + threadBlockOffset) * (1) +1), &
       & opGblDat10Deviceale_advectors_sumflux &
       & )
@@ -417,7 +414,6 @@ attributes (host) SUBROUTINE ale_advectors_sumflux_host_gpu( userSubroutine, set
     dynamicSharedMemorySize = reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock
 
     CALL op_cuda_ale_advectors_sumflux <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>> (&
-    & getSetSizeFromOpArg(opArg1), &
     & opDat2Deviceale_advectors_sumflux, &
     & opMap2Deviceale_advectors_sumflux, &
     & opDat1Deviceale_advectors_sumflux, &

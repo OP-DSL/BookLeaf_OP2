@@ -269,12 +269,12 @@ MODULE op2_bookleaf
   ! Let's declare OP2 stuff
   call op_decl_set_hdf5(s_nodes,fileName,'nodes')
   call op_decl_set_hdf5(s_elements,fileName,'elements')
-  call op_decl_set_hdf5(s_reg,fileName,'reg')
+!  call op_decl_set_hdf5(s_reg,fileName,'reg')
 
   call op_decl_map_hdf5(s_elements,s_nodes,nshape,m_el2node,fileName,'el2node',status)
   call op_decl_map_hdf5(s_elements,s_elements,nshape,m_el2el,fileName,'el2el',status)
 !   call op_decl_map_hdf5(s_elements,s_mat,1,ielmat2,m_el2mat,'el2mat')
-  call op_decl_map_hdf5(s_elements,s_reg,1,m_el2reg,fileName,'el2reg',status)
+!  call op_decl_map_hdf5(s_elements,s_reg,1,m_el2reg,fileName,'el2reg',status)
 
 
   call op_decl_dat_hdf5(s_elements,1,d_rho,'real(8)',fileName,'rho',status)
@@ -331,8 +331,8 @@ MODULE op2_bookleaf
   call op_decl_dat_hdf5(s_nodes,1,d_rscratch115,'real(8)',fileName,'rscratch115',status)
   ENDIF
 
-  call op_decl_dat_hdf5(s_reg,1,d_zdtnotreg,'integer(4)',fileName,'d_zdtnotreg',status)
-  call op_decl_dat_hdf5(s_reg,1,d_zmidlength,'integer(4)',fileName,'d_zmidlength',status)
+!  call op_decl_dat_hdf5(s_reg,1,d_zdtnotreg,'integer(4)',fileName,'d_zdtnotreg',status)
+!  call op_decl_dat_hdf5(s_reg,1,d_zmidlength,'integer(4)',fileName,'d_zmidlength',status)
 
   call op_decl_dat_hdf5(s_elements,4,d_rscratch21,'real(8)',fileName,'rscratch21',status)
   call op_decl_dat_hdf5(s_elements,4,d_rscratch22,'real(8)',fileName,'rscratch22',status)

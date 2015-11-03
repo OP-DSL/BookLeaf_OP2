@@ -41,6 +41,7 @@ CONTAINS
     USE scratch_mod,     ONLY: rscratch11,elu=>rscratch21,elv=>rscratch22
     USE geometry_mod,    ONLY: dlm,dln
     USE error_mod,       ONLY: halt
+    USE parameters_mod,ONLY: LI
 
     USE utilities_mod,   ONLY: gather,gather2
     USE timing_mod,      ONLY: bookleaf_times, get_time
@@ -84,9 +85,12 @@ CONTAINS
                      & op_arg_dat(d_qq,-1,OP_ID,1,'real(8)',OP_READ),  &
                      & op_arg_dat(d_elx,-1,OP_ID,4,'real(8)',OP_READ),  &
                      & op_arg_dat(d_ely,-1,OP_ID,4,'real(8)',OP_READ),  &
-                     & op_arg_dat(d_zdtnotreg,1,m_el2reg,1,'integer(4)',OP_READ),  &
-                     & op_arg_dat(d_zmidlength,1,m_el2reg,1,'integer(4)',OP_READ))
+                     & op_arg_dat(d_ielreg,-1,OP_ID,1,'integer(4)',OP_READ),  &
+                     & op_arg_gbl(zdtnotreg,LI,'integer(4)',OP_READ),  &
+                     & op_arg_gbl(zmidlength,LI,'integer(4)',OP_READ))
 
+!&           op_arg_dat(d_zdtnotreg,1,m_el2reg,1,'integer(4)',OP_READ), &
+!&           op_arg_dat(d_zmidlength,1,m_el2reg,1,'integer(4)',OP_READ))
 
 
     ii=nel+1_ink

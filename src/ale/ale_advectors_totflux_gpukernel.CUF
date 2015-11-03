@@ -22,7 +22,6 @@ USE CUDACONFIGURATIONPARAMS
 
 TYPE ( c_ptr )  :: planRet_ale_advectors_totflux
 
-#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -52,17 +51,16 @@ attributes (device) subroutine ale_advectors_totflux_gpu(rFlux,rTotFlux1,rTotFlu
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(IN) :: rFlux
     REAL(KIND=rlk), INTENT(INOUT) :: rTotFlux1,rTotFlux2,rTotFlux3,rTotFlux4
 
-    rTotFlux1 = rTotFlux1 + OP2_SOA(rFlux,1, elements_stride_OP2)
-    rTotFlux2 = rTotFlux2 + OP2_SOA(rFlux,2, elements_stride_OP2)
-    rTotFlux3 = rTotFlux3 + OP2_SOA(rFlux,3, elements_stride_OP2)
-    rTotFlux4 = rTotFlux4 + OP2_SOA(rFlux,4, elements_stride_OP2)
+    rTotFlux1 = rTotFlux1 + rFlux(1)
+    rTotFlux2 = rTotFlux2 + rFlux(2)
+    rTotFlux3 = rTotFlux3 + rFlux(3)
+    rTotFlux4 = rTotFlux4 + rFlux(4)
 
   END SUBROUTINE ale_advectors_totflux_gpu
 
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_ale_advectors_totflux( &
-  &  soa_stride,      &
   & opDat2Deviceale_advectors_totflux, &
   & opDat2Map, &
   & opDat1Deviceale_advectors_totflux, &
@@ -83,7 +81,6 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_totflux( &
 
   INTEGER(kind=4) map2idx, map3idx, map4idx, map5idx
 
-  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pblkMap
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: poffset
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pnelems
@@ -138,7 +135,7 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_totflux( &
 
 ! kernel call
       CALL ale_advectors_totflux_gpu( &
-      & opDat1Deviceale_advectors_totflux(1 + (i3 + threadBlockOffset)), &
+      & opDat1Deviceale_advectors_totflux((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
       & opDat2Local, &
       & opDat3Local, &
       & opDat4Local, &
@@ -342,7 +339,6 @@ attributes (host) SUBROUTINE ale_advectors_totflux_host_gpu( userSubroutine, set
     dynamicSharedMemorySize = reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock
 
     CALL op_cuda_ale_advectors_totflux <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>> (&
-    & getSetSizeFromOpArg(opArg1), &
     & opDat2Deviceale_advectors_totflux, &
     & opMap2Deviceale_advectors_totflux, &
     & opDat1Deviceale_advectors_totflux, &

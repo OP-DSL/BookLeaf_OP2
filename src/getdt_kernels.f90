@@ -22,32 +22,33 @@ MODULE getdt_kernels
 
   CONTAINS
 
-  SUBROUTINE getdt_cfl(rscratch11,rscratch12,rho,csqrd,qq,elx,ely,zdtnotreg,zmidlength)
+  SUBROUTINE getdt_cfl(rscratch11,rscratch12,rho,csqrd,qq,elx,ely,ielreg,zdtnotreg,zmidlength)
 
     USE kinds_mod,ONLY: rlk,ink
 !    USE geometry_mod,    ONLY: dlm,dln
     USE reals_mod,       ONLY: ccut,zcut,dt_max
-    USE parameters_mod,ONLY: N_SHAPE
+    USE parameters_mod,ONLY: N_SHAPE,LI
 
     implicit none
 
     REAL(KIND=rlk), DIMENSION(4), INTENT(IN) :: elx,ely
     REAL(KIND=rlk), INTENT(IN) :: rho,csqrd,qq
     REAL(KIND=rlk), INTENT(OUT) :: rscratch11,rscratch12
-    INTEGER(KIND=ink), INTENT(IN) :: zdtnotreg,zmidlength !need to inline this
+    INTEGER(KIND=ink), DIMENSION(LI) :: zdtnotreg,zmidlength !need to inline this
+    INTEGER(KIND=ink) :: ielreg
 
     REAL(KIND=rlk) :: w1,w2,w3
     !For dlm and dln
     REAL(KIND=rlk)                              :: x1,x2,y1,y2
     REAL(KIND=rlk),DIMENSION(N_SHAPE)            :: res
 
-    IF (zdtnotreg) THEN
+    IF (zdtnotreg(ielreg+1)) THEN
       rscratch11=dt_max
       rscratch12=TINY(1.0_rlk)
     ELSE
       w1=MAX(rho,zcut)
       w2=MAX(ccut,csqrd)+2.0_rlk*qq/w1
-      IF (zmidlength) THEN
+      IF (zmidlength(ielreg+1)) THEN
         x1=elx(1)+elx(2)
         x2=elx(3)+elx(4)
         y1=ely(1)+ely(2)
@@ -271,10 +272,11 @@ MODULE getdt_kernels
   SUBROUTINE getdt_mindt_reg(elidx,ielreg,idx,reg)
     USE kinds_mod,ONLY: rlk,ink
     implicit none
-    INTEGER(KIND=ink), INTENT(IN) :: elidx,ielreg,idx
+    INTEGER(KIND=ink), INTENT(IN) :: elidx,ielreg
+    INTEGER(KIND=ink) :: idx
     INTEGER(KIND=ink), INTENT(INOUT) :: reg
     IF (idx.EQ.elidx) then
-      reg = ielreg
+      reg = ielreg+1
     ENDIF
   END SUBROUTINE getdt_mindt_reg
 END MODULE getdt_kernels
