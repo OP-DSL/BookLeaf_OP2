@@ -29,29 +29,26 @@ OBJ += gethg.o       \
        getsp_kernels.o \
        getsp.o
 else
-OBJ += gethg_op.o       \
+OBJ += gethg.o       \
        getq_op.o        \
-       getsp_op.o
+       getsp.o
 ifeq ($(OPTARGET),genseq)
-OBJ += $(shell find . -maxdepth 1 -name "*_seqkernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
+OBJ += $(shell cd hydro; find . -maxdepth 1 -name "*_seqkernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' '; cd ..)
 endif
 ifeq ($(OPTARGET),openmp)
-OBJ =
-OBJ += $(shell find . -maxdepth 1 -name "*_kernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
+OBJ += $(shell cd hydro; find . -maxdepth 1 -name "*_kernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' '; cd ..)
 endif
 ifeq ($(OPTARGET),cuda)
-OBJ += $(shell find . -maxdepth 1 -name "*_gpukernel.CUF" | sed s/\\.CUF/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
+OBJ += $(shell cd hydro; find . -maxdepth 1 -name "*_gpukernel.CUF" | sed s/\\.CUF/\\.o/g | sed s/\\.\\///g | tr "\n" ' '; cd ..)
 endif
 ifeq ($(OPTARGET),mpi)
-OBJ =
-OBJ += $(shell find . -maxdepth 1 -name "*_seqkernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
+OBJ += $(shell cd hydro; find . -maxdepth 1 -name "*_seqkernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' '; cd ..)
 endif
 ifeq ($(OPTARGET),mpi_openmp)
-OBJ =
-OBJ += $(shell find . -maxdepth 1 -name "*_kernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
+OBJ += $(shell cd hydro; find . -maxdepth 1 -name "*_kernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' '; cd ..)
 endif
 ifeq ($(OPTARGET),mpi_cuda)
-OBJ += $(shell find . -maxdepth 1 -name "*_gpukernel.CUF" | sed s/\\.CUF/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
+OBJ += $(shell cd hydro; find . -maxdepth 1 -name "*_gpukernel.CUF" | sed s/\\.CUF/\\.o/g | sed s/\\.\\///g | tr "\n" ' '; cd ..)
 endif
 endif
 endif

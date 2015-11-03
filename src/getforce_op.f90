@@ -81,16 +81,16 @@ CONTAINS
                      & op_arg_dat(d_qy,-1,OP_ID,4,'real(8)',OP_READ))
 
 
-
-    ! Subzonal pressure force
-!    IF (zsp) CALL getsp(nshape,nel,rho,elx,ely,elfx,elfy)
+!//TODO enable this section
+!     ! Subzonal pressure force
+!     IF (zsp) CALL getsp(nshape,nel,rho,elx,ely,elfx,elfy)
 
 !     !# Missing code here that can't be merged
-!     IF (zflag) THEN
-!       !# Missing code here that can't be merged
-!       ! Anti-hourglass force
-!       IF (zhg) CALL gethg(nshape,nel,dt,rho,elu,elv,elfx,elfy)
-!     ENDIF
+!      IF (zflag) THEN
+!        !# Missing code here that can't be merged
+!        ! Anti-hourglass force
+!        IF (zhg) CALL gethg(nshape,nel,dt,rho,elu,elv,elfx,elfy)
+!      ENDIF
 
     ! Timing data
     t1=get_time()

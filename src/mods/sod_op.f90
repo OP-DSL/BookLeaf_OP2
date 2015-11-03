@@ -24,7 +24,7 @@
 SUBROUTINE modify()
 
   USE kinds_mod,   ONLY: ink,rlk
-  USE pointers_mod,ONLY: ndx,ndy,ielmat,ielnod,rho,pre,ein,elvol,cnwt,  &
+  USE pointers_mod,ONLY: ndx,ndy,ielmat,ielnd,rho,pre,ein,elvol,cnwt,  &
 &                        elmass,cnmass,spmass
   USE integers_mod,ONLY: nel,nnod
   USE reals_mod,   ONLY: eos_param

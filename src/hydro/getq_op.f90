@@ -44,7 +44,7 @@ CONTAINS
   use GETQ_CHRISTIENSEN_LIMITER_MODULE
   use GETQ_CHRISTIENSEN_Q_MODULE
      USE op2_bookleaf, ONLY: m_el2node,m_el2el,s_elements, &
-&                           d_qq,d_qx,d_qy,d_csqrd,d_ielsd,d_indtype,d_ielel
+&                           d_qq,d_qx,d_qy,d_csqrd,d_ielsd,d_indtype,d_ielel,d_elidx
     ! USE common_kernels, ONLY:set_zero1,set_zero4
     ! USE USE getq_kernels
 
@@ -87,6 +87,7 @@ CONTAINS
                      & op_arg_dat(d_elx,-1,OP_ID,4,'real(8)',OP_READ),  &
                      & op_arg_dat(d_ely,-1,OP_ID,4,'real(8)',OP_READ))
 
+
         DO iside=1,nshape/2_ink
 
     ! Christiensen monotonic limit
@@ -122,6 +123,7 @@ CONTAINS
                        & "getq_christiensen_bc",s_elements,  &
                        & op_arg_dat(d_ielel,-1,OP_ID,4,'integer(4)',OP_READ),  &
                        & op_arg_dat(d_scratch,-1,OP_ID,4,'real(8)',OP_WRITE),  &
+                       & op_arg_dat(d_elidx,-1,OP_ID,1,'integer(4)',OP_READ),  &
                        & op_arg_dat(d_indtype,1,m_el2node,1,'integer(4)',OP_READ),  &
                        & op_arg_dat(d_indtype,2,m_el2node,1,'integer(4)',OP_READ),  &
                        & op_arg_dat(d_indtype,3,m_el2node,1,'integer(4)',OP_READ),  &

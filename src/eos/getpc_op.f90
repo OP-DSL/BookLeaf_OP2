@@ -28,7 +28,7 @@ MODULE getpc_mod
 
 CONTAINS
 
-  SUBROUTINE getpc(d_rho,d_ein,d_pre,d_csqrd)
+  SUBROUTINE getpc(d_rho,d_ein,d_pre,d_csqrd,timer)
 
     USE kinds_mod,    ONLY: ink,rlk
     USE eos_mod,      ONLY: getpre,getcc
@@ -47,6 +47,7 @@ CONTAINS
 
     ! Argument list
     type(op_dat), INTENT(INOUT) :: d_rho,d_ein,d_pre,d_csqrd
+    REAL(KIND=rlk),                  INTENT(INOUT) :: timer
     ! Local
     REAL(KIND=rlk)                               :: t0,t1
 
@@ -77,7 +78,7 @@ CONTAINS
     ! Timing data
     t1=get_time()
     t1=t1-t0
-    bookleaf_times%time_in_eos=bookleaf_times%time_in_eos+t1
+    timer=timer+t1
 
   END SUBROUTINE getpc
 

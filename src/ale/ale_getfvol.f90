@@ -19,7 +19,7 @@
 MODULE ale_getfvol_mod
 
   USE kinds_mod,ONLY: ink,lok,rlk
-!  USE op2_bookleaf, ONLY: op_dat,s_elements,s_nodes,m_el2node
+  USE op2_bookleaf
   IMPLICIT NONE
 
   PRIVATE :: fvol
@@ -54,15 +54,9 @@ CONTAINS
 
     ! calculate mesh velocity
     IF (zeul) THEN
-      m1 = -1_rlk
-      call op_par_loop_3(a_eq_b_times_c, s_nodes, &
-&             op_arg_dat(d_ndux,-1,OP_ID,1,'real(8)',OP_WRITE), &
-&             op_arg_dat(d_ndux,-1,OP_ID,1,'real(8)',OP_READ), &
-&             op_arg_gbl(m1,1,'real(8)',OP_READ))
-      call op_par_loop_3(a_eq_b_times_c, s_nodes, &
-&             op_arg_dat(d_ndvy,-1,OP_ID,1,'real(8)',OP_WRITE), &
-&             op_arg_dat(d_ndvy,-1,OP_ID,1,'real(8)',OP_READ), &
-&             op_arg_gbl(m1,1,'real(8)',OP_READ))
+      call_op_par_loop_2(ale_getfvol_min1, s_nodes, &
+&             op_arg_dat(d_ndux,-1,OP_ID,1,'real(8)',OP_RW), &
+&             op_arg_dat(d_ndvy,-1,OP_ID,1,'real(8)',OP_RW))
     ELSE
       !# Exchange MESH_MOTION ndx,ndy, Ndux,ndvy to nnod1
       ! Other options

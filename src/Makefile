@@ -136,6 +136,24 @@ ifneq ($(MOD),)
   else
 	ifneq ($(OPTARGET),meshgen)
   OBJ+=$(MOD)_op.o
+	  ifeq ($(OPTARGET),genseq)
+		OBJ += $(shell cd mods; find . -maxdepth 1 -name "$(MOD)*_seqkernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' '; cd ..)
+		endif
+		ifeq ($(OPTARGET),openmp)
+		OBJ += $(shell cd mods; find . -maxdepth 1 -name "$(MOD)*_kernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' '; cd ..)
+		endif
+		ifeq ($(OPTARGET),cuda)
+		OBJ += $(shell cd mods; find . -maxdepth 1 -name "$(MOD)*_gpukernel.CUF" | sed s/\\.CUF/\\.o/g | sed s/\\.\\///g | tr "\n" ' '; cd ..)
+		endif
+		ifeq ($(OPTARGET),mpi)
+		OBJ += $(shell cd mods; find . -maxdepth 1 -name "$(MOD)*_seqkernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' '; cd ..)
+		endif
+		ifeq ($(OPTARGET),mpi_openmp)
+		OBJ += $(shell cd mods; find . -maxdepth 1 -name "$(MOD)*_kernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' '; cd ..)
+		endif
+		ifeq ($(OPTARGET),mpi_cuda)
+		OBJ += $(shell cd mods; find . -maxdepth 1 -name "$(MOD)*_gpukernel.CUF" | sed s/\\.CUF/\\.o/g | sed s/\\.\\///g | tr "\n" ' '; cd ..)
+		endif
 	endif
   endif
 	ifneq ($(OPTARGET),meshgen)

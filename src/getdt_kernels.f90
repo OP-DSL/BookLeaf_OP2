@@ -217,7 +217,8 @@ MODULE getdt_kernels
 
   SUBROUTINE getdt_div_maxloc(iel,w2_s,w2,ii)
     USE kinds_mod,ONLY: rlk,ink
-    REAL(KIND=rlk), INTENT(IN) :: w2,w2_s
+    REAL(KIND=rlk), INTENT(IN) :: w2_s
+    REAL(KIND=rlk), INTENT(INOUT) :: w2
     INTEGER(KIND=ink), INTENT(IN) :: iel
     INTEGER(KIND=ink), INTENT(INOUT) :: ii
 
@@ -257,7 +258,8 @@ MODULE getdt_kernels
   SUBROUTINE getdt_ale_zeul_minloc(iel,w2_s,w2,ii)
     USE kinds_mod,ONLY: rlk,ink
     implicit none
-    REAL(KIND=rlk), INTENT(IN) :: w2,w2_s
+    REAL(KIND=rlk), INTENT(IN) :: w2_s
+    REAL(KIND=rlk), INTENT(INOUT) :: w2
     INTEGER(KIND=ink), INTENT(IN) :: iel
     INTEGER(KIND=ink), INTENT(INOUT) :: ii
 

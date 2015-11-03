@@ -235,7 +235,7 @@ MODULE op2_bookleaf
   type(op_dat) :: d_rscratch11,d_rscratch12,d_rscratch13,d_rscratch14, &
 &                         d_rscratch15,d_rscratch16,d_rscratch17,d_rscratch18,d_rscratch21,d_rscratch22,d_rscratch23, &
 &                         d_rscratch24,d_rscratch25,d_rscratch26,d_rscratch27,d_rscratch28, &
-&                         d_iscratch11,d_zscratch11
+&                         d_iscratch11,d_zscratch11,d_rscratch111,d_rscratch112,d_rscratch113,d_rscratch114,d_rscratch115
 
   PUBLIC :: op2_bookleaf_declare
 
@@ -322,8 +322,13 @@ MODULE op2_bookleaf
   call op_decl_dat_hdf5(s_elements,1,d_rscratch16,'real(8)',fileName,'rscratch16',status)
   call op_decl_dat_hdf5(s_elements,1,d_rscratch17,'real(8)',fileName,'rscratch17',status)
   call op_decl_dat_hdf5(s_elements,1,d_rscratch18,'real(8)',fileName,'rscratch18',status)
-  call op_decl_dat_hdf5(s_elements,1,d_iscratch11,'integer(4)',fileName,'iscratch11',status)
-  call op_decl_dat_hdf5(s_elements,1,d_zscratch11,'integer(4)',fileName,'zscratch11',status)
+  call op_decl_dat_hdf5(s_nodes,1,d_iscratch11,'integer(4)',fileName,'iscratch11',status)
+  call op_decl_dat_hdf5(s_nodes,1,d_zscratch11,'integer(4)',fileName,'zscratch11',status)
+  call op_decl_dat_hdf5(s_nodes,1,d_rscratch111,'real(8)',fileName,'rscratch111',status)
+  call op_decl_dat_hdf5(s_nodes,1,d_rscratch112,'real(8)',fileName,'rscratch112',status)
+  call op_decl_dat_hdf5(s_nodes,1,d_rscratch113,'real(8)',fileName,'rscratch113',status)
+  call op_decl_dat_hdf5(s_nodes,1,d_rscratch114,'real(8)',fileName,'rscratch114',status)
+  call op_decl_dat_hdf5(s_nodes,1,d_rscratch115,'real(8)',fileName,'rscratch115',status)
   ENDIF
 
   call op_decl_dat_hdf5(s_reg,1,d_zdtnotreg,'integer(4)',fileName,'d_zdtnotreg',status)

@@ -20,6 +20,8 @@ MODULE ale_advect_mod
 
   USE kinds_mod,    ONLY: ink,rlk,lok
   USE timing_mod,   ONLY: bookleaf_times,get_time
+  USE OP2_Fortran_Declarations
+  use op2_bookleaf
 
 
   IMPLICIT NONE
@@ -50,12 +52,12 @@ CONTAINS
 &                                                            nel2,nnod, &
 &                                                            nnod1,nnod2
     REAL(KIND=rlk),                          INTENT(IN)   :: dencut,cut
-    
+
     type(op_dat) :: d_ielel,d_ielsd,d_indstatus, &
 &                      d_indtype,d_cutv,d_cutm,d_elv0ndm1,d_elm0ndm0,  &
 &                      d_elr0ndv0,d_ndv1,d_elv1,d_elm1,d_elr1,d_cnv0,d_cnm1,d_dfv,d_dfm,  &
 &                      d_cnm0,d_eluv,d_elvv,d_flux,d_work1,d_work2,d_work11,d_work21,d_zactive
-    
+
     ! Local
     REAL(KIND=rlk)                                        :: t0,t1
 
@@ -226,17 +228,20 @@ CONTAINS
     CALL sum_flux(id1,id2,nshape,nel,nel1,d_ielel,d_ielsd,d_delm,d_totm)
 
     ! update
-    call op_par_loop_10(ale_advect_update,s_elements, &
+    call op_par_loop_8(ale_advect_update,s_elements, &
 &        op_arg_dat(d_elv,-1,OP_ID,1,'real(8)',OP_RW), &
 &        op_arg_dat(d_elm,-1,OP_ID,1,'real(8)',OP_RW), &
 &        op_arg_dat(d_elr,-1,OP_ID,1,'real(8)',OP_RW), &
-&        op_arg_dat(d_elvpr,-1,OP_ID,1,'real(8)',OP_RW), &
-&        op_arg_dat(d_elmpr,-1,OP_ID,1,'real(8)',OP_RW), &
-&        op_arg_dat(d_elrpr,-1,OP_ID,1,'real(8)',OP_RW), &
-&        op_arg_dat(d_cutv,-1,OP_ID,1,'real(8)',OP_RW), &
-&        op_arg_dat(d_cutm,-1,OP_ID,1,'real(8)',OP_RW), &
+&        op_arg_dat(d_elvpr,-1,OP_ID,1,'real(8)',OP_WRITE), &
+&        op_arg_dat(d_elmpr,-1,OP_ID,1,'real(8)',OP_WRITE), &
+&        op_arg_dat(d_cutm,-1,OP_ID,1,'real(8)',OP_WRITE), &
 &        op_arg_dat(d_totv,-1,OP_ID,1,'real(8)',OP_READ), &
 &        op_arg_dat(d_totm,-1,OP_ID,1,'real(8)',OP_READ))
+
+!is unused, on the correct set
+!&        op_arg_dat(d_elrpr,-1,OP_ID,1,'real(8)',OP_WRITE), &
+!is unused, on the wrong set
+!&        op_arg_dat(d_cutv,-1,OP_ID,1,'real(8)',OP_WRITE), &
 
     ! Timing data
     t1=get_time()
@@ -289,9 +294,11 @@ CONTAINS
   SUBROUTINE update_nd_basis(id1,id2,nshape,nel2,nnod2,nsz,dencut,cut,  &
 &                        d_ielel,d_ielsd,  &
 &                        d_delv,d_delm,d_dndv,d_dndm, &
-&                        d_cnm0,d_cnm1,d_cutv,d_cutm,d_ndv0,  &
-&                        d_ndv1,d_ndm0,d_elv0ndm1,d_elv1,d_flux)
-    use op2_bookleaf, ONLY:s_elements,s_nodes,m_el2node,m_el2el,d_elidx
+&                        d_cnm0,d_cnm1,d_cutv,d_cutm_bad,d_ndv0_bad,  &
+&                        d_ndv1,d_ndm0_bad,d_elv0ndm1,d_elv1,d_flux)
+    use op2_bookleaf, ONLY:s_elements,s_nodes,m_el2node,m_el2el,d_elidx, &
+&           d_elv0ndm11=>d_rscratch111, d_ndm0=>d_rscratch112, d_ndv0=>d_rscratch113, &
+&           d_cutm=>d_rscratch114
     USE OP2_Fortran_Reference
     use OP2_Fortran_RT_Support
     USE common_kernels
@@ -303,8 +310,8 @@ CONTAINS
     REAL(KIND=rlk),                          INTENT(IN)   :: dencut,cut
     type(op_dat)         d_ielel,d_ielsd,  &
 &                        d_delv,d_delm,d_dndv,d_dndm, &
-&                        d_cnm0,d_cnm1,d_cutv,d_cutm,d_ndv0,  &
-&                        d_ndv1,d_ndm0,d_elv0ndm1,d_elv1,d_flux
+&                        d_cnm0,d_cnm1,d_cutv,d_cutm_bad,d_ndv0_bad,  &
+&                        d_ndv1,d_ndm0_bad,d_elv0ndm1,d_elv1,d_flux
 
     ! Local
     INTEGER(KIND=ink) :: ind,iel,ii,i1,i2,ie1,ie2,is1,is2
@@ -368,15 +375,15 @@ CONTAINS
     ! construct post nodal/corner mass
 
     call op_par_loop_2(a_eq_b,s_nodes, &
-&           op_arg_dat(d_elv0ndm1,-1,OP_ID,1,'real(8)',OP_WRITE), &
+&           op_arg_dat(d_elv0ndm11,-1,OP_ID,1,'real(8)',OP_WRITE), &
 &           op_arg_dat(d_ndm0,    -1,OP_ID,1,'real(8)',OP_READ))
     call op_par_loop_6(ale_advect_postmass, s_elements, &
 &           op_arg_dat(d_cnm1,   -1,OP_ID,4,'real(8)',OP_INC), &
 &           op_arg_dat(d_flux,   -1,OP_ID,4,'real(8)',OP_READ), &
-&           op_arg_dat(d_elv0ndm1,1,m_el2node,1,'real(8)',OP_INC), &
-&           op_arg_dat(d_elv0ndm1,2,m_el2node,1,'real(8)',OP_INC), &
-&           op_arg_dat(d_elv0ndm1,3,m_el2node,1,'real(8)',OP_INC), &
-&           op_arg_dat(d_elv0ndm1,4,m_el2node,1,'real(8)',OP_INC))
+&           op_arg_dat(d_elv0ndm11,1,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_elv0ndm11,2,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_elv0ndm11,3,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_elv0ndm11,4,m_el2node,1,'real(8)',OP_INC))
 
     ! construct cut-offs
     call op_par_loop_4(ale_advect_cutoff,s_nodes, &

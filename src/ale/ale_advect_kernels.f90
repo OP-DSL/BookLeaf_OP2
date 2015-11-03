@@ -21,15 +21,16 @@ MODULE ale_advect_kernels
 
   CONTAINS
 
-  SUBROUTINE ale_advect_update(elv,elm,elr,elvpr,elmpr,elrpr, &
-&                              cutv,cutm,totv,totm)
+  SUBROUTINE ale_advect_update(elv,elm,elr,elvpr,elmpr, &
+&                              cutm,totv,totm)
 
     USE kinds_mod,ONLY: rlk
     USE reals_mod,    ONLY: zerocut, dencut
 
     implicit none
 
-    REAL(KIND=rlk), INTENT(INOUT) :: elvpr,elmpr,elrpr,cutv,cutm,elv,elm,elr
+    REAL(KIND=rlk), INTENT(INOUT) :: elv,elm,elr
+    REAL(KIND=rlk), INTENT(OUT) :: elvpr,elmpr,cutm !cutv,elrpr UNUSED
     REAL(KIND=rlk), INTENT(IN) :: totv,totm
 
 
@@ -37,9 +38,9 @@ MODULE ale_advect_kernels
     ! store basis variables
       elvpr=elv
       elmpr=elm
-      elrpr=elr
+!      elrpr=elr !UNUSED
       ! construct cut-off's
-      cutv=zerocut
+!      cutv=zerocut !UNUSED
       cutm=elvpr*dencut
       ! volume
       elv=elv+totv
@@ -105,7 +106,8 @@ MODULE ale_advect_kernels
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(INOUT) :: flux
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(OUT) :: dndv,dndm
     INTEGER(KIND=ink), DIMENSION(N_SHAPE), INTENT(IN) :: ielel,ielsd
-    INTEGER(KIND=ink), INTENT(IN) :: iel,i1
+    INTEGER(KIND=ink), INTENT(IN) :: iel
+    INTEGER(KIND=ink) :: i1
 
     INTEGER(KIND=ink) :: i2,ie1,ie2,is1,is2
     REAL(KIND=rlk)  :: w1,w2,w3,w4
@@ -181,7 +183,8 @@ MODULE ale_advect_kernels
 
     implicit none
 
-    REAL(KIND=rlk), INTENT(IN) :: ndv0,cut
+    REAL(KIND=rlk), INTENT(IN) :: ndv0
+    REAL(KIND=rlk) :: cut
     REAL(KIND=rlk), INTENT(OUT) :: cutv,cutm
 
     cutv=cut

@@ -26,8 +26,9 @@ MODULE ale_getfvol_kernels
 
     implicit none
 
-    REAL(KIND=rlk), INTENT(IN) :: ndx,ndy,dt
+    REAL(KIND=rlk), INTENT(IN) :: ndx,ndy
     REAL(KIND=rlk), INTENT(INOUT) :: ndux,ndvy
+    REAL(KIND=rlk) :: dt
 
     ndux=ndx+dt*ndux
     ndvy=ndy+dt*ndvy
@@ -35,6 +36,18 @@ MODULE ale_getfvol_kernels
 
   END SUBROUTINE ale_getfvol_newpos
 
+  SUBROUTINE ale_getfvol_min1(ndux,ndvy)
+    USE kinds_mod,ONLY: rlk
+
+    implicit none
+
+    REAL(KIND=rlk), INTENT(INOUT) :: ndux,ndvy
+
+    ndux=-1.0_rlk*ndux
+    ndvy=-1.0_rlk*ndvy
+
+
+  END SUBROUTINE ale_getfvol_min1
 
   SUBROUTINE ale_getfvol_vol(ndx01,ndx02,ndx03,ndx04, &
     & ndy01,ndy02,ndy03,ndy04,ndx11,ndx12,ndx13,ndx14, &
@@ -45,8 +58,9 @@ MODULE ale_getfvol_kernels
     implicit none
 
     REAL(KIND=rlk), INTENT(IN) :: ndx01,ndx02,ndx03,ndx04, &
-    & ndy01,ndy02,ndy03,ndy04,cut,ndx11,ndx12,ndx13,ndx14, &
+    & ndy01,ndy02,ndy03,ndy04,ndx11,ndx12,ndx13,ndx14, &
     & ndy11,ndy12,ndy13,ndy14
+    REAL(KIND=rlk) :: cut
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(OUT) :: rDelv
     INTEGER(KIND=ink) jj
     REAL(KIND=rlk) :: x1,x2,x3,x4,y1,y2,y3,y4,a1,a3,b1,b3

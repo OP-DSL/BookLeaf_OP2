@@ -19,6 +19,8 @@
 MODULE ale_advectors_mod
 
   USE kinds_mod,ONLY: ink,rlk,lok
+  USE OP2_Fortran_Declarations
+  use op2_bookleaf
 
   IMPLICIT NONE
 
@@ -27,7 +29,7 @@ MODULE ale_advectors_mod
 CONTAINS
 
   SUBROUTINE flux_c1_VL(iD1,iD2,iShape,iLSize,iASize, d_ielel,d_ielsd,d_rCorner,d_rDel,d_rVar,d_rFlux)
-      USE op2_bookleaf, ONLY: s_elements,m_el2node,m_el2el
+    USE op2_bookleaf, ONLY: s_elements,m_el2node,m_el2el
     USE OP2_Fortran_Reference
     use OP2_Fortran_RT_Support
       USE ale_advectors_kernels
@@ -120,7 +122,7 @@ CONTAINS
 
   SUBROUTINE update_c1(iD1,iD2,iShape,iLSize,iASize,d_ielel,d_ielsd,d_rBase0,d_rBase1,d_rCutOff,d_rFlux, &
 &                      d_rTotFlux, d_rVar)
-      USE op2_bookleaf, ONLY: s_elements,m_el2node
+      USE op2_bookleaf, ONLY:op_dat,s_elements,m_el2node
     USE OP2_Fortran_Reference
     use OP2_Fortran_RT_Support
       USE ale_advectors_kernels
@@ -149,9 +151,10 @@ CONTAINS
 
   END SUBROUTINE update_c1
 
-  SUBROUTINE update_n1(iShape,iUSize,iESize,iCSize,iNSize,d_rBase0,d_rBase1,d_rCut,d_zActive,d_rFlux,      &
+  SUBROUTINE update_n1(iShape,iUSize,iESize,iCSize,iNSize,d_rBase0_bad,d_rBase1_bad,d_rCut_bad,d_zActive,d_rFlux,      &
 &                      d_rTotFlux_bad,d_rVar)
-    USE op2_bookleaf, ONLY: s_elements,m_el2node,s_nodes,d_rscratch18
+    USE op2_bookleaf, ONLY: op_dat,s_elements,m_el2node,s_nodes,d_rscratch115, &
+&         d_rBase0=>d_rscratch112, d_rBase1=>d_rscratch111,d_rCut=>d_rscratch114
     USE OP2_Fortran_Reference
     use OP2_Fortran_RT_Support
     USE common_kernels
@@ -162,27 +165,27 @@ CONTAINS
 &                                                               iESize, &
 &                                                               iCSize, &
 &                                                               iNSize
-    type(op_dat) ::    d_rBase0,d_rBase1,d_rCut,d_zActive,d_rFlux,      &
+    type(op_dat) ::    d_rBase0_bad,d_rBase1_bad,d_rCut_bad,d_zActive,d_rFlux,      &
 &                      d_rTotFlux_bad,d_rVar
     ! Local
     INTEGER(KIND=ink) :: iEl,iNd,ii,jj
 
     ! construct total flux
     call op_par_loop_1(set_zero1,s_nodes, &
-&           op_arg_dat(d_rscratch18,-1,OP_ID,1,'real(8)',OP_WRITE))
+&           op_arg_dat(d_rscratch115,-1,OP_ID,1,'real(8)',OP_WRITE))
     call op_par_loop_5(ale_advectors_totflux,s_elements, &
 &           op_arg_dat(d_rFlux,-1,OP_ID,4,'real(8)',OP_READ), &
-&           op_arg_dat(d_rscratch18,1,m_el2node,1,'real(8)',OP_INC), &
-&           op_arg_dat(d_rscratch18,2,m_el2node,1,'real(8)',OP_INC), &
-&           op_arg_dat(d_rscratch18,3,m_el2node,1,'real(8)',OP_INC), &
-&           op_arg_dat(d_rscratch18,4,m_el2node,1,'real(8)',OP_INC))
+&           op_arg_dat(d_rscratch115,1,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_rscratch115,2,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_rscratch115,3,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_rscratch115,4,m_el2node,1,'real(8)',OP_INC))
 
     ! update variable
     call op_par_loop_6(ale_advectors_update_n1,s_nodes, &
 &           op_arg_dat(d_rBase0, -1,OP_ID,1,'real(8)',OP_READ), &
 &           op_arg_dat(d_rBase1, -1,OP_ID,1,'real(8)',OP_READ), &
 &           op_arg_dat(d_rCut,-1,OP_ID,1,'real(8)',OP_READ), &
-&           op_arg_dat(d_rscratch18,-1,OP_ID,1,'real(8)',OP_READ), &
+&           op_arg_dat(d_rscratch115,-1,OP_ID,1,'real(8)',OP_READ), &
 &           op_arg_dat(d_rVar,-1,OP_ID,1,'real(8)',OP_WRITE), &
 &           op_arg_dat(d_zActive,-1,OP_ID,1,'integer(4)',OP_READ))
 

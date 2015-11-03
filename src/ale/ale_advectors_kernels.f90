@@ -32,7 +32,7 @@ MODULE ale_advectors_kernels
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(OUT) :: rFlux
     REAL(KIND=rlk), INTENT(IN) :: rVar,rVar1,rVar2,rVar3,rVar4
     INTEGER(KIND=ink), DIMENSION(N_SHAPE), INTENT(IN) :: ielsd
-    INTEGER(KIND=ink), INTENT(IN) :: i1
+    INTEGER(KIND=ink) :: i1
 
     INTEGER(KIND=ink) :: i2,j1,j2
     REAL(KIND=rlk) :: r1,r2,r3,r4,w1,w2,w3,w4,w5,w6,w7,w8,rV,rGrad
@@ -97,7 +97,7 @@ MODULE ale_advectors_kernels
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(OUT) :: rFlux
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(IN) :: rVar,rVar1,rVar2,rVar3,rVar4
     INTEGER(KIND=ink), DIMENSION(N_SHAPE), INTENT(IN) :: ielsd
-    INTEGER(KIND=ink), INTENT(IN) :: iFaceL,iCorner
+    INTEGER(KIND=ink) :: iFaceL,iCorner
 
     INTEGER(KIND=ink) :: iFaceR,iSdL,iSdR, &
 &                        iLNdL,iLNdR,iLNNdL,iLNNdR,ii
@@ -216,7 +216,8 @@ MODULE ale_advectors_kernels
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(IN) :: rFlux,rFlux1,rFlux2,rFlux3,rFlux4
     REAL(KIND=rlk), INTENT(OUT) :: rTotFlux
     INTEGER(KIND=ink), DIMENSION(N_SHAPE), INTENT(IN) :: iElSd,iElEl
-    INTEGER(KIND=ink), INTENT(IN) :: i1,iel
+    INTEGER(KIND=ink), INTENT(IN) :: iel
+    INTEGER(KIND=ink) :: i1
 
     INTEGER(KIND=ink) :: i2,j1,j2,ie1,ie2
     REAL(KIND=rlk) :: w1,w2

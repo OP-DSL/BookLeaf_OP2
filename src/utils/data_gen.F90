@@ -235,7 +235,7 @@ MODULE op2_bookleaf
   type(op_dat) :: d_rscratch11,d_rscratch12,d_rscratch13,d_rscratch14, &
 &                         d_rscratch15,d_rscratch16,d_rscratch17,d_rscratch18,d_rscratch21,d_rscratch22,d_rscratch23, &
 &                         d_rscratch24,d_rscratch25,d_rscratch26,d_rscratch27,d_rscratch28, &
-&                         d_iscratch11,d_zscratch11
+&                         d_iscratch11,d_zscratch11,d_rscratch111,d_rscratch112,d_rscratch113,d_rscratch114,d_rscratch115
 
   PUBLIC :: op2_bookleaf_declare
 
@@ -351,8 +351,14 @@ MODULE op2_bookleaf
   call op_decl_dat(s_elements,1,'real(8)',rscratch16,  d_rscratch16,'rscratch16')
   call op_decl_dat(s_elements,1,'real(8)',rscratch17,  d_rscratch17,'rscratch17')
   call op_decl_dat(s_elements,1,'real(8)',rscratch18,  d_rscratch18,'rscratch18')
-  call op_decl_dat(s_elements,1,'integer(4)',iscratch11,d_iscratch11,'iscratch11')
-  call op_decl_dat(s_elements,1,'integer(4)',zscratch11,d_zscratch11,'zscratch11')
+  call op_decl_dat(s_nodes,1,'integer(4)',iscratch11,d_iscratch11,'iscratch11')
+  call op_decl_dat(s_nodes,1,'integer(4)',zscratch11,d_zscratch11,'zscratch11')
+! Cheating a little here, using the same storage
+  call op_decl_dat(s_nodes,1,'real(8)',rscratch14,  d_rscratch111,'rscratch111')
+  call op_decl_dat(s_nodes,1,'real(8)',rscratch14,  d_rscratch112,'rscratch112')
+  call op_decl_dat(s_nodes,1,'real(8)',rscratch14,  d_rscratch113,'rscratch113')
+  call op_decl_dat(s_nodes,1,'real(8)',rscratch14,  d_rscratch114,'rscratch114')
+  call op_decl_dat(s_nodes,1,'real(8)',rscratch14,  d_rscratch115,'rscratch115')
   ENDIF
 !   call op_decl_dat(s_mat   ,1,'real(8)',mat_rho,  d_mat_rho,'d_mat_rho')
 !   call op_decl_dat(s_mat   ,1,'real(8)',mat_ein,  d_mat_ein,'d_mat_ein')

@@ -45,178 +45,39 @@ else
 ifeq ($(OPTARGET),meshgen)
 OBJ = main_gen.o
 OP2_LIB = -lop2_for_seq -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5
-endif
-ifeq ($(OPTARGET),genseq)
-OBJ = banner.o       \
-      common_kernels.o         \
-      data.o         \
-      error.o        \
-      eos.o          \
-      geometry_op.o     \
-      getacc_op.o       \
+else
+OBJ = getacc_op.o       \
       getdt_op.o        \
       getein_op.o       \
       getforce_op.o     \
-      gethg.o        \
-      getpc_op.o        \
-      getq_op.o         \
-      getsp.o        \
-      halt.o         \
       hydro.o        \
-      init_op.o         \
       lagstep_op.o      \
-      main.o         \
-      mesh.o         \
-      read.o         \
-      timers.o       \
-      utilities_op.o    \
-      write_kernels.o    \
-      write_op.o
+      main.o
+ifeq ($(OPTARGET),genseq)
 OBJ += $(shell find . -maxdepth 1 -name "*_seqkernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
 OP2_LIB = -lop2_for_seq -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5
 endif
 ifeq ($(OPTARGET),openmp)
-OBJ = banner.o       \
-      common_kernels.o         \
-      data.o         \
-      error.o        \
-      eos.o          \
-      geometry_op.o     \
-      getacc_op.o       \
-      getdt_op.o        \
-      getein_op.o       \
-      getforce_op.o     \
-      gethg.o        \
-      getpc_op.o        \
-      getq_op.o         \
-      getsp.o        \
-      halt.o         \
-      hydro.o        \
-      init_op.o         \
-      lagstep_op.o      \
-      main.o         \
-      mesh.o         \
-      read.o         \
-      timers.o       \
-      utilities_op.o    \
-      write_op.o
 OBJ += $(shell find . -maxdepth 1 -name "*_kernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
 OP2_LIB = -lop2_for_openmp -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5
 endif
 ifeq ($(OPTARGET),cuda)
-OBJ = banner.o       \
-      cudaConfigurationParams.o \
-      common_kernels.o         \
-      data.o         \
-      error.o        \
-      eos.o          \
-      geometry_op.o     \
-      getacc_op.o       \
-      getdt_op.o        \
-      getein_op.o       \
-      getforce_op.o     \
-      gethg.o        \
-      getpc_op.o        \
-      getq_op.o         \
-      getsp.o        \
-      halt.o         \
-      hydro.o        \
-      init_op.o         \
-      lagstep_op.o      \
-      main.o         \
-      mesh.o         \
-      read.o         \
-      timers.o       \
-      utilities_op.o    \
-      write_kernels.o       \
-      write.o
+OBJ += cudaConfigurationParams.o data.o
 OBJ += $(shell find . -maxdepth 1 -name "*_gpukernel.CUF" | sed s/\\.CUF/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
 OP2_LIB = -lop2_for_cuda -Mcuda=cuda6.0,cc35 -lcuda -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5
 endif
 ifeq ($(OPTARGET),mpi)
-OBJ = banner.o       \
-      common_kernels.o         \
-      data.o         \
-      error.o        \
-      eos.o          \
-      geometry_op.o     \
-      getacc_op.o       \
-      getdt_op.o        \
-      getein_op.o       \
-      getforce_op.o     \
-      gethg.o        \
-      getpc_op.o        \
-      getq_op.o         \
-      getsp.o        \
-      halt.o         \
-      hydro.o        \
-      init_op.o         \
-      lagstep_op.o      \
-      main.o         \
-      mesh.o         \
-      read.o         \
-      timers.o       \
-      utilities_op.o    \
-      write_op.o
 OBJ += $(shell find . -maxdepth 1 -name "*_seqkernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
 OP2_LIB = -lop2_for_mpi -L$(HDF5_INSTALL_PATH)/lib -lhdf5 -lz -pgcpplibs -lstdc++  $(PARMETIS_LINK) $(PTSCOTCH_LINK)
 endif
 ifeq ($(OPTARGET),mpi_openmp)
-OBJ = banner.o       \
-      common_kernels.o         \
-      data.o         \
-      error.o        \
-      eos.o          \
-      geometry_op.o     \
-      getacc_op.o       \
-      getdt_op.o        \
-      getein_op.o       \
-      getforce_op.o     \
-      gethg.o        \
-      getpc_op.o        \
-      getq_op.o         \
-      getsp.o        \
-      halt.o         \
-      hydro.o        \
-      init_op.o         \
-      lagstep_op.o      \
-      main.o         \
-      mesh.o         \
-      read.o         \
-      timers.o       \
-      utilities_op.o    \
-      write_op.o
 OBJ += $(shell find . -maxdepth 1 -name "*_kernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
 OP2_LIB = -lop2_for_mpi -L$(HDF5_INSTALL_PATH)/lib -lhdf5 -lz -pgcpplibs -lstdc++ $(PARMETIS_LINK) $(PTSCOTCH_LINK)
 endif
 ifeq ($(OPTARGET),mpi_cuda)
-OBJ = banner.o       \
-      cudaConfigurationParams.o \
-      common_kernels.o         \
-      data.o         \
-      error.o        \
-      eos.o          \
-      geometry_op.o     \
-      getacc_op.o       \
-      getdt_op.o        \
-      getein_op.o       \
-      getforce_op.o     \
-      gethg.o        \
-      getpc_op.o        \
-      getq_op.o         \
-      getsp.o        \
-      halt.o         \
-      hydro.o        \
-      init_op.o         \
-      lagstep_op.o      \
-      main.o         \
-      mesh.o         \
-      read.o         \
-      timers.o       \
-      utilities_op.o    \
-      write_kernels.o       \
-      write.o
+OBJ += cudaConfigurationParams.o data.o
 OBJ += $(shell find . -maxdepth 1 -name "*_gpukernel.CUF" | sed s/\\.CUF/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
 OP2_LIB = -lop2_for_mpi_cuda -Mcuda=cuda6.0,cc35 -lcuda -L$(HDF5_INSTALL_PATH)/lib -lhdf5 -lz -pgcpplibs -lstdc++ $(PARMETIS_LINK) $(PTSCOTCH_LINK)
+endif
 endif
 endif
