@@ -1,6 +1,6 @@
 &CONTROL
  time_start=0.0
- time_end=0.15
+ time_end=5.0e-2
  dt_initial=1.0e-3
  dt_max=1.0e-1
  dt_min=1.0e-8
@@ -26,7 +26,7 @@
 /
 &MESH
  region_typ(1)='LIN1'
- region_dim(1,:)=2000,500
+ region_dim(1,:)=4000,1000
  region_material(1)=1
  region_side(1,1,:)=1,1
  region_side(1,2,:)=1,2

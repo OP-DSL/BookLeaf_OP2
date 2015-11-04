@@ -22,6 +22,7 @@ USE CUDACONFIGURATIONPARAMS
 real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: reductionArrayDevice9getdt_div
 
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -163,10 +164,10 @@ attributes (device) subroutine getdt_div_gpu(elu,elv,a1,a3,b1,b3,elvol,w2_s,w2)
 
     REAL(KIND=rlk) :: w1
 
-    w1=elu(1)*(-b3+b1)+elv(1)*( a3-a1)+   &
-&        elu(2)*( b3+b1)+elv(2)*(-a3-a1)+   &
-&        elu(3)*( b3-b1)+elv(3)*(-a3+a1)+   &
-&        elu(4)*(-b3-b1)+elv(4)*( a3+a1)
+    w1=OP2_SOA(elu,1, elements_stride_OP2)*(-b3+b1)+OP2_SOA(elv,1, elements_stride_OP2)*( a3-a1)+   &
+&        OP2_SOA(elu,2, elements_stride_OP2)*( b3+b1)+OP2_SOA(elv,2, elements_stride_OP2)*(-a3-a1)+   &
+&        OP2_SOA(elu,3, elements_stride_OP2)*( b3-b1)+OP2_SOA(elv,3, elements_stride_OP2)*(-a3+a1)+   &
+&        OP2_SOA(elu,4, elements_stride_OP2)*(-b3-b1)+OP2_SOA(elv,4, elements_stride_OP2)*( a3+a1)
     w1=ABS(w1)/elvol
     w2_s=w1
     IF (w1.GT.w2) THEN
@@ -178,6 +179,7 @@ attributes (device) subroutine getdt_div_gpu(elu,elv,a1,a3,b1,b3,elvol,w2_s,w2)
 
 ! CUDA kernel function
   attributes (global) SUBROUTINE op_cuda_getdt_div( &
+    &  soa_stride,      &
     & opDat1Devicegetdt_div, &
     & opDat2Devicegetdt_div, &
     & opDat3Devicegetdt_div, &
@@ -204,6 +206,7 @@ attributes (device) subroutine getdt_div_gpu(elu,elv,a1,a3,b1,b3,elvol,w2_s,w2)
     real(8), DIMENSION(:), DEVICE :: reductionArrayDevice9
     real(8) :: opGblDat9Devicegetdt_div
 
+    INTEGER(kind=4), VALUE :: soa_stride
     INTEGER(kind=4), VALUE :: setSize
     INTEGER(kind=4) :: i1
 
@@ -214,8 +217,8 @@ attributes (device) subroutine getdt_div_gpu(elu,elv,a1,a3,b1,b3,elvol,w2_s,w2)
 ! kernel call
 
       CALL getdt_div_gpu( &
-      & opDat1Devicegetdt_div(i1 * (4) + 1: i1 * (4) + 4), &
-      & opDat2Devicegetdt_div(i1 * (4) + 1: i1 * (4) + 4), &
+      & opDat1Devicegetdt_div(1 + i1), &
+      & opDat2Devicegetdt_div(1 + i1), &
       & opDat3Devicegetdt_div(i1 + 1), &
       & opDat4Devicegetdt_div(i1 + 1), &
       & opDat5Devicegetdt_div(i1 + 1), &
@@ -399,6 +402,7 @@ attributes (device) subroutine getdt_div_gpu(elu,elv,a1,a3,b1,b3,elvol,w2_s,w2)
     reductionArrayDevice9getdt_div = reductionArrayHost9
 
     CALL op_cuda_getdt_div <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>>( &
+    & getSetSizeFromOpArg(opArg1), &
     & opDat1Devicegetdt_div, &
     & opDat2Devicegetdt_div, &
     & opDat3Devicegetdt_div, &

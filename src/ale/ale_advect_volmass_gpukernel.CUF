@@ -22,6 +22,7 @@ USE CUDACONFIGURATIONPARAMS
 
 TYPE ( c_ptr )  :: planRet_ale_advect_volmass
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -107,20 +108,20 @@ attributes (device) subroutine ale_advect_volmass_gpu(delv,delv1,delv2,delv3, de
 
     i2 = i1+2_ink
 
-    ie1=ielel(i1)
-    ie2=ielel(i2)
-    is1=ielsd(i1)
-    is2=ielsd(i2)
+    ie1=OP2_SOA(ielel,i1, elements_stride_OP2)
+    ie2=OP2_SOA(ielel,i2, elements_stride_OP2)
+    is1=OP2_SOA(ielsd,i1, elements_stride_OP2)
+    is2=OP2_SOA(ielsd,i2, elements_stride_OP2)
     IF (i1.EQ.1) THEN !i1 may only be 1 or 2, so that i2<=4
-      w1=delv1(is1)
-      w2=delv3(is2)
-      w3=delm1(is1)
-      w4=delm3(is2)
+      w1=OP2_SOA(delv1,is1, elements_stride_OP2)
+      w2=OP2_SOA(delv3,is2, elements_stride_OP2)
+      w3=OP2_SOA(delm1,is1, elements_stride_OP2)
+      w4=OP2_SOA(delm3,is2, elements_stride_OP2)
     ELSEIF (i1.EQ.2) THEN
-      w1=delv2(is1)
-      w2=delv4(is2)
-      w3=delm2(is1)
-      w4=delm4(is2)
+      w1=OP2_SOA(delv2,is1, elements_stride_OP2)
+      w2=OP2_SOA(delv4,is2, elements_stride_OP2)
+      w3=OP2_SOA(delm2,is1, elements_stride_OP2)
+      w4=OP2_SOA(delm4,is2, elements_stride_OP2)
     ENDIF
 
     IF (ie1.EQ.iel) THEN !i.e. boundary
@@ -131,26 +132,27 @@ attributes (device) subroutine ale_advect_volmass_gpu(delv,delv1,delv2,delv3, de
       w2=0.0_rlk
       w4=0.0_rlk
     ENDIF
-    w1=w1-delv(i1)
-    w2=w2-delv(i2)
+    w1=w1-OP2_SOA(delv,i1, elements_stride_OP2)
+    w2=w2-OP2_SOA(delv,i2, elements_stride_OP2)
     w1=0.25_rlk*(w1-w2)
-    dndv(i1)=w1
-    dndv(i2)=w1
-    w1=w3-delm(i1)
-    w2=w4-delm(i2)
+    OP2_SOA(dndv,i1, elements_stride_OP2)=w1
+    OP2_SOA(dndv,i2, elements_stride_OP2)=w1
+    w1=w3-OP2_SOA(delm,i1, elements_stride_OP2)
+    w2=w4-OP2_SOA(delm,i2, elements_stride_OP2)
     w3=0.25_rlk*(w1-w2)
-    dndm(i1)=w3
-    dndm(i2)=w3
+    OP2_SOA(dndm,i1, elements_stride_OP2)=w3
+    OP2_SOA(dndm,i2, elements_stride_OP2)=w3
     w3=0.25_rlk*(w1+w2)
-    flux(1)=flux(1)+w3
-    flux(2)=flux(2)+w3
-    flux(3)=flux(3)+w3
-    flux(4)=flux(4)+w3
+    OP2_SOA(flux,1, elements_stride_OP2)=OP2_SOA(flux,1, elements_stride_OP2)+w3
+    OP2_SOA(flux,2, elements_stride_OP2)=OP2_SOA(flux,2, elements_stride_OP2)+w3
+    OP2_SOA(flux,3, elements_stride_OP2)=OP2_SOA(flux,3, elements_stride_OP2)+w3
+    OP2_SOA(flux,4, elements_stride_OP2)=OP2_SOA(flux,4, elements_stride_OP2)+w3
   END SUBROUTINE ale_advect_volmass_gpu
 
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_ale_advect_volmass( &
+  &  soa_stride,      &
   & opDat2Deviceale_advect_volmass, &
   & opDat7Deviceale_advect_volmass, &
   & opDat2Map, &
@@ -189,6 +191,7 @@ attributes (global) SUBROUTINE op_cuda_ale_advect_volmass( &
   integer(4), VALUE :: opGblDat17Deviceale_advect_volmass
   INTEGER(kind=4) map2idx, map3idx, map4idx, map5idx
 
+  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pblkMap
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: poffset
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pnelems
@@ -234,21 +237,21 @@ attributes (global) SUBROUTINE op_cuda_ale_advect_volmass( &
 
 ! kernel call
       CALL ale_advect_volmass_gpu( &
-      & opDat1Deviceale_advect_volmass((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
-      & opDat2Deviceale_advect_volmass(1 + map2idx * (4):     map2idx * (4) + 4), &
-      & opDat2Deviceale_advect_volmass(1 + map3idx * (4):     map3idx * (4) + 4), &
-      & opDat2Deviceale_advect_volmass(1 + map4idx * (4):     map4idx * (4) + 4), &
-      & opDat2Deviceale_advect_volmass(1 + map5idx * (4):     map5idx * (4) + 4), &
-      & opDat6Deviceale_advect_volmass((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
-      & opDat7Deviceale_advect_volmass(1 + map2idx * (4):     map2idx * (4) + 4), &
-      & opDat7Deviceale_advect_volmass(1 + map3idx * (4):     map3idx * (4) + 4), &
-      & opDat7Deviceale_advect_volmass(1 + map4idx * (4):     map4idx * (4) + 4), &
-      & opDat7Deviceale_advect_volmass(1 + map5idx * (4):     map5idx * (4) + 4), &
-      & opDat11Deviceale_advect_volmass((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
-      & opDat12Deviceale_advect_volmass((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
-      & opDat13Deviceale_advect_volmass((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
-      & opDat14Deviceale_advect_volmass((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
-      & opDat15Deviceale_advect_volmass((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+      & opDat1Deviceale_advect_volmass(1 + (i3 + threadBlockOffset)), &
+      & opDat2Deviceale_advect_volmass(1 + map2idx), &
+      & opDat2Deviceale_advect_volmass(1 + map3idx), &
+      & opDat2Deviceale_advect_volmass(1 + map4idx), &
+      & opDat2Deviceale_advect_volmass(1 + map5idx), &
+      & opDat6Deviceale_advect_volmass(1 + (i3 + threadBlockOffset)), &
+      & opDat7Deviceale_advect_volmass(1 + map2idx), &
+      & opDat7Deviceale_advect_volmass(1 + map3idx), &
+      & opDat7Deviceale_advect_volmass(1 + map4idx), &
+      & opDat7Deviceale_advect_volmass(1 + map5idx), &
+      & opDat11Deviceale_advect_volmass(1 + (i3 + threadBlockOffset)), &
+      & opDat12Deviceale_advect_volmass(1 + (i3 + threadBlockOffset)), &
+      & opDat13Deviceale_advect_volmass(1 + (i3 + threadBlockOffset)), &
+      & opDat14Deviceale_advect_volmass(1 + (i3 + threadBlockOffset)), &
+      & opDat15Deviceale_advect_volmass(1 + (i3 + threadBlockOffset)), &
       & opDat16Deviceale_advect_volmass((i3 + threadBlockOffset) * (1) +1), &
       & opGblDat17Deviceale_advect_volmass &
       & )
@@ -555,6 +558,7 @@ attributes (host) SUBROUTINE ale_advect_volmass_host_gpu( userSubroutine, set, &
     dynamicSharedMemorySize = reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock
 
     CALL op_cuda_ale_advect_volmass <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>> (&
+    & getSetSizeFromOpArg(opArg1), &
     & opDat2Deviceale_advect_volmass, &
     & opDat7Deviceale_advect_volmass, &
     & opMap2Deviceale_advect_volmass, &

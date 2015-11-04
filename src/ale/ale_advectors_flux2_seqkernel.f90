@@ -219,6 +219,7 @@ SUBROUTINE ale_advectors_flux2_host( userSubroutine, set, &
   integer(4), POINTER, DIMENSION(:) :: opDat15Local
 
   INTEGER(kind=4) :: i1
+  REAL(kind=4) :: dataTransfer
 
   numberOfOpDats = 15
 
@@ -287,7 +288,16 @@ SUBROUTINE ale_advectors_flux2_host( userSubroutine, set, &
 
   call op_timers_core(endTime)
 
+  dataTransfer = 0.0
+  dataTransfer = dataTransfer + opArg2%size *n_upper
+  dataTransfer = dataTransfer + opArg7%size *n_upper
+  dataTransfer = dataTransfer + opArg11%size *n_upper
+  dataTransfer = dataTransfer + opArg12%size *n_upper
+  dataTransfer = dataTransfer + opArg13%size *n_upper
+  dataTransfer = dataTransfer + opArg14%size
+  dataTransfer = dataTransfer + opArg15%size
+  dataTransfer = dataTransfer + n_upper * opDat2MapDim * 4.d0
   returnSetKernelTiming = setKernelTime(11 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime,0.00000_4,0.00000_4, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
 END SUBROUTINE
 END MODULE

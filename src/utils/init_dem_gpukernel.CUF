@@ -23,6 +23,7 @@ real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opGblDat2Deviceinit_dem
 real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opGblDat3Deviceinit_dem
 
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -69,10 +70,10 @@ attributes (device) subroutine init_dem_gpu(im,mat_rho,mat_ein,rho,ein,elmass,el
     rho=mat_rho(im)
     ein=mat_ein(im)
     elmass=rho*elvol
-    cnmass(1) = rho*cnwt(1)
-    cnmass(2) = rho*cnwt(2)
-    cnmass(3) = rho*cnwt(3)
-    cnmass(4) = rho*cnwt(4)
+    OP2_SOA(cnmass,1, elements_stride_OP2) = rho*OP2_SOA(cnwt,1, elements_stride_OP2)
+    OP2_SOA(cnmass,2, elements_stride_OP2) = rho*OP2_SOA(cnwt,2, elements_stride_OP2)
+    OP2_SOA(cnmass,3, elements_stride_OP2) = rho*OP2_SOA(cnwt,3, elements_stride_OP2)
+    OP2_SOA(cnmass,4, elements_stride_OP2) = rho*OP2_SOA(cnwt,4, elements_stride_OP2)
 
 
   END SUBROUTINE init_dem_gpu
@@ -80,6 +81,7 @@ attributes (device) subroutine init_dem_gpu(im,mat_rho,mat_ein,rho,ein,elmass,el
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_init_dem( &
+  &  soa_stride,      &
   & opDat1Deviceinit_dem, &
   & opDat4Deviceinit_dem, &
   & opDat5Deviceinit_dem, &
@@ -101,6 +103,7 @@ attributes (global) SUBROUTINE op_cuda_init_dem( &
   real(8), DEVICE, INTENT(IN) :: opDat9Deviceinit_dem(*)
 
 
+  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
 
@@ -117,8 +120,8 @@ attributes (global) SUBROUTINE op_cuda_init_dem( &
     & opDat5Deviceinit_dem(i1 + 1), &
     & opDat6Deviceinit_dem(i1 + 1), &
     & opDat7Deviceinit_dem(i1 + 1), &
-    & opDat8Deviceinit_dem(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat9Deviceinit_dem(i1 * (4) + 1: i1 * (4) + 4) &
+    & opDat8Deviceinit_dem(1 + i1), &
+    & opDat9Deviceinit_dem(1 + i1) &
     & )
   END DO
 
@@ -289,6 +292,7 @@ attributes (host) SUBROUTINE init_dem_host_gpu( userSubroutine, set, &
   opGblDat3Deviceinit_dem(1:opArg3%dim) = opDat3Host(1:opArg3%dim)
 
   CALL op_cuda_init_dem <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>>( &
+  & getSetSizeFromOpArg(opArg8), &
   & opDat1Deviceinit_dem, &
   & opDat4Deviceinit_dem, &
   & opDat5Deviceinit_dem, &

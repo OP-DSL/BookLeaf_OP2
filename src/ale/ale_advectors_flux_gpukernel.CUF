@@ -22,6 +22,7 @@ USE CUDACONFIGURATIONPARAMS
 
 TYPE ( c_ptr )  :: planRet_ale_advectors_flux
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -113,26 +114,26 @@ attributes (device) subroutine ale_advectors_flux_gpu(rCorner,rCorner1,rCorner2,
 !    iE2=iElEl(i2)
     j2=iElSd(i2)
     j1=MOD(i2,N_SHAPE)+1_ink
-    r3=rCorner(i2)+rCorner(j1)
+    r3=OP2_SOA(rCorner,i2, elements_stride_OP2)+OP2_SOA(rCorner,j1, elements_stride_OP2)
     j1=MOD(j2,N_SHAPE)+1_ink
     IF (i2.EQ.3) THEN
-      w5=r3+rCorner3(j2)+rCorner3(j1)
+      w5=r3+OP2_SOA(rCorner3,j2, elements_stride_OP2)+OP2_SOA(rCorner3,j1, elements_stride_OP2)
     ELSEIF (i2.EQ.4) THEN
-      w5=r3+rCorner4(j2)+rCorner4(j1)
+      w5=r3+OP2_SOA(rCorner4,j2, elements_stride_OP2)+OP2_SOA(rCorner4,j1, elements_stride_OP2)
     ENDIF
 !    iE1=iElEl(i1)
     j2=iElSd(i1)
     j1=i1+1_ink
-    r4=rCorner(i1)+rCorner(j1)
+    r4=OP2_SOA(rCorner,i1, elements_stride_OP2)+OP2_SOA(rCorner,j1, elements_stride_OP2)
     j1=MOD(j2,N_SHAPE)+1_ink
     IF (i1.EQ.1) THEN
-      w6=r4+rCorner1(j2)+rCorner1(j1)
+      w6=r4+OP2_SOA(rCorner1,j2, elements_stride_OP2)+OP2_SOA(rCorner1,j1, elements_stride_OP2)
     ELSEIF (i1.EQ.2) THEN
-      w6=r4+rCorner2(j2)+rCorner2(j1)
+      w6=r4+OP2_SOA(rCorner2,j2, elements_stride_OP2)+OP2_SOA(rCorner2,j1, elements_stride_OP2)
     ENDIF
     rV=rVar
-    r1=rDel(i1)
-    r2=rDel(i2)
+    r1=OP2_SOA(rDel,i1, elements_stride_OP2)
+    r2=OP2_SOA(rDel,i2, elements_stride_OP2)
     IF (i2.EQ.3) THEN
       w1=rV-rVar3
     ELSEIF (i2.EQ.4) THEN
@@ -151,14 +152,15 @@ attributes (device) subroutine ale_advectors_flux_gpu(rCorner,rCorner1,rCorner2,
     IF (w1*w2.LE.0.0_rlk) rGrad=0.0_rlk
     r1=r1*(rV+rGrad*(r3-0.5_rlk*r1))
     r2=r2*(rV-rGrad*(r4-0.5_rlk*r2))
-    rFlux(i1)=r1
-    rFlux(i2)=r2
+    OP2_SOA(rFlux,i1, elements_stride_OP2)=r1
+    OP2_SOA(rFlux,i2, elements_stride_OP2)=r2
 
   END SUBROUTINE ale_advectors_flux_gpu
 
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_ale_advectors_flux( &
+  &  soa_stride,      &
   & opDat2Deviceale_advectors_flux, &
   & opDat7Deviceale_advectors_flux, &
   & opDat2Map, &
@@ -191,6 +193,7 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_flux( &
   integer(4), VALUE :: opGblDat14Deviceale_advectors_flux
   INTEGER(kind=4) map2idx, map3idx, map4idx, map5idx
 
+  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pblkMap
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: poffset
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pnelems
@@ -236,19 +239,19 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_flux( &
 
 ! kernel call
       CALL ale_advectors_flux_gpu( &
-      & opDat1Deviceale_advectors_flux((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
-      & opDat2Deviceale_advectors_flux(1 + map2idx * (4):     map2idx * (4) + 4), &
-      & opDat2Deviceale_advectors_flux(1 + map3idx * (4):     map3idx * (4) + 4), &
-      & opDat2Deviceale_advectors_flux(1 + map4idx * (4):     map4idx * (4) + 4), &
-      & opDat2Deviceale_advectors_flux(1 + map5idx * (4):     map5idx * (4) + 4), &
+      & opDat1Deviceale_advectors_flux(1 + (i3 + threadBlockOffset)), &
+      & opDat2Deviceale_advectors_flux(1 + map2idx), &
+      & opDat2Deviceale_advectors_flux(1 + map3idx), &
+      & opDat2Deviceale_advectors_flux(1 + map4idx), &
+      & opDat2Deviceale_advectors_flux(1 + map5idx), &
       & opDat6Deviceale_advectors_flux((i3 + threadBlockOffset) * (1) +1), &
       & opDat7Deviceale_advectors_flux(1 + map2idx), &
       & opDat7Deviceale_advectors_flux(1 + map3idx), &
       & opDat7Deviceale_advectors_flux(1 + map4idx), &
       & opDat7Deviceale_advectors_flux(1 + map5idx), &
-      & opDat11Deviceale_advectors_flux((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
-      & opDat12Deviceale_advectors_flux((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
-      & opDat13Deviceale_advectors_flux((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+      & opDat11Deviceale_advectors_flux(1 + (i3 + threadBlockOffset)), &
+      & opDat12Deviceale_advectors_flux(1 + (i3 + threadBlockOffset)), &
+      & opDat13Deviceale_advectors_flux(1 + (i3 + threadBlockOffset)), &
       & opGblDat14Deviceale_advectors_flux &
       & )
 
@@ -521,6 +524,7 @@ attributes (host) SUBROUTINE ale_advectors_flux_host_gpu( userSubroutine, set, &
     dynamicSharedMemorySize = reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock
 
     CALL op_cuda_ale_advectors_flux <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>> (&
+    & getSetSizeFromOpArg(opArg1), &
     & opDat2Deviceale_advectors_flux, &
     & opDat7Deviceale_advectors_flux, &
     & opMap2Deviceale_advectors_flux, &

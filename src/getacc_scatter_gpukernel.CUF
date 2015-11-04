@@ -22,6 +22,7 @@ USE CUDACONFIGURATIONPARAMS
 
 TYPE ( c_ptr )  :: planRet_getacc_scatter
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -131,74 +132,75 @@ attributes (device) subroutine getacc_scatter_gpu(cnmass,rho,cnwt,cnfx,cnfy, &
     INTEGER(KIND=ink) :: jj,ii
 
     jj=1_ink
-    IF (cnmass(jj).GT.zerocut_OP2) THEN
-      ndmass1=ndmass1+cnmass(jj)
+    IF (OP2_SOA(cnmass,jj, elements_stride_OP2).GT.zerocut_OP2) THEN
+      ndmass1=ndmass1+OP2_SOA(cnmass,jj, elements_stride_OP2)
     ELSE
       ii=jj-1_ink
       IF (ii.EQ.0_ink) ii=4_ink
-      IF (cnmass(ii).GT.zerocut_OP2) THEN
-        ndmass1=ndmass1+cnmass(ii)
+      IF (OP2_SOA(cnmass,ii, elements_stride_OP2).GT.zerocut_OP2) THEN
+        ndmass1=ndmass1+OP2_SOA(cnmass,ii, elements_stride_OP2)
       ELSE
-        ndmass1=ndmass1+rho*cnwt(jj)
+        ndmass1=ndmass1+rho*OP2_SOA(cnwt,jj, elements_stride_OP2)
       ENDIF
     ENDIF
-    ndarea1=ndarea1+cnwt(jj)
-    ndub1=ndub1+cnfx(jj)
-    ndvb1=ndvb1+cnfy(jj)
+    ndarea1=ndarea1+OP2_SOA(cnwt,jj, elements_stride_OP2)
+    ndub1=ndub1+OP2_SOA(cnfx,jj, elements_stride_OP2)
+    ndvb1=ndvb1+OP2_SOA(cnfy,jj, elements_stride_OP2)
 
     jj=2_ink
-    IF (cnmass(jj).GT.zerocut_OP2) THEN
-      ndmass2=ndmass2+cnmass(jj)
+    IF (OP2_SOA(cnmass,jj, elements_stride_OP2).GT.zerocut_OP2) THEN
+      ndmass2=ndmass2+OP2_SOA(cnmass,jj, elements_stride_OP2)
     ELSE
       ii=jj-1_ink
       IF (ii.EQ.0_ink) ii=4_ink
-      IF (cnmass(ii).GT.zerocut_OP2) THEN
-        ndmass2=ndmass2+cnmass(ii)
+      IF (OP2_SOA(cnmass,ii, elements_stride_OP2).GT.zerocut_OP2) THEN
+        ndmass2=ndmass2+OP2_SOA(cnmass,ii, elements_stride_OP2)
       ELSE
-        ndmass2=ndmass2+rho*cnwt(jj)
+        ndmass2=ndmass2+rho*OP2_SOA(cnwt,jj, elements_stride_OP2)
       ENDIF
     ENDIF
-    ndarea2=ndarea2+cnwt(jj)
-    ndub2=ndub2+cnfx(jj)
-    ndvb2=ndvb2+cnfy(jj)
+    ndarea2=ndarea2+OP2_SOA(cnwt,jj, elements_stride_OP2)
+    ndub2=ndub2+OP2_SOA(cnfx,jj, elements_stride_OP2)
+    ndvb2=ndvb2+OP2_SOA(cnfy,jj, elements_stride_OP2)
 
     jj=3_ink
-    IF (cnmass(jj).GT.zerocut_OP2) THEN
-      ndmass3=ndmass3+cnmass(jj)
+    IF (OP2_SOA(cnmass,jj, elements_stride_OP2).GT.zerocut_OP2) THEN
+      ndmass3=ndmass3+OP2_SOA(cnmass,jj, elements_stride_OP2)
     ELSE
       ii=jj-1_ink
       IF (ii.EQ.0_ink) ii=4_ink
-      IF (cnmass(ii).GT.zerocut_OP2) THEN
-        ndmass3=ndmass3+cnmass(ii)
+      IF (OP2_SOA(cnmass,ii, elements_stride_OP2).GT.zerocut_OP2) THEN
+        ndmass3=ndmass3+OP2_SOA(cnmass,ii, elements_stride_OP2)
       ELSE
-        ndmass3=ndmass3+rho*cnwt(jj)
+        ndmass3=ndmass3+rho*OP2_SOA(cnwt,jj, elements_stride_OP2)
       ENDIF
     ENDIF
-    ndarea3=ndarea3+cnwt(jj)
-    ndub3=ndub3+cnfx(jj)
-    ndvb3=ndvb3+cnfy(jj)
+    ndarea3=ndarea3+OP2_SOA(cnwt,jj, elements_stride_OP2)
+    ndub3=ndub3+OP2_SOA(cnfx,jj, elements_stride_OP2)
+    ndvb3=ndvb3+OP2_SOA(cnfy,jj, elements_stride_OP2)
 
     jj=4_ink
-    IF (cnmass(jj).GT.zerocut_OP2) THEN
-      ndmass4=ndmass4+cnmass(jj)
+    IF (OP2_SOA(cnmass,jj, elements_stride_OP2).GT.zerocut_OP2) THEN
+      ndmass4=ndmass4+OP2_SOA(cnmass,jj, elements_stride_OP2)
     ELSE
       ii=jj-1_ink
       IF (ii.EQ.0_ink) ii=4_ink
-      IF (cnmass(ii).GT.zerocut_OP2) THEN
-        ndmass4=ndmass4+cnmass(ii)
+      IF (OP2_SOA(cnmass,ii, elements_stride_OP2).GT.zerocut_OP2) THEN
+        ndmass4=ndmass4+OP2_SOA(cnmass,ii, elements_stride_OP2)
       ELSE
-        ndmass4=ndmass4+rho*cnwt(jj)
+        ndmass4=ndmass4+rho*OP2_SOA(cnwt,jj, elements_stride_OP2)
       ENDIF
     ENDIF
-    ndarea4=ndarea4+cnwt(jj)
-    ndub4=ndub4+cnfx(jj)
-    ndvb4=ndvb4+cnfy(jj)
+    ndarea4=ndarea4+OP2_SOA(cnwt,jj, elements_stride_OP2)
+    ndub4=ndub4+OP2_SOA(cnfx,jj, elements_stride_OP2)
+    ndvb4=ndvb4+OP2_SOA(cnfy,jj, elements_stride_OP2)
 
   END SUBROUTINE getacc_scatter_gpu
 
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_getacc_scatter( &
+  &  soa_stride,      &
   & opDat6Devicegetacc_scatter, &
   & opDat10Devicegetacc_scatter, &
   & opDat14Devicegetacc_scatter, &
@@ -233,6 +235,7 @@ attributes (global) SUBROUTINE op_cuda_getacc_scatter( &
 
   INTEGER(kind=4) map6idx, map7idx, map8idx, map9idx
 
+  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pblkMap
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: poffset
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pnelems
@@ -311,11 +314,11 @@ attributes (global) SUBROUTINE op_cuda_getacc_scatter( &
 
 ! kernel call
       CALL getacc_scatter_gpu( &
-      & opDat1Devicegetacc_scatter((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+      & opDat1Devicegetacc_scatter(1 + (i3 + threadBlockOffset)), &
       & opDat2Devicegetacc_scatter((i3 + threadBlockOffset) * (1) +1), &
-      & opDat3Devicegetacc_scatter((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
-      & opDat4Devicegetacc_scatter((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
-      & opDat5Devicegetacc_scatter((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+      & opDat3Devicegetacc_scatter(1 + (i3 + threadBlockOffset)), &
+      & opDat4Devicegetacc_scatter(1 + (i3 + threadBlockOffset)), &
+      & opDat5Devicegetacc_scatter(1 + (i3 + threadBlockOffset)), &
       & opDat6Local, &
       & opDat7Local, &
       & opDat8Local, &
@@ -722,6 +725,7 @@ attributes (host) SUBROUTINE getacc_scatter_host_gpu( userSubroutine, set, &
     dynamicSharedMemorySize = reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock
 
     CALL op_cuda_getacc_scatter <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>> (&
+    & getSetSizeFromOpArg(opArg1), &
     & opDat6Devicegetacc_scatter, &
     & opDat10Devicegetacc_scatter, &
     & opDat14Devicegetacc_scatter, &

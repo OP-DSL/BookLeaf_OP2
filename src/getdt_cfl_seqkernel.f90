@@ -252,6 +252,7 @@ SUBROUTINE getdt_cfl_host( userSubroutine, set, &
   integer(4), POINTER, DIMENSION(:) :: opDat10Local
 
   INTEGER(kind=4) :: i1
+  REAL(kind=4) :: dataTransfer
 
   numberOfOpDats = 10
 
@@ -312,7 +313,18 @@ SUBROUTINE getdt_cfl_host( userSubroutine, set, &
 
   call op_timers_core(endTime)
 
+  dataTransfer = 0.0
+  dataTransfer = dataTransfer + opArg1%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg2%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg3%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg4%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg5%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg6%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg7%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg8%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg9%size
+  dataTransfer = dataTransfer + opArg10%size
   returnSetKernelTiming = setKernelTime(41 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime,0.00000_4,0.00000_4, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
 END SUBROUTINE
 END MODULE

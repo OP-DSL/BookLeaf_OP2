@@ -97,6 +97,7 @@ SUBROUTINE getacc_bc_host( userSubroutine, set, &
 
 
   INTEGER(kind=4) :: i1
+  REAL(kind=4) :: dataTransfer
 
   numberOfOpDats = 3
 
@@ -131,7 +132,11 @@ SUBROUTINE getacc_bc_host( userSubroutine, set, &
 
   call op_timers_core(endTime)
 
+  dataTransfer = 0.0
+  dataTransfer = dataTransfer + opArg1%size * opSetCore%size * 2.d0
+  dataTransfer = dataTransfer + opArg2%size * opSetCore%size * 2.d0
+  dataTransfer = dataTransfer + opArg3%size * opSetCore%size
   returnSetKernelTiming = setKernelTime(38 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime,0.00000_4,0.00000_4, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
 END SUBROUTINE
 END MODULE

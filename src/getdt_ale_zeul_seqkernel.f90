@@ -109,6 +109,7 @@ SUBROUTINE getdt_ale_zeul_host( userSubroutine, set, &
   real(8), POINTER, DIMENSION(:) :: opDat5Local
 
   INTEGER(kind=4) :: i1
+  REAL(kind=4) :: dataTransfer
 
   numberOfOpDats = 5
 
@@ -152,7 +153,13 @@ SUBROUTINE getdt_ale_zeul_host( userSubroutine, set, &
 
   call op_timers_core(endTime)
 
+  dataTransfer = 0.0
+  dataTransfer = dataTransfer + opArg1%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg2%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg3%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg4%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg5%size * 2.d0
   returnSetKernelTiming = setKernelTime(46 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime,0.00000_4,0.00000_4, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
 END SUBROUTINE
 END MODULE

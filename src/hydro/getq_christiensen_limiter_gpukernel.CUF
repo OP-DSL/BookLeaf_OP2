@@ -21,6 +21,7 @@ USE CUDACONFIGURATIONPARAMS
 
 
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -84,32 +85,33 @@ attributes (device) subroutine getq_christiensen_limiter_gpu(du,dv,qx,qy,csqrd,r
     is2=iside+1_ink
 
     w1=cq1*SQRT(csqrd)
-    w2=scratch(1)
-    w3=scratch(2)
+    w2=OP2_SOA(scratch,1, elements_stride_OP2)
+    w3=OP2_SOA(scratch,2, elements_stride_OP2)
     w2=MIN(0.5_rlk*(w2+w3),2.0_rlk*w2,2.0_rlk*w3,1.0_rlk)
     w2=MAX(0.0_rlk,w2)
-    w3=du(is1)
-    w4=dv(is1)
+    w3=OP2_SOA(du,is1, elements_stride_OP2)
+    w4=OP2_SOA(dv,is1, elements_stride_OP2)
     w3=SQRT(w3*w3+w4*w4)
     w3=(1.0_rlk-w2)*rho*(w1+cq2*w3)
-    qx(is1)=w3
-    qy(is1)=w3
-    w2=scratch(3)
-    w3=scratch(4)
+    OP2_SOA(qx,is1, elements_stride_OP2)=w3
+    OP2_SOA(qy,is1, elements_stride_OP2)=w3
+    w2=OP2_SOA(scratch,3, elements_stride_OP2)
+    w3=OP2_SOA(scratch,4, elements_stride_OP2)
     w2=MIN(0.5_rlk*(w2+w3),2.0_rlk*w2,2.0_rlk*w3,1.0_rlk)
     w2=MAX(0.0_rlk,w2)
-    w3=du(is2)
-    w4=dv(is2)
+    w3=OP2_SOA(du,is2, elements_stride_OP2)
+    w4=OP2_SOA(dv,is2, elements_stride_OP2)
     w3=SQRT(w3*w3+w4*w4)
     w3=(1.0_rlk-w2)*rho*(w1+cq2*w3)
-    qx(is2)=w3
-    qy(is2)=w3
+    OP2_SOA(qx,is2, elements_stride_OP2)=w3
+    OP2_SOA(qy,is2, elements_stride_OP2)=w3
 
   END SUBROUTINE getq_christiensen_limiter_gpu
 
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_getq_christiensen_limiter( &
+  &  soa_stride,      &
   & opDat1Devicegetq_christiensen_limiter, &
   & opDat2Devicegetq_christiensen_limiter, &
   & opDat3Devicegetq_christiensen_limiter, &
@@ -137,6 +139,7 @@ attributes (global) SUBROUTINE op_cuda_getq_christiensen_limiter( &
   real(8), VALUE :: opGblDat9Devicegetq_christiensen_limiter
   integer(4), VALUE :: opGblDat10Devicegetq_christiensen_limiter
 
+  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
 
@@ -146,13 +149,13 @@ attributes (global) SUBROUTINE op_cuda_getq_christiensen_limiter( &
 ! kernel call
 
     CALL getq_christiensen_limiter_gpu( &
-    & opDat1Devicegetq_christiensen_limiter(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat2Devicegetq_christiensen_limiter(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat3Devicegetq_christiensen_limiter(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat4Devicegetq_christiensen_limiter(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat1Devicegetq_christiensen_limiter(1 + i1), &
+    & opDat2Devicegetq_christiensen_limiter(1 + i1), &
+    & opDat3Devicegetq_christiensen_limiter(1 + i1), &
+    & opDat4Devicegetq_christiensen_limiter(1 + i1), &
     & opDat5Devicegetq_christiensen_limiter(i1 + 1), &
     & opDat6Devicegetq_christiensen_limiter(i1 + 1), &
-    & opDat7Devicegetq_christiensen_limiter(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat7Devicegetq_christiensen_limiter(1 + i1), &
     & opGblDat8Devicegetq_christiensen_limiter, &
     & opGblDat9Devicegetq_christiensen_limiter, &
     & opGblDat10Devicegetq_christiensen_limiter &
@@ -328,6 +331,7 @@ attributes (host) SUBROUTINE getq_christiensen_limiter_host_gpu( userSubroutine,
 
 
   CALL op_cuda_getq_christiensen_limiter <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>>( &
+  & getSetSizeFromOpArg(opArg1), &
   & opDat1Devicegetq_christiensen_limiter, &
   & opDat2Devicegetq_christiensen_limiter, &
   & opDat3Devicegetq_christiensen_limiter, &

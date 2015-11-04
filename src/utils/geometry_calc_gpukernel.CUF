@@ -21,6 +21,7 @@ USE CUDACONFIGURATIONPARAMS
 
 
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -69,22 +70,22 @@ attributes (device) subroutine geometry_calc_gpu(a1,a2,a3,b1,b2,b3,elx,ely,cnwt,
     REAL(KIND=rlk), DIMENSION(4), INTENT(OUT) :: cnwt
     REAL(KIND=rlk), INTENT(OUT) :: a1,a2,a3,b1,b2,b3,elvol
 
-    a1=0.25_rlk*(-elx(1)+elx(2)+elx(3)-elx(4))
-    a2=0.25_rlk*( elx(1)-elx(2)+elx(3)-elx(4))
-    a3=0.25_rlk*(-elx(1)-elx(2)+elx(3)+elx(4))
-    b1=0.25_rlk*(-ely(1)+ely(2)+ely(3)-ely(4))
-    b2=0.25_rlk*( ely(1)-ely(2)+ely(3)-ely(4))
-    b3=0.25_rlk*(-ely(1)-ely(2)+ely(3)+ely(4))
-    cnwt(1)=ONEBYNINE*                            &
+    a1=0.25_rlk*(-OP2_SOA(elx,1, elements_stride_OP2)+OP2_SOA(elx,2, elements_stride_OP2)+OP2_SOA(elx,3, elements_stride_OP2)-OP2_SOA(elx,4, elements_stride_OP2))
+    a2=0.25_rlk*( OP2_SOA(elx,1, elements_stride_OP2)-OP2_SOA(elx,2, elements_stride_OP2)+OP2_SOA(elx,3, elements_stride_OP2)-OP2_SOA(elx,4, elements_stride_OP2))
+    a3=0.25_rlk*(-OP2_SOA(elx,1, elements_stride_OP2)-OP2_SOA(elx,2, elements_stride_OP2)+OP2_SOA(elx,3, elements_stride_OP2)+OP2_SOA(elx,4, elements_stride_OP2))
+    b1=0.25_rlk*(-OP2_SOA(ely,1, elements_stride_OP2)+OP2_SOA(ely,2, elements_stride_OP2)+OP2_SOA(ely,3, elements_stride_OP2)-OP2_SOA(ely,4, elements_stride_OP2))
+    b2=0.25_rlk*( OP2_SOA(ely,1, elements_stride_OP2)-OP2_SOA(ely,2, elements_stride_OP2)+OP2_SOA(ely,3, elements_stride_OP2)-OP2_SOA(ely,4, elements_stride_OP2))
+    b3=0.25_rlk*(-OP2_SOA(ely,1, elements_stride_OP2)-OP2_SOA(ely,2, elements_stride_OP2)+OP2_SOA(ely,3, elements_stride_OP2)+OP2_SOA(ely,4, elements_stride_OP2))
+    OP2_SOA(cnwt,1, elements_stride_OP2)=ONEBYNINE*                            &
 &               ((3.0_rlk*b3-b2)*(3.0_rlk*a1-a2)  &
 &               -(3.0_rlk*a3-a2)*(3.0_rlk*b1-b2))
-    cnwt(2)=ONEBYNINE*                            &
+    OP2_SOA(cnwt,2, elements_stride_OP2)=ONEBYNINE*                            &
 &               ((3.0_rlk*b3+b2)*(3.0_rlk*a1-a2)  &
 &               -(3.0_rlk*a3+a2)*(3.0_rlk*b1-b2))
-    cnwt(3)=ONEBYNINE*                            &
+    OP2_SOA(cnwt,3, elements_stride_OP2)=ONEBYNINE*                            &
 &               ((3.0_rlk*b3+b2)*(3.0_rlk*a1+a2)  &
                 -(3.0_rlk*a3+a2)*(3.0_rlk*b1+b2))
-    cnwt(4)=ONEBYNINE*                            &
+    OP2_SOA(cnwt,4, elements_stride_OP2)=ONEBYNINE*                            &
 &               ((3.0_rlk*b3-b2)*(3.0_rlk*a1+a2)  &
                 -(3.0_rlk*a3-a2)*(3.0_rlk*b1+b2))
     elvol=4.0_rlk*(a1*b3-a3*b1)
@@ -94,6 +95,7 @@ attributes (device) subroutine geometry_calc_gpu(a1,a2,a3,b1,b2,b3,elx,ely,cnwt,
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_geometry_calc( &
+  &  soa_stride,      &
   & opDat1Devicegeometry_calc, &
   & opDat2Devicegeometry_calc, &
   & opDat3Devicegeometry_calc, &
@@ -121,6 +123,7 @@ attributes (global) SUBROUTINE op_cuda_geometry_calc( &
   real(8), DEVICE :: opDat10Devicegeometry_calc(*)
 
 
+  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
 
@@ -136,9 +139,9 @@ attributes (global) SUBROUTINE op_cuda_geometry_calc( &
     & opDat4Devicegeometry_calc(i1 + 1), &
     & opDat5Devicegeometry_calc(i1 + 1), &
     & opDat6Devicegeometry_calc(i1 + 1), &
-    & opDat7Devicegeometry_calc(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat8Devicegeometry_calc(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat9Devicegeometry_calc(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat7Devicegeometry_calc(1 + i1), &
+    & opDat8Devicegeometry_calc(1 + i1), &
+    & opDat9Devicegeometry_calc(1 + i1), &
     & opDat10Devicegeometry_calc(i1 + 1) &
     & )
   END DO
@@ -312,6 +315,7 @@ attributes (host) SUBROUTINE geometry_calc_host_gpu( userSubroutine, set, &
 
 
   CALL op_cuda_geometry_calc <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>>( &
+  & getSetSizeFromOpArg(opArg7), &
   & opDat1Devicegeometry_calc, &
   & opDat2Devicegeometry_calc, &
   & opDat3Devicegeometry_calc, &

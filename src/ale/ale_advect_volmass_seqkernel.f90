@@ -221,6 +221,7 @@ SUBROUTINE ale_advect_volmass_host( userSubroutine, set, &
   integer(4), POINTER, DIMENSION(:) :: opDat17Local
 
   INTEGER(kind=4) :: i1
+  REAL(kind=4) :: dataTransfer
 
   numberOfOpDats = 17
 
@@ -298,7 +299,18 @@ SUBROUTINE ale_advect_volmass_host( userSubroutine, set, &
 
   call op_timers_core(endTime)
 
+  dataTransfer = 0.0
+  dataTransfer = dataTransfer + opArg2%size *n_upper
+  dataTransfer = dataTransfer + opArg7%size *n_upper
+  dataTransfer = dataTransfer + opArg11%size *n_upper
+  dataTransfer = dataTransfer + opArg12%size *n_upper
+  dataTransfer = dataTransfer + opArg13%size *n_upper * 2.d0
+  dataTransfer = dataTransfer + opArg14%size *n_upper
+  dataTransfer = dataTransfer + opArg15%size *n_upper
+  dataTransfer = dataTransfer + opArg16%size *n_upper
+  dataTransfer = dataTransfer + opArg17%size
+  dataTransfer = dataTransfer + n_upper * opDat2MapDim * 4.d0
   returnSetKernelTiming = setKernelTime(4 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime,0.00000_4,0.00000_4, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
 END SUBROUTINE
 END MODULE

@@ -160,6 +160,7 @@ SUBROUTINE getpc_update_host( userSubroutine, set, &
 
 
   INTEGER(kind=4) :: i1
+  REAL(kind=4) :: dataTransfer
 
   numberOfOpDats = 7
 
@@ -208,7 +209,15 @@ SUBROUTINE getpc_update_host( userSubroutine, set, &
 
   call op_timers_core(endTime)
 
+  dataTransfer = 0.0
+  dataTransfer = dataTransfer + opArg1%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg2%size
+  dataTransfer = dataTransfer + opArg3%size
+  dataTransfer = dataTransfer + opArg4%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg5%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg6%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg7%size * opSetCore%size
   returnSetKernelTiming = setKernelTime(21 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime,0.00000_4,0.00000_4, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
 END SUBROUTINE
 END MODULE

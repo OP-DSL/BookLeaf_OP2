@@ -21,6 +21,7 @@ USE CUDACONFIGURATIONPARAMS
 
 
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -63,10 +64,10 @@ attributes (device) subroutine getforce_visc_gpu(elfx,elfy,qx,qy)
     DO jj=1,N_SHAPE
       jp=jj+1_ink
       IF (jp.GT.4_ink) jp=1_ink
-      elfx(jj)=elfx(jj)+qx(jj)
-      elfx(jp)=elfx(jp)-qx(jj)
-      elfy(jj)=elfy(jj)+qy(jj)
-      elfy(jp)=elfy(jp)-qy(jj)
+      OP2_SOA(elfx,jj, elements_stride_OP2)=OP2_SOA(elfx,jj, elements_stride_OP2)+OP2_SOA(qx,jj, elements_stride_OP2)
+      OP2_SOA(elfx,jp, elements_stride_OP2)=OP2_SOA(elfx,jp, elements_stride_OP2)-OP2_SOA(qx,jj, elements_stride_OP2)
+      OP2_SOA(elfy,jj, elements_stride_OP2)=OP2_SOA(elfy,jj, elements_stride_OP2)+OP2_SOA(qy,jj, elements_stride_OP2)
+      OP2_SOA(elfy,jp, elements_stride_OP2)=OP2_SOA(elfy,jp, elements_stride_OP2)-OP2_SOA(qy,jj, elements_stride_OP2)
     ENDDO
 
   END SUBROUTINE getforce_visc_gpu
@@ -74,6 +75,7 @@ attributes (device) subroutine getforce_visc_gpu(elfx,elfy,qx,qy)
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_getforce_visc( &
+  &  soa_stride,      &
   & opDat1Devicegetforce_visc, &
   & opDat2Devicegetforce_visc, &
   & opDat3Devicegetforce_visc, &
@@ -89,6 +91,7 @@ attributes (global) SUBROUTINE op_cuda_getforce_visc( &
   real(8), DEVICE, INTENT(IN) :: opDat4Devicegetforce_visc(*)
 
 
+  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
 
@@ -98,10 +101,10 @@ attributes (global) SUBROUTINE op_cuda_getforce_visc( &
 ! kernel call
 
     CALL getforce_visc_gpu( &
-    & opDat1Devicegetforce_visc(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat2Devicegetforce_visc(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat3Devicegetforce_visc(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat4Devicegetforce_visc(i1 * (4) + 1: i1 * (4) + 4) &
+    & opDat1Devicegetforce_visc(1 + i1), &
+    & opDat2Devicegetforce_visc(1 + i1), &
+    & opDat3Devicegetforce_visc(1 + i1), &
+    & opDat4Devicegetforce_visc(1 + i1) &
     & )
   END DO
 
@@ -214,6 +217,7 @@ attributes (host) SUBROUTINE getforce_visc_host_gpu( userSubroutine, set, &
 
 
   CALL op_cuda_getforce_visc <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>>( &
+  & getSetSizeFromOpArg(opArg1), &
   & opDat1Devicegetforce_visc, &
   & opDat2Devicegetforce_visc, &
   & opDat3Devicegetforce_visc, &

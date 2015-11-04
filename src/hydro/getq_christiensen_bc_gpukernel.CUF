@@ -22,6 +22,7 @@ USE CUDACONFIGURATIONPARAMS
 
 TYPE ( c_ptr )  :: planRet_getq_christiensen_bc
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -99,18 +100,18 @@ attributes (device) subroutine getq_christiensen_bc_gpu(ielel,scratch,iel,indtyp
     indtype(4) = indtype4
 
     ins=iside+2_ink
-    in1=ielel(iside)
-    in2=ielel(ins)
+    in1=OP2_SOA(ielel,iside, elements_stride_OP2)
+    in2=OP2_SOA(ielel,ins, elements_stride_OP2)
     IF (in1.EQ.iel) THEN
       ic1=iside
       ic2=MOD(iside,N_SHAPE)+1_ink
       IF (((indtype(ic1).LT.0_ink).AND.(indtype(ic2).LT.0_ink)).AND.&
 &          (in2.NE.iel)) THEN
-        scratch(1)=1.0_rlk
-        scratch(3)=1.0_rlk
+        OP2_SOA(scratch,1, elements_stride_OP2)=1.0_rlk
+        OP2_SOA(scratch,3, elements_stride_OP2)=1.0_rlk
       ELSE
-        scratch(1)=0.0_rlk
-        scratch(3)=0.0_rlk
+        OP2_SOA(scratch,1, elements_stride_OP2)=0.0_rlk
+        OP2_SOA(scratch,3, elements_stride_OP2)=0.0_rlk
       ENDIF
     ENDIF
     IF (in2.EQ.iel) THEN
@@ -118,11 +119,11 @@ attributes (device) subroutine getq_christiensen_bc_gpu(ielel,scratch,iel,indtyp
       ic2=MOD(ins,N_SHAPE)+1_ink
       IF (((indtype(ic1).LT.0_ink).AND.(indtype(ic2).LT.0_ink)).AND.&
 &          (in1.NE.iel)) THEN
-        scratch(2)=1.0_rlk
-        scratch(4)=1.0_rlk
+        OP2_SOA(scratch,2, elements_stride_OP2)=1.0_rlk
+        OP2_SOA(scratch,4, elements_stride_OP2)=1.0_rlk
       ELSE
-        scratch(2)=0.0_rlk
-        scratch(4)=0.0_rlk
+        OP2_SOA(scratch,2, elements_stride_OP2)=0.0_rlk
+        OP2_SOA(scratch,4, elements_stride_OP2)=0.0_rlk
       ENDIF
     ENDIF
 
@@ -131,6 +132,7 @@ attributes (device) subroutine getq_christiensen_bc_gpu(ielel,scratch,iel,indtyp
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_getq_christiensen_bc( &
+  &  soa_stride,      &
   & opDat4Devicegetq_christiensen_bc, &
   & opDat4Map, &
   & opDat1Devicegetq_christiensen_bc, &
@@ -157,6 +159,7 @@ attributes (global) SUBROUTINE op_cuda_getq_christiensen_bc( &
   integer(4), VALUE :: opGblDat8Devicegetq_christiensen_bc
   INTEGER(kind=4) map4idx, map5idx, map6idx, map7idx
 
+  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pblkMap
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: poffset
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pnelems
@@ -202,8 +205,8 @@ attributes (global) SUBROUTINE op_cuda_getq_christiensen_bc( &
 
 ! kernel call
       CALL getq_christiensen_bc_gpu( &
-      & opDat1Devicegetq_christiensen_bc((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
-      & opDat2Devicegetq_christiensen_bc((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+      & opDat1Devicegetq_christiensen_bc(1 + (i3 + threadBlockOffset)), &
+      & opDat2Devicegetq_christiensen_bc(1 + (i3 + threadBlockOffset)), &
       & opDat3Devicegetq_christiensen_bc((i3 + threadBlockOffset) * (1) +1), &
       & opDat4Devicegetq_christiensen_bc(1 + map4idx), &
       & opDat4Devicegetq_christiensen_bc(1 + map5idx), &
@@ -422,6 +425,7 @@ attributes (host) SUBROUTINE getq_christiensen_bc_host_gpu( userSubroutine, set,
     dynamicSharedMemorySize = reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock
 
     CALL op_cuda_getq_christiensen_bc <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>> (&
+    & getSetSizeFromOpArg(opArg1), &
     & opDat4Devicegetq_christiensen_bc, &
     & opMap4Devicegetq_christiensen_bc, &
     & opDat1Devicegetq_christiensen_bc, &

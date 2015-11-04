@@ -58,7 +58,7 @@ ifeq ($(LEV),RELEASE)
   IEEE   += 
 endif
 ifeq ($(LEV),OPT)
-  OPT     = -fastsse -gopt -Mlist
+  OPT     = -fastsse -Mlist
   COPT    =
 #Disable following for OPT
   BIG_ENDIAN   =
@@ -67,11 +67,11 @@ ifeq ($(LEV),OPT)
   IEEE         =
 endif
 ifeq ($(OPTARGET),cuda)
-  CUDAF     = -Mcuda=cuda6.0,cc35,fastmath,ptxinfo -Minform=inform -Mx,189,0x40 -fast
+  CUDAF     = -O3 -Mcuda=cuda6.0,cc35,fastmath,ptxinfo,loadcache:L1 -Minform=inform -Mx,189,0x40 -fast
   PREPRO  += -DOP2_ENABLE_CUDA
 endif
 ifeq ($(OPTARGET),mpi_cuda)
-  CUDAF     = -Mcuda=cuda6.0,cc35,fastmath,ptxinfo -Minform=inform -Mx,189,0x40 -fast
+  CUDAF     = -O3 -Mcuda=cuda6.0,cc35,fastmath,ptxinfo,loadcache:L1 -Minform=inform -Mx,189,0x40 -fast
   PREPRO  += -DOP2_ENABLE_CUDA
 endif
 

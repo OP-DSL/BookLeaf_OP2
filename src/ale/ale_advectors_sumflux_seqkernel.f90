@@ -150,6 +150,7 @@ SUBROUTINE ale_advectors_sumflux_host( userSubroutine, set, &
   integer(4), POINTER, DIMENSION(:) :: opDat10Local
 
   INTEGER(kind=4) :: i1
+  REAL(kind=4) :: dataTransfer
 
   numberOfOpDats = 10
 
@@ -206,7 +207,15 @@ SUBROUTINE ale_advectors_sumflux_host( userSubroutine, set, &
 
   call op_timers_core(endTime)
 
+  dataTransfer = 0.0
+  dataTransfer = dataTransfer + opArg2%size *n_upper
+  dataTransfer = dataTransfer + opArg6%size *n_upper
+  dataTransfer = dataTransfer + opArg7%size *n_upper
+  dataTransfer = dataTransfer + opArg8%size *n_upper
+  dataTransfer = dataTransfer + opArg9%size *n_upper
+  dataTransfer = dataTransfer + opArg10%size
+  dataTransfer = dataTransfer + n_upper * opDat2MapDim * 4.d0
   returnSetKernelTiming = setKernelTime(15 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime,0.00000_4,0.00000_4, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
 END SUBROUTINE
 END MODULE
