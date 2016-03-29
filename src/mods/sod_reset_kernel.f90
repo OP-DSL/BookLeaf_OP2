@@ -221,7 +221,7 @@ opArgArray(13) = opArg13
 opArgArray(14) = opArg14
 
 returnSetKernelTiming = setKernelTime(29 , userSubroutine//C_NULL_CHAR, &
-& 0.d0, 0.00000_4,0.00000_4, 0)
+& 0.0_8, 0.00000_4,0.00000_4, 0)
 call op_timers_core(startTime)
 
 n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -256,10 +256,14 @@ n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
   & indirectionDescriptorArray,2)
 
   CALL c_f_pointer(planRet_sod_reset,actualPlan_sod_reset)
-  CALL c_f_pointer(actualPlan_sod_reset%ncolblk,ncolblk_sod_reset,(/actualPlan_sod_reset%ncolors_core/))
-  CALL c_f_pointer(actualPlan_sod_reset%blkmap,blkmap_sod_reset,(/actualPlan_sod_reset%nblocks/))
-  CALL c_f_pointer(actualPlan_sod_reset%offset,offset_sod_reset,(/actualPlan_sod_reset%nblocks/))
-  CALL c_f_pointer(actualPlan_sod_reset%nelems,nelems_sod_reset,(/actualPlan_sod_reset%nblocks/))
+  CALL c_f_pointer(actualPlan_sod_reset%ncolblk, &
+&    ncolblk_sod_reset,(/actualPlan_sod_reset%ncolors_core/))
+  CALL c_f_pointer(actualPlan_sod_reset%blkmap, &
+&    blkmap_sod_reset,(/actualPlan_sod_reset%nblocks/))
+  CALL c_f_pointer(actualPlan_sod_reset%offset,&
+&    offset_sod_reset,(/actualPlan_sod_reset%nblocks/))
+  CALL c_f_pointer(actualPlan_sod_reset%nelems,&
+&    nelems_sod_reset,(/actualPlan_sod_reset%nblocks/))
 
   opSetCore => set%setPtr
 

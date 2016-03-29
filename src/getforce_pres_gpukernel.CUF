@@ -21,7 +21,6 @@ USE CUDACONFIGURATIONPARAMS
 
 
 
-#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -61,21 +60,20 @@ attributes (device) subroutine getforce_pres_gpu(pre,elfx,elfy,a1,a3,b1,b3)
     REAL(KIND=rlk) :: w1
 
     w1=pre
-    OP2_SOA(elfx,1, elements_stride_OP2)=w1*(-b3+b1)
-    OP2_SOA(elfx,2, elements_stride_OP2)=w1*( b3+b1)
-    OP2_SOA(elfx,3, elements_stride_OP2)=w1*( b3-b1)
-    OP2_SOA(elfx,4, elements_stride_OP2)=w1*(-b3-b1)
-    OP2_SOA(elfy,1, elements_stride_OP2)=w1*( a3-a1)
-    OP2_SOA(elfy,2, elements_stride_OP2)=w1*(-a3-a1)
-    OP2_SOA(elfy,3, elements_stride_OP2)=w1*(-a3+a1)
-    OP2_SOA(elfy,4, elements_stride_OP2)=w1*( a3+a1)
+    elfx(1)=w1*(-b3+b1)
+    elfx(2)=w1*( b3+b1)
+    elfx(3)=w1*( b3-b1)
+    elfx(4)=w1*(-b3-b1)
+    elfy(1)=w1*( a3-a1)
+    elfy(2)=w1*(-a3-a1)
+    elfy(3)=w1*(-a3+a1)
+    elfy(4)=w1*( a3+a1)
 
   END SUBROUTINE getforce_pres_gpu
 
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_getforce_pres( &
-  &  soa_stride,      &
   & opDat1Devicegetforce_pres, &
   & opDat2Devicegetforce_pres, &
   & opDat3Devicegetforce_pres, &
@@ -97,7 +95,6 @@ attributes (global) SUBROUTINE op_cuda_getforce_pres( &
   real(8), DEVICE, INTENT(IN) :: opDat7Devicegetforce_pres(*)
 
 
-  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
 
@@ -108,8 +105,8 @@ attributes (global) SUBROUTINE op_cuda_getforce_pres( &
 
     CALL getforce_pres_gpu( &
     & opDat1Devicegetforce_pres(i1 + 1), &
-    & opDat2Devicegetforce_pres(1 + i1), &
-    & opDat3Devicegetforce_pres(1 + i1), &
+    & opDat2Devicegetforce_pres(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat3Devicegetforce_pres(i1 * (4) + 1: i1 * (4) + 4), &
     & opDat4Devicegetforce_pres(i1 + 1), &
     & opDat5Devicegetforce_pres(i1 + 1), &
     & opDat6Devicegetforce_pres(i1 + 1), &
@@ -141,7 +138,7 @@ attributes (host) SUBROUTINE getforce_pres_host( userSubroutine, set, &
   TYPE ( op_arg ) , INTENT(IN) :: opArg6
   TYPE ( op_arg ) , INTENT(IN) :: opArg7
 
-  IF (getHybridGPU()) THEN
+  IF (getHybridGPU().EQ.1) THEN
     CALL getforce_pres_host_gpu( userSubroutine, set, &
     & opArg1, &
     & opArg2, &
@@ -227,7 +224,7 @@ attributes (host) SUBROUTINE getforce_pres_host_gpu( userSubroutine, set, &
   opArgArray(7) = opArg7
 
   returnSetKernelTiming = setKernelTime(50 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000_4,0.00000_4, 0)
+  & 0.d0, 0.00000,0.00000, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -256,7 +253,6 @@ attributes (host) SUBROUTINE getforce_pres_host_gpu( userSubroutine, set, &
 
 
   CALL op_cuda_getforce_pres <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>>( &
-  & getSetSizeFromOpArg(opArg2), &
   & opDat1Devicegetforce_pres, &
   & opDat2Devicegetforce_pres, &
   & opDat3Devicegetforce_pres, &
@@ -285,7 +281,7 @@ attributes (host) SUBROUTINE getforce_pres_host_gpu( userSubroutine, set, &
   dataTransfer = dataTransfer + opArg6%size * getSetSizeFromOpArg(opArg6)
   dataTransfer = dataTransfer + opArg7%size * getSetSizeFromOpArg(opArg7)
   returnSetKernelTiming = setKernelTime(50 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, dataTransfer, 0.00000_4, 1)
+  & endTime-startTime, dataTransfer, 0.00000, 1)
   calledTimes = calledTimes + 1
 END SUBROUTINE
 

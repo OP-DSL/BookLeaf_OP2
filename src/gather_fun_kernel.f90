@@ -125,7 +125,7 @@ opArgArray(4) = opArg4
 opArgArray(5) = opArg5
 
 returnSetKernelTiming = setKernelTime(35 , userSubroutine//C_NULL_CHAR, &
-& 0.d0, 0.00000_4,0.00000_4, 0)
+& 0.0_8, 0.00000_4,0.00000_4, 0)
 call op_timers_core(startTime)
 
 n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -151,10 +151,14 @@ n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
   & indirectionDescriptorArray,2)
 
   CALL c_f_pointer(planRet_gather_fun,actualPlan_gather_fun)
-  CALL c_f_pointer(actualPlan_gather_fun%ncolblk,ncolblk_gather_fun,(/actualPlan_gather_fun%ncolors_core/))
-  CALL c_f_pointer(actualPlan_gather_fun%blkmap,blkmap_gather_fun,(/actualPlan_gather_fun%nblocks/))
-  CALL c_f_pointer(actualPlan_gather_fun%offset,offset_gather_fun,(/actualPlan_gather_fun%nblocks/))
-  CALL c_f_pointer(actualPlan_gather_fun%nelems,nelems_gather_fun,(/actualPlan_gather_fun%nblocks/))
+  CALL c_f_pointer(actualPlan_gather_fun%ncolblk, &
+&    ncolblk_gather_fun,(/actualPlan_gather_fun%ncolors_core/))
+  CALL c_f_pointer(actualPlan_gather_fun%blkmap, &
+&    blkmap_gather_fun,(/actualPlan_gather_fun%nblocks/))
+  CALL c_f_pointer(actualPlan_gather_fun%offset,&
+&    offset_gather_fun,(/actualPlan_gather_fun%nblocks/))
+  CALL c_f_pointer(actualPlan_gather_fun%nelems,&
+&    nelems_gather_fun,(/actualPlan_gather_fun%nblocks/))
 
   opSetCore => set%setPtr
 

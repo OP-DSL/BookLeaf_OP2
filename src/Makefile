@@ -129,7 +129,11 @@ ifneq ($(MOD),)
   ifeq ($(MKFILEC), makefile.xl)
     PP_MOD=-WF,-DMODY
   else
+  ifeq ($(MKFILEC), makefile.xlcuf)
+    PP_MOD=-WF,-DMODY
+  else
     PP_MOD=-DMODY
+  endif
   endif
   ifndef OPTARGET
   OBJ+=$(MOD).o

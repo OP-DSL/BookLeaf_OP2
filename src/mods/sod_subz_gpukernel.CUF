@@ -22,7 +22,6 @@ USE CUDACONFIGURATIONPARAMS
 
 TYPE ( c_ptr )  :: planRet_sod_subz
 
-#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -108,7 +107,7 @@ attributes (device) subroutine sod_subz_gpu(ndx1,ndx2,ndx3,ndx4,ndy1,ndy2,ndy3,n
       w2=-x1-x2+x3+x4
       w3=-y1+y2+y3-y4
       w4=-y1-y2+y3+y4
-      OP2_SOA(spmass,inod, elements_stride_OP2)=rho*(w1*w4-w2*w3)
+      spmass(inod)=rho*(w1*w4-w2*w3)
     ENDDO
 
   END SUBROUTINE sod_subz_gpu
@@ -116,7 +115,6 @@ attributes (device) subroutine sod_subz_gpu(ndx1,ndx2,ndx3,ndx4,ndy1,ndy2,ndy3,n
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_sod_subz( &
-  &  soa_stride,      &
   & opDat1Devicesod_subz, &
   & opDat5Devicesod_subz, &
   & opDat1Map, &
@@ -141,7 +139,6 @@ attributes (global) SUBROUTINE op_cuda_sod_subz( &
 
   INTEGER(kind=4) map1idx, map2idx, map3idx, map4idx
 
-  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pblkMap
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: poffset
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pnelems
@@ -196,7 +193,7 @@ attributes (global) SUBROUTINE op_cuda_sod_subz( &
       & opDat5Devicesod_subz(1 + map3idx), &
       & opDat5Devicesod_subz(1 + map4idx), &
       & opDat9Devicesod_subz((i3 + threadBlockOffset) * (1) +1), &
-      & opDat10Devicesod_subz(1 + (i3 + threadBlockOffset)) &
+      & opDat10Devicesod_subz((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)) &
       & )
 
     END IF
@@ -234,7 +231,7 @@ attributes (host) SUBROUTINE sod_subz_host( userSubroutine, set, &
   TYPE ( op_arg ) , INTENT(IN) :: opArg9
   TYPE ( op_arg ) , INTENT(IN) :: opArg10
 
-  IF (getHybridGPU()) THEN
+  IF (getHybridGPU().EQ.1) THEN
     CALL sod_subz_host_gpu( userSubroutine, set, &
     & opArg1, &
     & opArg2, &
@@ -354,7 +351,7 @@ attributes (host) SUBROUTINE sod_subz_host_gpu( userSubroutine, set, &
   opArgArray(10) = opArg10
 
   returnSetKernelTiming = setKernelTime(30 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000_4,0.00000_4, 0)
+  & 0.d0, 0.00000,0.00000, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -424,7 +421,6 @@ attributes (host) SUBROUTINE sod_subz_host_gpu( userSubroutine, set, &
     dynamicSharedMemorySize = reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock
 
     CALL op_cuda_sod_subz <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>> (&
-    & getSetSizeFromOpArg(opArg10), &
     & opDat1Devicesod_subz, &
     & opDat5Devicesod_subz, &
     & opMap1Devicesod_subz, &

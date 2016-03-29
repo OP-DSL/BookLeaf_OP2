@@ -1,10 +1,10 @@
 # Compiler
 ifeq ($(NO_MPI),)
-  FC = mpxlf95_r
-  CC = mpcc_r
+  FC = mpif90
+  CC = mpicc
 else
-  FC = mpxlf90_r
-  CC = mpcc_r
+  FC = mpif90
+  CC = mpicc
 endif
 
 # General flags
@@ -12,7 +12,7 @@ REALSIZE     = -qrealsize=8
 INTSIZE      = -qintsize=4
 FORM         = -qfree
 BIG_ENDIAN   = -xfilebyteorder=big8
-AUTO_ARRAYS  = 
+AUTO_ARRAYS  = -qsmallstack=dynlenonheap 
 SHARED_INTEL = 
 IEEE         = -qfloat=nomaf
 # Open MP
@@ -66,11 +66,11 @@ ifeq ($(LEV),RELEASE)
   IEEE   +=
 endif
 ifeq ($(LEV),OPT)
-  OPT     = -O3 -Q -qfullpath -g -qsigtrap
-  COPT    = -O3 -Q -qfullpath -g
+  OPT     = -qarch=pwr8 -qtune=pwr8:smt2 -O5 -qaltivec=le -qreport -qhot -qinline=level=10
+  COPT    = -qarch=pwr8 -qtune=pwr8:smt2 -O5 -qaltivec=le -qreport -qhot -qinline=level=10
 #Disable following for OPT
   BIG_ENDIAN   =
-  AUTO_ARRAYS  =
+#  AUTO_ARRAYS  =
   SHARED_INTEL =
   IEEE         =
 endif
@@ -81,4 +81,4 @@ FFLAGS = -c $(REALSIZE) $(INTSIZE) $(FORM) $(BIG_ENDIAN) $(AUTO_ARRAYS) \
 
 CFLAGS = -c $(CDBG) $(COPT)
 
-LFLAGS = $(DBG) $(OPT) $(OPENMP) -o
+LFLAGS = $(DBG) $(OPT) $(OPENMP)  -lmpi_cxx -qnoeh  -o

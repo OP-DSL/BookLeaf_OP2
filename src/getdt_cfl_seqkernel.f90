@@ -33,13 +33,13 @@ SUBROUTINE getdt_cfl(rscratch11,rscratch12,rho,csqrd,qq,elx,ely,ielreg,zdtnotreg
     REAL(KIND=rlk)                              :: x1,x2,y1,y2
     REAL(KIND=rlk),DIMENSION(N_SHAPE)            :: res
 
-    IF (zdtnotreg(ielreg+1)) THEN
+    IF (zdtnotreg(ielreg+1).EQ.1) THEN
       rscratch11=dt_max
       rscratch12=TINY(1.0_rlk)
     ELSE
       w1=MAX(rho,zcut)
       w2=MAX(ccut,csqrd)+2.0_rlk*qq/w1
-      IF (zmidlength(ielreg+1)) THEN
+      IF (zmidlength(ielreg+1).EQ.1) THEN
         x1=elx(1)+elx(2)
         x2=elx(3)+elx(4)
         y1=ely(1)+ely(2)
@@ -252,7 +252,6 @@ SUBROUTINE getdt_cfl_host( userSubroutine, set, &
   integer(4), POINTER, DIMENSION(:) :: opDat10Local
 
   INTEGER(kind=4) :: i1
-  REAL(kind=4) :: dataTransfer
 
   numberOfOpDats = 10
 
@@ -268,7 +267,7 @@ SUBROUTINE getdt_cfl_host( userSubroutine, set, &
   opArgArray(10) = opArg10
 
   returnSetKernelTiming = setKernelTime(41 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000_4,0.00000_4, 0)
+  & 0.0_8, 0.00000_4,0.00000_4, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -313,18 +312,7 @@ SUBROUTINE getdt_cfl_host( userSubroutine, set, &
 
   call op_timers_core(endTime)
 
-  dataTransfer = 0.0
-  dataTransfer = dataTransfer + opArg1%size * opSetCore%size
-  dataTransfer = dataTransfer + opArg2%size * opSetCore%size
-  dataTransfer = dataTransfer + opArg3%size * opSetCore%size
-  dataTransfer = dataTransfer + opArg4%size * opSetCore%size
-  dataTransfer = dataTransfer + opArg5%size * opSetCore%size
-  dataTransfer = dataTransfer + opArg6%size * opSetCore%size
-  dataTransfer = dataTransfer + opArg7%size * opSetCore%size
-  dataTransfer = dataTransfer + opArg8%size * opSetCore%size
-  dataTransfer = dataTransfer + opArg9%size
-  dataTransfer = dataTransfer + opArg10%size
   returnSetKernelTiming = setKernelTime(41 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, dataTransfer, 0.00000_4, 1)
+  & endTime-startTime,0.00000_4,0.00000_4, 1)
 END SUBROUTINE
 END MODULE

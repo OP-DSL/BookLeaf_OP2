@@ -12,7 +12,7 @@ SHARED_INTEL =
 IEEE         = -Kieee
 # Open MP
 ifeq ($(NO_OMP),)
-  OPENMP = -mp=nonuma
+  OPENMP = #-mp=nonuma
 else
   OPENMP =
 endif
@@ -58,7 +58,7 @@ ifeq ($(LEV),RELEASE)
   IEEE   += 
 endif
 ifeq ($(LEV),OPT)
-  OPT     = -fastsse -Mlist
+  OPT     = -g -O0 -Mfma -Mbuiltin #sse -Mlist
   COPT    =
 #Disable following for OPT
   BIG_ENDIAN   =

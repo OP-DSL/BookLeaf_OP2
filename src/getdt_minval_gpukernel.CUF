@@ -194,7 +194,7 @@ attributes (device) subroutine getdt_minval_gpu(rscratch11,w1)
     TYPE ( op_arg ) , INTENT(IN) :: opArg1
     TYPE ( op_arg ) , INTENT(IN) :: opArg2
 
-    IF (getHybridGPU()) THEN
+    IF (getHybridGPU().EQ.1) THEN
       CALL getdt_minval_host_gpu( userSubroutine, set, &
       & opArg1, &
       & opArg2 )
@@ -252,7 +252,7 @@ attributes (device) subroutine getdt_minval_gpu(rscratch11,w1)
     opArgArray(2) = opArg2
 
     returnSetKernelTiming = setKernelTime(42 , userSubroutine//C_NULL_CHAR, &
-    & 0.d0, 0.00000_4,0.00000_4, 0)
+    & 0.d0, 0.00000,0.00000, 0)
     call op_timers_core(startTime)
 
     n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -309,7 +309,7 @@ attributes (device) subroutine getdt_minval_gpu(rscratch11,w1)
     dataTransfer = dataTransfer + opArg1%size * getSetSizeFromOpArg(opArg1)
     dataTransfer = dataTransfer + opArg2%size * 2.d0
     returnSetKernelTiming = setKernelTime(42 , userSubroutine//C_NULL_CHAR, &
-    & endTime-startTime, dataTransfer, 0.00000_4, 1)
+    & endTime-startTime, dataTransfer, 0.00000, 1)
     calledTimes = calledTimes + 1
   END SUBROUTINE
 

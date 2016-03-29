@@ -222,7 +222,7 @@ END MODULE timing_mod
 
 MODULE op2_bookleaf
 
-  USE OP2_Fortran_Reference
+  USE OP2_Fortran_Declarations
   use OP2_Fortran_RT_Support
   use, intrinsic :: ISO_C_BINDING
   type(op_set) :: s_nodes, s_elements, s_mat, s_reg
@@ -292,9 +292,9 @@ MODULE op2_bookleaf
 
   ! This was originally not defined on reg, but had fixed size
   ALLOCATE(zdtnotreg2(1:nreg))
-  zdtnotreg2 = zdtnotreg(1:nreg)
+  zdtnotreg2 = 0_ink !zdtnotreg(1:nreg)
   ALLOCATE(zmidlength2(1:nreg))
-  zmidlength2 = zmidlength(1:nreg)
+  zmidlength2 = 0_ink !zmidlength(1:nreg)
 
   ! Generate a dataset for element indices
   ALLOCATE(elidx(1:nel))

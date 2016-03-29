@@ -43,6 +43,7 @@ SUBROUTINE op_wrap_gather_fun( &
   INTEGER(kind=4) bottom,top,i1
   INTEGER(kind=4) map1idx, map2idx, map3idx, map4idx
 
+print *,"g3"
   DO i1 = bottom, top-1, 1
     map1idx = opDat1Map(1 + i1 * opDat1MapDim + 0)+1
     map2idx = opDat1Map(1 + i1 * opDat1MapDim + 1)+1
@@ -57,6 +58,7 @@ SUBROUTINE op_wrap_gather_fun( &
     & opDat5Local(1,i1+1) &
     & )
   END DO
+print *,"g4"
 END SUBROUTINE
 SUBROUTINE gather_fun_host( userSubroutine, set, &
   & opArg1, &
@@ -95,10 +97,9 @@ SUBROUTINE gather_fun_host( userSubroutine, set, &
 
 
   INTEGER(kind=4) :: i1
-  REAL(kind=4) :: dataTransfer
 
+print *,"g1"
   numberOfOpDats = 5
-
   opArgArray(1) = opArg1
   opArgArray(2) = opArg2
   opArgArray(3) = opArg3
@@ -106,13 +107,14 @@ SUBROUTINE gather_fun_host( userSubroutine, set, &
   opArgArray(5) = opArg5
 
   returnSetKernelTiming = setKernelTime(35 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000_4,0.00000_4, 0)
+  & 0.0_8, 0.00000_4,0.00000_4, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
 
   opSetCore => set%setPtr
 
+print *,"g2"
   opDat1Cardinality = opArg1%dim * getSetSizeFromOpArg(opArg1)
   opDat1MapDim = getMapDimFromOpArg(opArg1)
   opDat5Cardinality = opArg5%dim * getSetSizeFromOpArg(opArg5)
@@ -133,11 +135,7 @@ SUBROUTINE gather_fun_host( userSubroutine, set, &
 
   call op_timers_core(endTime)
 
-  dataTransfer = 0.0
-  dataTransfer = dataTransfer + opArg1%size *n_upper
-  dataTransfer = dataTransfer + opArg5%size *n_upper
-  dataTransfer = dataTransfer + n_upper * opDat1MapDim * 4.d0
   returnSetKernelTiming = setKernelTime(35 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, dataTransfer, 0.00000_4, 1)
+  & endTime-startTime,0.00000_4,0.00000_4, 1)
 END SUBROUTINE
 END MODULE

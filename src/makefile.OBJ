@@ -55,29 +55,29 @@ OBJ = getacc_op.o       \
       main.o
 ifeq ($(OPTARGET),genseq)
 OBJ += $(shell find . -maxdepth 1 -name "*_seqkernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
-OP2_LIB = -lop2_for_seq -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5
+OP2_LIB = -lop2_for_seq -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5 -lz
 endif
 ifeq ($(OPTARGET),openmp)
 OBJ += $(shell find . -maxdepth 1 -name "*_kernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
-OP2_LIB = -lop2_for_openmp -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5
+OP2_LIB = -lop2_for_openmp -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5 -lz
 endif
 ifeq ($(OPTARGET),cuda)
 OBJ += cudaConfigurationParams.o data.o
 OBJ += $(shell find . -maxdepth 1 -name "*_gpukernel.CUF" | sed s/\\.CUF/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
-OP2_LIB = -lop2_for_cuda -Mcuda=cuda6.0,cc35,loadcache:L1 -lcuda -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5
+OP2_LIB = -lop2_for_cuda -Mcuda=cuda6.0,cc35,loadcache:L1 -lcuda -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5 -lz
 endif
 ifeq ($(OPTARGET),mpi)
 OBJ += $(shell find . -maxdepth 1 -name "*_seqkernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
-OP2_LIB = -lop2_for_mpi -L$(HDF5_INSTALL_PATH)/lib -lhdf5 -lz -pgcpplibs -lstdc++  $(PARMETIS_LINK) $(PTSCOTCH_LINK)
+OP2_LIB = -lop2_for_mpi -L$(HDF5_INSTALL_PATH)/lib -lhdf5 -lz -lstdc++  $(PARMETIS_LINK) $(PTSCOTCH_LINK) -lz
 endif
 ifeq ($(OPTARGET),mpi_openmp)
 OBJ += $(shell find . -maxdepth 1 -name "*_kernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
-OP2_LIB = -lop2_for_mpi -L$(HDF5_INSTALL_PATH)/lib -lhdf5 -lz -pgcpplibs -lstdc++ $(PARMETIS_LINK) $(PTSCOTCH_LINK)
+OP2_LIB = -lop2_for_mpi -L$(HDF5_INSTALL_PATH)/lib -lhdf5 -lz -lstdc++ $(PARMETIS_LINK) $(PTSCOTCH_LINK) -lz
 endif
 ifeq ($(OPTARGET),mpi_cuda)
 OBJ += cudaConfigurationParams.o data.o
 OBJ += $(shell find . -maxdepth 1 -name "*_gpukernel.CUF" | sed s/\\.CUF/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
-OP2_LIB = -lop2_for_mpi_cuda -Mcuda=cuda6.0,cc35,loadcache:L1 -lcuda -L$(HDF5_INSTALL_PATH)/lib -lhdf5 -lz -pgcpplibs -lstdc++ $(PARMETIS_LINK) $(PTSCOTCH_LINK)
+OP2_LIB = -lop2_for_mpi_cuda -Mcuda=cuda6.0,cc35,loadcache:L1 -lcuda -L$(HDF5_INSTALL_PATH)/lib -lhdf5 -lz -lstdc++ $(PARMETIS_LINK) $(PTSCOTCH_LINK) -lz
 endif
 endif
 endif

@@ -82,7 +82,6 @@ SUBROUTINE getdt_mindt_reg_host( userSubroutine, set, &
   integer(4), POINTER, DIMENSION(:) :: opDat4Local
 
   INTEGER(kind=4) :: i1
-  REAL(kind=4) :: dataTransfer
 
   numberOfOpDats = 4
 
@@ -92,7 +91,7 @@ SUBROUTINE getdt_mindt_reg_host( userSubroutine, set, &
   opArgArray(4) = opArg4
 
   returnSetKernelTiming = setKernelTime(48 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000_4,0.00000_4, 0)
+  & 0.0_8, 0.00000_4,0.00000_4, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -121,12 +120,7 @@ SUBROUTINE getdt_mindt_reg_host( userSubroutine, set, &
 
   call op_timers_core(endTime)
 
-  dataTransfer = 0.0
-  dataTransfer = dataTransfer + opArg1%size * opSetCore%size
-  dataTransfer = dataTransfer + opArg2%size * opSetCore%size
-  dataTransfer = dataTransfer + opArg3%size
-  dataTransfer = dataTransfer + opArg4%size * 2.d0
   returnSetKernelTiming = setKernelTime(48 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, dataTransfer, 0.00000_4, 1)
+  & endTime-startTime,0.00000_4,0.00000_4, 1)
 END SUBROUTINE
 END MODULE

@@ -92,7 +92,7 @@ attributes (host) SUBROUTINE getpc_merge_host( userSubroutine, set, &
 
   TYPE ( op_arg ) , INTENT(IN) :: opArg1
 
-  IF (getHybridGPU()) THEN
+  IF (getHybridGPU().EQ.1) THEN
     CALL getpc_merge_host_gpu( userSubroutine, set, &
     & opArg1 )
   END IF
@@ -142,7 +142,7 @@ attributes (host) SUBROUTINE getpc_merge_host_gpu( userSubroutine, set, &
   opArgArray(1) = opArg1
 
   returnSetKernelTiming = setKernelTime(22 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000_4,0.00000_4, 0)
+  & 0.d0, 0.00000,0.00000, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -175,7 +175,7 @@ attributes (host) SUBROUTINE getpc_merge_host_gpu( userSubroutine, set, &
   dataTransfer = 0.0
   dataTransfer = dataTransfer + opArg1%size * getSetSizeFromOpArg(opArg1) * 2.d0
   returnSetKernelTiming = setKernelTime(22 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, dataTransfer, 0.00000_4, 1)
+  & endTime-startTime, dataTransfer, 0.00000, 1)
   calledTimes = calledTimes + 1
 END SUBROUTINE
 

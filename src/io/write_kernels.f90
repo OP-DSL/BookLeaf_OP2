@@ -44,11 +44,11 @@ MODULE write_kernels
 
 !   END SUBROUTINE write_init
 
-    SUBROUTINE write_regvalues(elvol,elmass,ein,pre, &
-&               rho,cnmass,cnwt,ndu1,ndu2,ndu3,ndu4,ndv1, &
-&               ndv2,ndv3,ndv4,reg_vol,reg_ie, reg_pre, &
-&       reg_pmx,reg_pmn,reg_mass,reg_ke, reg_dmx,reg_dmn, &
-&       tot_mom_u,tot_mom_v,ireg,myreg)
+    SUBROUTINE write_regvalues(elvol,elmass,ein,pre, &    !4
+&               rho,cnmass,cnwt,ndu1,ndu2,ndu3,ndu4,ndv1, & !8
+&               ndv2,ndv3,ndv4,reg_vol,reg_ie, reg_pre, & !6
+&       reg_pmx,reg_pmn,reg_mass,reg_ke, reg_dmx,reg_dmn, & !6
+&       tot_mom_u,tot_mom_v,ireg,myreg) !4:tab
 
     USE kinds_mod,ONLY: rlk,ink
     USE parameters_mod,ONLY: N_SHAPE

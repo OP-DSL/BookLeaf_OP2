@@ -18,7 +18,15 @@
 #
 #
 # Object list
+ifndef OPTARGET
 OBJ += banner.o       \
        read.o         \
        write_kernels.o         \
        write.o
+else
+OBJ += banner.o       \
+       read.o         \
+       write_kernels.o         \
+       write_regvalues_seqkernel.o         \
+       write_op.o
+endif

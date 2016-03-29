@@ -122,6 +122,7 @@ CONTAINS
     type(op_set) :: iterset
     type(op_map) :: map
     type(op_dat) :: dat1, dat2
+    print *,"g0"
 ! check if iteset == s_elements and map == m_ep2node
     call gather_fun_host(&
                      & "gather_fun",s_elements,  &

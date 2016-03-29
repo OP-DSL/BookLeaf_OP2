@@ -22,7 +22,6 @@ USE CUDACONFIGURATIONPARAMS
 
 TYPE ( c_ptr )  :: planRet_getq_christiensen1
 
-#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -155,10 +154,10 @@ attributes (device) subroutine getq_christiensen1_gpu(du,dv,dx,dy, &
     is2=iside+1_ink
 
     ! edge 1
-    w1=OP2_SOA(du,is1, elements_stride_OP2)
-    w2=OP2_SOA(dv,is1, elements_stride_OP2)
-    w3=OP2_SOA(dx,is1, elements_stride_OP2)
-    w4=OP2_SOA(dy,is1, elements_stride_OP2)
+    w1=du(is1)
+    w2=dv(is1)
+    w3=dx(is1)
+    w4=dy(is1)
     den=SQRT(w1*w1+w2*w2)
     den=1.0_rlk/MAX(den,zerocut_OP2)
     uhat=w1*den
@@ -170,35 +169,35 @@ attributes (device) subroutine getq_christiensen1_gpu(du,dv,dx,dy, &
     den=w3*xhat+w4*yhat
     w1=(w1*uhat+w2*vhat)/SIGN(MAX(ABS(den),zerocut_OP2),den)
     w1=1.0_rlk/SIGN(MAX(ABS(w1),zerocut_OP2),w1)
-    ins=OP2_SOA(ielsd,iside, elements_stride_OP2)
+    ins=ielsd(iside)
     ins=MOD(ins,N_SHAPE)+1_ink
     IF (iside.eq.1_ink) THEN
-      den=OP2_SOA(dx1,ins, elements_stride_OP2)*xhat+OP2_SOA(dy1,ins, elements_stride_OP2)*yhat
-      w2=(OP2_SOA(du1,ins, elements_stride_OP2)*uhat+OP2_SOA(dv1,ins, elements_stride_OP2)*vhat)/                        &
+      den=dx1(ins)*xhat+dy1(ins)*yhat
+      w2=(du1(ins)*uhat+dv1(ins)*vhat)/                        &
   &        SIGN(MAX(ABS(den),zerocut_OP2),den)
     ELSE
-      den=OP2_SOA(dx2,ins, elements_stride_OP2)*xhat+OP2_SOA(dy2,ins, elements_stride_OP2)*yhat
-      w2=(OP2_SOA(du2,ins, elements_stride_OP2)*uhat+OP2_SOA(dv2,ins, elements_stride_OP2)*vhat)/                        &
+      den=dx2(ins)*xhat+dy2(ins)*yhat
+      w2=(du2(ins)*uhat+dv2(ins)*vhat)/                        &
   &        SIGN(MAX(ABS(den),zerocut_OP2),den)
     ENDIF
-    OP2_SOA(scratch,1, elements_stride_OP2)=w2*w1
-    ins=OP2_SOA(ielsd,iside+2_ink, elements_stride_OP2)
+    scratch(1)=w2*w1
+    ins=ielsd(iside+2_ink)
     ins=MOD(ins+2_ink,N_SHAPE)+1_ink
     IF (iside.eq.1_ink) THEN
-      den=OP2_SOA(dx3,ins, elements_stride_OP2)*xhat+OP2_SOA(dy3,ins, elements_stride_OP2)*yhat
-      w3=(OP2_SOA(du3,ins, elements_stride_OP2)*uhat+OP2_SOA(dv3,ins, elements_stride_OP2)*vhat)/                        &
+      den=dx3(ins)*xhat+dy3(ins)*yhat
+      w3=(du3(ins)*uhat+dv3(ins)*vhat)/                        &
   &        SIGN(MAX(ABS(den),zerocut_OP2),den)
     ELSE
-      den=OP2_SOA(dx4,ins, elements_stride_OP2)*xhat+OP2_SOA(dy4,ins, elements_stride_OP2)*yhat
-      w3=(OP2_SOA(du4,ins, elements_stride_OP2)*uhat+OP2_SOA(dv4,ins, elements_stride_OP2)*vhat)/                        &
+      den=dx4(ins)*xhat+dy4(ins)*yhat
+      w3=(du4(ins)*uhat+dv4(ins)*vhat)/                        &
 &          SIGN(MAX(ABS(den),zerocut_OP2),den)
     ENDIF
-    OP2_SOA(scratch,2, elements_stride_OP2)=w3*w1
+    scratch(2)=w3*w1
     ! edge 2
-    w1=OP2_SOA(du,is2, elements_stride_OP2)
-    w2=OP2_SOA(dv,is2, elements_stride_OP2)
-    w3=OP2_SOA(dx,is2, elements_stride_OP2)
-    w4=OP2_SOA(dy,is2, elements_stride_OP2)
+    w1=du(is2)
+    w2=dv(is2)
+    w3=dx(is2)
+    w4=dy(is2)
     den=SQRT(w1*w1+w2*w2)
     den=1.0_rlk/MAX(den,zerocut_OP2)
     uhat=w1*den
@@ -210,37 +209,36 @@ attributes (device) subroutine getq_christiensen1_gpu(du,dv,dx,dy, &
     den=w3*xhat+w4*yhat
     w1=(w1*uhat+w2*vhat)/SIGN(MAX(ABS(den),zerocut_OP2),den)
     w1=1.0_rlk/SIGN(MAX(ABS(w1),zerocut_OP2),w1)
-    ins=OP2_SOA(ielsd,iside, elements_stride_OP2)
+    ins=ielsd(iside)
     ins=MOD(ins+2_ink,N_SHAPE)+1_ink
     IF (iside.eq.1_ink) THEN
-      den=OP2_SOA(dx1,ins, elements_stride_OP2)*xhat+OP2_SOA(dy1,ins, elements_stride_OP2)*yhat
-      w2=(OP2_SOA(du1,ins, elements_stride_OP2)*uhat+OP2_SOA(dv1,ins, elements_stride_OP2)*vhat)/                         &
+      den=dx1(ins)*xhat+dy1(ins)*yhat
+      w2=(du1(ins)*uhat+dv1(ins)*vhat)/                         &
   &        SIGN(MAX(ABS(den),zerocut_OP2),den)
     ELSE
-      den=OP2_SOA(dx2,ins, elements_stride_OP2)*xhat+OP2_SOA(dy2,ins, elements_stride_OP2)*yhat
-      w2=(OP2_SOA(du2,ins, elements_stride_OP2)*uhat+OP2_SOA(dv2,ins, elements_stride_OP2)*vhat)/                         &
+      den=dx2(ins)*xhat+dy2(ins)*yhat
+      w2=(du2(ins)*uhat+dv2(ins)*vhat)/                         &
   &        SIGN(MAX(ABS(den),zerocut_OP2),den)
     ENDIF
-    OP2_SOA(scratch,3, elements_stride_OP2)=w2*w1
-    ins=OP2_SOA(ielsd,iside+2_ink, elements_stride_OP2)
+    scratch(3)=w2*w1
+    ins=ielsd(iside+2_ink)
     ins=MOD(ins,N_SHAPE)+1_ink
     IF (iside.eq.1_ink) THEN
-      den=OP2_SOA(dx3,ins, elements_stride_OP2)*xhat+OP2_SOA(dy3,ins, elements_stride_OP2)*yhat
-      w3=(OP2_SOA(du3,ins, elements_stride_OP2)*uhat+OP2_SOA(dv3,ins, elements_stride_OP2)*vhat)/                         &
+      den=dx3(ins)*xhat+dy3(ins)*yhat
+      w3=(du3(ins)*uhat+dv3(ins)*vhat)/                         &
   &        SIGN(MAX(ABS(den),zerocut_OP2),den)
     ELSE
-      den=OP2_SOA(dx4,ins, elements_stride_OP2)*xhat+OP2_SOA(dy4,ins, elements_stride_OP2)*yhat
-      w3=(OP2_SOA(du4,ins, elements_stride_OP2)*uhat+OP2_SOA(dv4,ins, elements_stride_OP2)*vhat)/                         &
+      den=dx4(ins)*xhat+dy4(ins)*yhat
+      w3=(du4(ins)*uhat+dv4(ins)*vhat)/                         &
   &        SIGN(MAX(ABS(den),zerocut_OP2),den)
     ENDIF
-    OP2_SOA(scratch,4, elements_stride_OP2)=w3*w1
+    scratch(4)=w3*w1
 
   END SUBROUTINE getq_christiensen1_gpu
 
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_getq_christiensen1( &
-  &  soa_stride,      &
   & opDat5Devicegetq_christiensen1, &
   & opDat9Devicegetq_christiensen1, &
   & opDat13Devicegetq_christiensen1, &
@@ -279,7 +277,6 @@ attributes (global) SUBROUTINE op_cuda_getq_christiensen1( &
   integer(4), VALUE :: opGblDat23Devicegetq_christiensen1
   INTEGER(kind=4) map5idx, map6idx, map7idx, map8idx
 
-  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pblkMap
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: poffset
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pnelems
@@ -325,28 +322,28 @@ attributes (global) SUBROUTINE op_cuda_getq_christiensen1( &
 
 ! kernel call
       CALL getq_christiensen1_gpu( &
-      & opDat1Devicegetq_christiensen1(1 + (i3 + threadBlockOffset)), &
-      & opDat2Devicegetq_christiensen1(1 + (i3 + threadBlockOffset)), &
-      & opDat3Devicegetq_christiensen1(1 + (i3 + threadBlockOffset)), &
-      & opDat4Devicegetq_christiensen1(1 + (i3 + threadBlockOffset)), &
-      & opDat5Devicegetq_christiensen1(1 + map5idx), &
-      & opDat5Devicegetq_christiensen1(1 + map6idx), &
-      & opDat5Devicegetq_christiensen1(1 + map7idx), &
-      & opDat5Devicegetq_christiensen1(1 + map8idx), &
-      & opDat9Devicegetq_christiensen1(1 + map5idx), &
-      & opDat9Devicegetq_christiensen1(1 + map6idx), &
-      & opDat9Devicegetq_christiensen1(1 + map7idx), &
-      & opDat9Devicegetq_christiensen1(1 + map8idx), &
-      & opDat13Devicegetq_christiensen1(1 + map5idx), &
-      & opDat13Devicegetq_christiensen1(1 + map6idx), &
-      & opDat13Devicegetq_christiensen1(1 + map7idx), &
-      & opDat13Devicegetq_christiensen1(1 + map8idx), &
-      & opDat17Devicegetq_christiensen1(1 + map5idx), &
-      & opDat17Devicegetq_christiensen1(1 + map6idx), &
-      & opDat17Devicegetq_christiensen1(1 + map7idx), &
-      & opDat17Devicegetq_christiensen1(1 + map8idx), &
-      & opDat21Devicegetq_christiensen1(1 + (i3 + threadBlockOffset)), &
-      & opDat22Devicegetq_christiensen1(1 + (i3 + threadBlockOffset)), &
+      & opDat1Devicegetq_christiensen1((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+      & opDat2Devicegetq_christiensen1((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+      & opDat3Devicegetq_christiensen1((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+      & opDat4Devicegetq_christiensen1((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+      & opDat5Devicegetq_christiensen1(1 + map5idx * (4):     map5idx * (4) + 4), &
+      & opDat5Devicegetq_christiensen1(1 + map6idx * (4):     map6idx * (4) + 4), &
+      & opDat5Devicegetq_christiensen1(1 + map7idx * (4):     map7idx * (4) + 4), &
+      & opDat5Devicegetq_christiensen1(1 + map8idx * (4):     map8idx * (4) + 4), &
+      & opDat9Devicegetq_christiensen1(1 + map5idx * (4):     map5idx * (4) + 4), &
+      & opDat9Devicegetq_christiensen1(1 + map6idx * (4):     map6idx * (4) + 4), &
+      & opDat9Devicegetq_christiensen1(1 + map7idx * (4):     map7idx * (4) + 4), &
+      & opDat9Devicegetq_christiensen1(1 + map8idx * (4):     map8idx * (4) + 4), &
+      & opDat13Devicegetq_christiensen1(1 + map5idx * (4):     map5idx * (4) + 4), &
+      & opDat13Devicegetq_christiensen1(1 + map6idx * (4):     map6idx * (4) + 4), &
+      & opDat13Devicegetq_christiensen1(1 + map7idx * (4):     map7idx * (4) + 4), &
+      & opDat13Devicegetq_christiensen1(1 + map8idx * (4):     map8idx * (4) + 4), &
+      & opDat17Devicegetq_christiensen1(1 + map5idx * (4):     map5idx * (4) + 4), &
+      & opDat17Devicegetq_christiensen1(1 + map6idx * (4):     map6idx * (4) + 4), &
+      & opDat17Devicegetq_christiensen1(1 + map7idx * (4):     map7idx * (4) + 4), &
+      & opDat17Devicegetq_christiensen1(1 + map8idx * (4):     map8idx * (4) + 4), &
+      & opDat21Devicegetq_christiensen1((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+      & opDat22Devicegetq_christiensen1((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
       & opGblDat23Devicegetq_christiensen1 &
       & )
 
@@ -411,7 +408,7 @@ attributes (host) SUBROUTINE getq_christiensen1_host( userSubroutine, set, &
   TYPE ( op_arg ) , INTENT(IN) :: opArg22
   TYPE ( op_arg ) , INTENT(IN) :: opArg23
 
-  IF (getHybridGPU()) THEN
+  IF (getHybridGPU().EQ.1) THEN
     CALL getq_christiensen1_host_gpu( userSubroutine, set, &
     & opArg1, &
     & opArg2, &
@@ -603,7 +600,7 @@ attributes (host) SUBROUTINE getq_christiensen1_host_gpu( userSubroutine, set, &
   opArgArray(23) = opArg23
 
   returnSetKernelTiming = setKernelTime(24 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000_4,0.00000_4, 0)
+  & 0.d0, 0.00000,0.00000, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -704,7 +701,6 @@ attributes (host) SUBROUTINE getq_christiensen1_host_gpu( userSubroutine, set, &
     dynamicSharedMemorySize = reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock
 
     CALL op_cuda_getq_christiensen1 <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>> (&
-    & getSetSizeFromOpArg(opArg1), &
     & opDat5Devicegetq_christiensen1, &
     & opDat9Devicegetq_christiensen1, &
     & opDat13Devicegetq_christiensen1, &

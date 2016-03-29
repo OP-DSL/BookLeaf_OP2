@@ -225,7 +225,7 @@ opArgArray(15) = opArg15
 opArgArray(16) = opArg16
 
 returnSetKernelTiming = setKernelTime(2 , userSubroutine//C_NULL_CHAR, &
-& 0.d0, 0.00000_4,0.00000_4, 0)
+& 0.0_8, 0.00000_4,0.00000_4, 0)
 call op_timers_core(startTime)
 
 n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -262,10 +262,14 @@ n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
   & indirectionDescriptorArray,2)
 
   CALL c_f_pointer(planRet_ale_advect_prevolmass,actualPlan_ale_advect_prevolmass)
-  CALL c_f_pointer(actualPlan_ale_advect_prevolmass%ncolblk,ncolblk_ale_advect_prevolmass,(/actualPlan_ale_advect_prevolmass%ncolors_core/))
-  CALL c_f_pointer(actualPlan_ale_advect_prevolmass%blkmap,blkmap_ale_advect_prevolmass,(/actualPlan_ale_advect_prevolmass%nblocks/))
-  CALL c_f_pointer(actualPlan_ale_advect_prevolmass%offset,offset_ale_advect_prevolmass,(/actualPlan_ale_advect_prevolmass%nblocks/))
-  CALL c_f_pointer(actualPlan_ale_advect_prevolmass%nelems,nelems_ale_advect_prevolmass,(/actualPlan_ale_advect_prevolmass%nblocks/))
+  CALL c_f_pointer(actualPlan_ale_advect_prevolmass%ncolblk, &
+&    ncolblk_ale_advect_prevolmass,(/actualPlan_ale_advect_prevolmass%ncolors_core/))
+  CALL c_f_pointer(actualPlan_ale_advect_prevolmass%blkmap, &
+&    blkmap_ale_advect_prevolmass,(/actualPlan_ale_advect_prevolmass%nblocks/))
+  CALL c_f_pointer(actualPlan_ale_advect_prevolmass%offset,&
+&    offset_ale_advect_prevolmass,(/actualPlan_ale_advect_prevolmass%nblocks/))
+  CALL c_f_pointer(actualPlan_ale_advect_prevolmass%nelems,&
+&    nelems_ale_advect_prevolmass,(/actualPlan_ale_advect_prevolmass%nblocks/))
 
   opSetCore => set%setPtr
 

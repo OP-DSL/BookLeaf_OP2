@@ -1,0 +1,85 @@
+# Compiler
+ifeq ($(NO_MPI),)
+  FC = mpif90
+  CC = mpicc
+else
+  FC = mpif90
+  CC = mpicc
+endif
+
+# General flags
+REALSIZE     = #-qrealsize=8
+INTSIZE      = -qintsize=4
+FORM         = -qfree
+BIG_ENDIAN   = -xfilebyteorder=big8
+AUTO_ARRAYS  = -qsmallstack=dynlenonheap 
+SHARED_INTEL = 
+IEEE         = -qfloat=nomaf
+# Open MP
+ifeq ($(NO_OMP),)
+  OPENMP = #-qsmp=omp -qthreaded
+else
+  OPENMP = 
+endif
+# Debug flags
+ifeq ($(LEV),MEMDEBUG)
+  DBG     = -O0 -g -qfullpath -qsource -qinit=f90ptr -qsigtrap
+  CDBG    = -O0 -g -qfullpath -qsource -qsrcmsg
+  CHECK   = -qcheck -qinitauto=FF -qmaxmem=-1
+  FLTTRAP = -qflttrap=ov:zero:invalid:en
+  IEEE   +=
+endif
+ifeq ($(LEV),DEBUG)
+  DBG     = -O0 -g -qfullpath -qsource -qinit=f90ptr -qsigtrap
+  CDBG    = -O0 -g -qfullpath -qsource -qsrcmsg
+  CHECK   = -qcheck -qinitauto=FF -qmaxmem=-1
+  FLTTRAP = -qflttrap=ov:zero:invalid:en
+  IEEE   +=
+endif
+ifeq ($(LEV),TV)
+  DBG     = -O0 -g -qfullpath -qsource -qinit=f90ptr -qsigtrap
+  CDBG    = -O0 -g -qfullpath -qsource -qsrcmsg
+  CHECK   = -qcheck -qinitauto=FF -qmaxmem=-1
+  FLTTRAP = -qflttrap=ov:zero:invalid:en
+  IEEE   +=
+endif
+ifeq ($(LEV),MEMTV)
+  DBG     = -O0 -g -qfullpath -qsource -qinit=f90ptr -qsigtrap
+  CDBG    = -O0 -g -qfullpath -qsource -qsrcmsg
+  CHECK   = -qcheck -qinitauto=FF -qmaxmem=-1
+  FLTTRAP = -qflttrap=ov:zero:invalid:en
+  IEEE   +=
+endif
+ifeq ($(LEV),OPTDEBUG)
+  DBG     = -g
+  CDBG    = -g
+endif
+# Optimisation flags
+ifeq ($(LEV),OPTDEBUG)
+  OPT     = -O3 -Q
+  COPT    = -O3 -Q
+  IEEE   +=
+endif
+ifeq ($(LEV),RELEASE)
+  OPT     = -O3 -Q
+  COPT    = -O3 -Q
+  IEEE   +=
+endif
+ifeq ($(LEV),OPT)
+  OPT     = -qarch=pwr8 -qtune=pwr8:smt2 -O3 -qcuda -WF,-DOP2_WITH_CUDAFOR -WF,CUDAFOR #-qaltivec=le -qreport -qhot -qinline=level=10
+  COPT    = -qarch=pwr8 -qtune=pwr8:smt2 -O3 #-qaltivec=le -qreport -qhot -qinline=level=10
+  PREPRO  += -WF,-DOP2_ENABLE_CUDA -WF,-DOP2_WITH_CUDAFOR -WF,CUDAFOR
+#Disable following for OPT
+  BIG_ENDIAN   =
+#  AUTO_ARRAYS  =
+  SHARED_INTEL =
+  IEEE         =
+endif
+
+FFLAGS = -c $(REALSIZE) $(INTSIZE) $(FORM) $(BIG_ENDIAN) $(AUTO_ARRAYS) \
+	$(SHARED_INTEL) $(IEEE) $(DBG) $(CHECK) $(OPT) $(FLTTRAP)       \
+	$(OPENMP)
+
+CFLAGS = -c $(CDBG) $(COPT)
+
+LFLAGS = $(DBG) $(OPT) $(OPENMP)  -lmpi_cxx -qnoeh  -o

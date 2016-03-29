@@ -225,7 +225,6 @@ SUBROUTINE ale_getfvol_vol_host( userSubroutine, set, &
   real(8), POINTER, DIMENSION(:) :: opDat18Local
 
   INTEGER(kind=4) :: i1
-  REAL(kind=4) :: dataTransfer
 
   numberOfOpDats = 18
 
@@ -249,7 +248,7 @@ SUBROUTINE ale_getfvol_vol_host( userSubroutine, set, &
   opArgArray(18) = opArg18
 
   returnSetKernelTiming = setKernelTime(18 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000_4,0.00000_4, 0)
+  & 0.0_8, 0.00000_4,0.00000_4, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -293,15 +292,7 @@ SUBROUTINE ale_getfvol_vol_host( userSubroutine, set, &
 
   call op_timers_core(endTime)
 
-  dataTransfer = 0.0
-  dataTransfer = dataTransfer + opArg1%size *n_upper
-  dataTransfer = dataTransfer + opArg5%size *n_upper
-  dataTransfer = dataTransfer + opArg9%size *n_upper
-  dataTransfer = dataTransfer + opArg13%size *n_upper
-  dataTransfer = dataTransfer + opArg17%size *n_upper
-  dataTransfer = dataTransfer + opArg18%size
-  dataTransfer = dataTransfer + n_upper * opDat1MapDim * 4.d0
   returnSetKernelTiming = setKernelTime(18 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, dataTransfer, 0.00000_4, 1)
+  & endTime-startTime,0.00000_4,0.00000_4, 1)
 END SUBROUTINE
 END MODULE

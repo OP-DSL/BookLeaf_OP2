@@ -184,7 +184,6 @@ SUBROUTINE ale_advect_prevolmass_host( userSubroutine, set, &
 
 
   INTEGER(kind=4) :: i1
-  REAL(kind=4) :: dataTransfer
 
   numberOfOpDats = 16
 
@@ -206,7 +205,7 @@ SUBROUTINE ale_advect_prevolmass_host( userSubroutine, set, &
   opArgArray(16) = opArg16
 
   returnSetKernelTiming = setKernelTime(2 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000_4,0.00000_4, 0)
+  & 0.0_8, 0.00000_4,0.00000_4, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -252,16 +251,7 @@ SUBROUTINE ale_advect_prevolmass_host( userSubroutine, set, &
 
   call op_timers_core(endTime)
 
-  dataTransfer = 0.0
-  dataTransfer = dataTransfer + opArg5%size *n_upper * 2.d0
-  dataTransfer = dataTransfer + opArg6%size *n_upper * 2.d0
-  dataTransfer = dataTransfer + opArg7%size *n_upper * 2.d0
-  dataTransfer = dataTransfer + opArg1%size *n_upper
-  dataTransfer = dataTransfer + opArg2%size *n_upper
-  dataTransfer = dataTransfer + opArg3%size *n_upper
-  dataTransfer = dataTransfer + opArg4%size *n_upper
-  dataTransfer = dataTransfer + n_upper * opDat5MapDim * 4.d0
   returnSetKernelTiming = setKernelTime(2 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, dataTransfer, 0.00000_4, 1)
+  & endTime-startTime,0.00000_4,0.00000_4, 1)
 END SUBROUTINE
 END MODULE

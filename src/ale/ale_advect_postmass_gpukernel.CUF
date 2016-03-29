@@ -22,7 +22,6 @@ USE CUDACONFIGURATIONPARAMS
 
 TYPE ( c_ptr )  :: planRet_ale_advect_postmass
 
-#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -60,21 +59,20 @@ attributes (device) subroutine ale_advect_postmass_gpu(cnm1,flux, &
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(INOUT) :: cnm1
     REAL(KIND=rlk), INTENT(INOUT) :: elv0ndm11,elv0ndm12,elv0ndm13,elv0ndm14
 
-    OP2_SOA(cnm1,1, elements_stride_OP2)=OP2_SOA(cnm1,1, elements_stride_OP2)+OP2_SOA(flux,1, elements_stride_OP2)
-    OP2_SOA(cnm1,2, elements_stride_OP2)=OP2_SOA(cnm1,2, elements_stride_OP2)+OP2_SOA(flux,2, elements_stride_OP2)
-    OP2_SOA(cnm1,3, elements_stride_OP2)=OP2_SOA(cnm1,3, elements_stride_OP2)+OP2_SOA(flux,3, elements_stride_OP2)
-    OP2_SOA(cnm1,4, elements_stride_OP2)=OP2_SOA(cnm1,4, elements_stride_OP2)+OP2_SOA(flux,4, elements_stride_OP2)
-    elv0ndm11=elv0ndm11+OP2_SOA(flux,1, elements_stride_OP2)
-    elv0ndm12=elv0ndm12+OP2_SOA(flux,2, elements_stride_OP2)
-    elv0ndm13=elv0ndm13+OP2_SOA(flux,3, elements_stride_OP2)
-    elv0ndm14=elv0ndm14+OP2_SOA(flux,4, elements_stride_OP2)
+    cnm1(1)=cnm1(1)+flux(1)
+    cnm1(2)=cnm1(2)+flux(2)
+    cnm1(3)=cnm1(3)+flux(3)
+    cnm1(4)=cnm1(4)+flux(4)
+    elv0ndm11=elv0ndm11+flux(1)
+    elv0ndm12=elv0ndm12+flux(2)
+    elv0ndm13=elv0ndm13+flux(3)
+    elv0ndm14=elv0ndm14+flux(4)
 
   END SUBROUTINE ale_advect_postmass_gpu
 
 
 ! CUDA kernel function
 attributes (global) SUBROUTINE op_cuda_ale_advect_postmass( &
-  &  soa_stride,      &
   & opDat3Deviceale_advect_postmass, &
   & opDat3Map, &
   & opDat1Deviceale_advect_postmass, &
@@ -97,7 +95,6 @@ attributes (global) SUBROUTINE op_cuda_ale_advect_postmass( &
 
   INTEGER(kind=4) map3idx, map4idx, map5idx, map6idx
 
-  INTEGER(kind=4), VALUE :: soa_stride
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pblkMap
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: poffset
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pnelems
@@ -152,8 +149,8 @@ attributes (global) SUBROUTINE op_cuda_ale_advect_postmass( &
 
 ! kernel call
       CALL ale_advect_postmass_gpu( &
-      & opDat1Deviceale_advect_postmass(1 + (i3 + threadBlockOffset)), &
-      & opDat2Deviceale_advect_postmass(1 + (i3 + threadBlockOffset)), &
+      & opDat1Deviceale_advect_postmass((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+      & opDat2Deviceale_advect_postmass((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
       & opDat3Local, &
       & opDat4Local, &
       & opDat5Local, &
@@ -207,7 +204,7 @@ attributes (host) SUBROUTINE ale_advect_postmass_host( userSubroutine, set, &
   TYPE ( op_arg ) , INTENT(IN) :: opArg5
   TYPE ( op_arg ) , INTENT(IN) :: opArg6
 
-  IF (getHybridGPU()) THEN
+  IF (getHybridGPU().EQ.1) THEN
     CALL ale_advect_postmass_host_gpu( userSubroutine, set, &
     & opArg1, &
     & opArg2, &
@@ -306,7 +303,7 @@ attributes (host) SUBROUTINE ale_advect_postmass_host_gpu( userSubroutine, set, 
   opArgArray(6) = opArg6
 
   returnSetKernelTiming = setKernelTime(6 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000_4,0.00000_4, 0)
+  & 0.d0, 0.00000,0.00000, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -368,7 +365,6 @@ attributes (host) SUBROUTINE ale_advect_postmass_host_gpu( userSubroutine, set, 
     dynamicSharedMemorySize = reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock
 
     CALL op_cuda_ale_advect_postmass <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>> (&
-    & getSetSizeFromOpArg(opArg1), &
     & opDat3Deviceale_advect_postmass, &
     & opMap3Deviceale_advect_postmass, &
     & opDat1Deviceale_advect_postmass, &

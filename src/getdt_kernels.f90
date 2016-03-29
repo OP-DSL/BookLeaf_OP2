@@ -42,13 +42,13 @@ MODULE getdt_kernels
     REAL(KIND=rlk)                              :: x1,x2,y1,y2
     REAL(KIND=rlk),DIMENSION(N_SHAPE)            :: res
 
-    IF (zdtnotreg(ielreg+1)) THEN
+    IF (zdtnotreg(ielreg+1).EQ.1) THEN
       rscratch11=dt_max
       rscratch12=TINY(1.0_rlk)
     ELSE
       w1=MAX(rho,zcut)
       w2=MAX(ccut,csqrd)+2.0_rlk*qq/w1
-      IF (zmidlength(ielreg+1)) THEN
+      IF (zmidlength(ielreg+1).EQ.1) THEN
         x1=elx(1)+elx(2)
         x2=elx(3)+elx(4)
         y1=ely(1)+ely(2)
