@@ -95,7 +95,7 @@ attributes (global) SUBROUTINE op_cuda_init_dem( &
   integer(4), DEVICE, INTENT(IN) :: opDat1Deviceinit_dem(*)
   real(8), DEVICE :: opDat4Deviceinit_dem(*)
   real(8), DEVICE :: opDat5Deviceinit_dem(*)
-  real(8), DEVICE, INTENT(IN) :: opDat6Deviceinit_dem(*)
+  real(8), DEVICE :: opDat6Deviceinit_dem(*)
   real(8), DEVICE, INTENT(IN) :: opDat7Deviceinit_dem(*)
   real(8), DEVICE :: opDat8Deviceinit_dem(*)
   real(8), DEVICE, INTENT(IN) :: opDat9Deviceinit_dem(*)
