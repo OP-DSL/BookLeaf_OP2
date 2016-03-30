@@ -165,7 +165,7 @@ print *,"2"
                    & op_arg_gbl(mat_ein,LI,'real(8)',OP_READ),  &
                    & op_arg_dat(d_rho,-1,OP_ID,1,'real(8)',OP_WRITE),  &
                    & op_arg_dat(d_ein,-1,OP_ID,1,'real(8)',OP_WRITE),  &
-                   & op_arg_dat(d_elmass,-1,OP_ID,1,'real(8)',OP_READ),  &
+                   & op_arg_dat(d_elmass,-1,OP_ID,1,'real(8)',OP_WRITE),  &
                    & op_arg_dat(d_elvol,-1,OP_ID,1,'real(8)',OP_READ),  &
                    & op_arg_dat(d_cnmass,-1,OP_ID,4,'real(8)',OP_WRITE),  &
                    & op_arg_dat(d_cnwt,-1,OP_ID,4,'real(8)',OP_READ))
