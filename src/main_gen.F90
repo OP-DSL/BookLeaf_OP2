@@ -56,7 +56,7 @@ PROGRAM main
 
 ! MPI
 !  CALL init_parallel()
-  call op_init(0)
+  !call op_init_base(0,0)
   IF (op_is_root().EQ.1_ink) THEN
     zmprocw = .TRUE._lok
   ENDIF

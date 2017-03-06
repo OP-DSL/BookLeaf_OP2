@@ -262,7 +262,7 @@ MODULE op2_bookleaf
   INTEGER(KIND=ink) :: ierr
 
   ! Let's declare OP2 stuff
-  call op_init(0)
+  call op_init_base(0,0)
   call op_decl_set(nnod,s_nodes,'nodes')
   call op_decl_set(nel,s_elements,'elements')
   call op_decl_set(nreg,s_reg,'reg')

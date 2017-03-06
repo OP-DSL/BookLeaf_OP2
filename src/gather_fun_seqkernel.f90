@@ -43,7 +43,6 @@ SUBROUTINE op_wrap_gather_fun( &
   INTEGER(kind=4) bottom,top,i1
   INTEGER(kind=4) map1idx, map2idx, map3idx, map4idx
 
-print *,"g3"
   DO i1 = bottom, top-1, 1
     map1idx = opDat1Map(1 + i1 * opDat1MapDim + 0)+1
     map2idx = opDat1Map(1 + i1 * opDat1MapDim + 1)+1
@@ -58,7 +57,6 @@ print *,"g3"
     & opDat5Local(1,i1+1) &
     & )
   END DO
-print *,"g4"
 END SUBROUTINE
 SUBROUTINE gather_fun_host( userSubroutine, set, &
   & opArg1, &
@@ -98,7 +96,6 @@ SUBROUTINE gather_fun_host( userSubroutine, set, &
 
   INTEGER(kind=4) :: i1
 
-print *,"g1"
   numberOfOpDats = 5
   opArgArray(1) = opArg1
   opArgArray(2) = opArg2
@@ -114,7 +111,6 @@ print *,"g1"
 
   opSetCore => set%setPtr
 
-print *,"g2"
   opDat1Cardinality = opArg1%dim * getSetSizeFromOpArg(opArg1)
   opDat1MapDim = getMapDimFromOpArg(opArg1)
   opDat5Cardinality = opArg5%dim * getSetSizeFromOpArg(opArg5)
