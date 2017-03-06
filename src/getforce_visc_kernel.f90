@@ -45,6 +45,7 @@ SUBROUTINE op_wrap_getforce_visc( &
 & opDat3Local, &
 & opDat4Local, &
 & bottom,top)
+implicit none
 real(8) opDat1Local(4,*)
 real(8) opDat2Local(4,*)
 real(8) opDat3Local(4,*)
@@ -115,7 +116,7 @@ opArgArray(3) = opArg3
 opArgArray(4) = opArg4
 
 returnSetKernelTiming = setKernelTime(51 , userSubroutine//C_NULL_CHAR, &
-& 0.0_8, 0.00000_4,0.00000_4, 0)
+& 0.d0, 0.00000_4,0.00000_4, 0)
 call op_timers_core(startTime)
 
 n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)

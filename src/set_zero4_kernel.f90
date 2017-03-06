@@ -34,6 +34,7 @@ SUBROUTINE set_zero4(a)
 SUBROUTINE op_wrap_set_zero4( &
 & opDat1Local, &
 & bottom,top)
+implicit none
 real(8) opDat1Local(4,*)
 INTEGER(kind=4) bottom,top,i1
 
@@ -80,7 +81,7 @@ numberOfOpDats = 1
 opArgArray(1) = opArg1
 
 returnSetKernelTiming = setKernelTime(3 , userSubroutine//C_NULL_CHAR, &
-& 0.0_8, 0.00000_4,0.00000_4, 0)
+& 0.d0, 0.00000_4,0.00000_4, 0)
 call op_timers_core(startTime)
 
 n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)

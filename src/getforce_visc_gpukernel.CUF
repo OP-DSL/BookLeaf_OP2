@@ -19,8 +19,11 @@ USE CUDACONFIGURATIONPARAMS
 
 ! getforce_viscvariable declarations
 
+INTEGER(kind=4), CONSTANT :: direct_stride_OP2CONSTANT
+INTEGER(kind=4) :: direct_stride_OP2HOST
 
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -63,10 +66,10 @@ attributes (device) subroutine getforce_visc_gpu(elfx,elfy,qx,qy)
     DO jj=1,N_SHAPE
       jp=jj+1_ink
       IF (jp.GT.4_ink) jp=1_ink
-      elfx(jj)=elfx(jj)+qx(jj)
-      elfx(jp)=elfx(jp)-qx(jj)
-      elfy(jj)=elfy(jj)+qy(jj)
-      elfy(jp)=elfy(jp)-qy(jj)
+      OP2_SOA(elfx,jj, elements_stride_OP2)=OP2_SOA(elfx,jj, elements_stride_OP2)+OP2_SOA(qx,jj, elements_stride_OP2)
+      OP2_SOA(elfx,jp, elements_stride_OP2)=OP2_SOA(elfx,jp, elements_stride_OP2)-OP2_SOA(qx,jj, elements_stride_OP2)
+      OP2_SOA(elfy,jj, elements_stride_OP2)=OP2_SOA(elfy,jj, elements_stride_OP2)+OP2_SOA(qy,jj, elements_stride_OP2)
+      OP2_SOA(elfy,jp, elements_stride_OP2)=OP2_SOA(elfy,jp, elements_stride_OP2)-OP2_SOA(qy,jj, elements_stride_OP2)
     ENDDO
 
   END SUBROUTINE getforce_visc_gpu
@@ -91,6 +94,7 @@ attributes (global) SUBROUTINE op_cuda_getforce_visc( &
 
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
+  INTEGER(kind=4) :: i2
 
 
   DO i1 = threadIdx%x - 1 + (blockIdx%x - 1) * blockDim%x, setSize - 1, blockDim%x * gridDim%x
@@ -98,10 +102,10 @@ attributes (global) SUBROUTINE op_cuda_getforce_visc( &
 ! kernel call
 
     CALL getforce_visc_gpu( &
-    & opDat1Devicegetforce_visc(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat2Devicegetforce_visc(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat3Devicegetforce_visc(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat4Devicegetforce_visc(i1 * (4) + 1: i1 * (4) + 4) &
+    & opDat1Devicegetforce_visc(1 + i1), &
+    & opDat2Devicegetforce_visc(1 + i1), &
+    & opDat3Devicegetforce_visc(1 + i1), &
+    & opDat4Devicegetforce_visc(1 + i1) &
     & )
   END DO
 
@@ -160,10 +164,10 @@ attributes (host) SUBROUTINE getforce_visc_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: returnSetKernelTiming
 
 
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Devicegetforce_visc
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat2Devicegetforce_visc
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat3Devicegetforce_visc
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat4Devicegetforce_visc
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat1Devicegetforce_visc
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat2Devicegetforce_visc
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat3Devicegetforce_visc
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat4Devicegetforce_visc
 
   INTEGER(kind=4) :: opDat1Cardinality
   INTEGER(kind=4) :: opDat2Cardinality
@@ -174,13 +178,13 @@ attributes (host) SUBROUTINE getforce_visc_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: threadsPerBlock
   INTEGER(kind=4) :: dynamicSharedMemorySize
   INTEGER(kind=4) :: threadSynchRet
-  INTEGER(kind=4), SAVE :: calledTimes
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
   INTEGER(kind=4) :: i10
   INTEGER(kind=4) :: i20
   REAL(kind=4) :: dataTransfer
 
+  INTEGER(kind=4), SAVE :: calledTimes=0
   INTEGER(kind=4) :: istat
 
   numberOfOpDats = 4
@@ -191,7 +195,11 @@ attributes (host) SUBROUTINE getforce_visc_host_gpu( userSubroutine, set, &
   opArgArray(4) = opArg4
 
   returnSetKernelTiming = setKernelTime(51 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000,0.00000, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
+  IF ((calledTimes.EQ.0).OR.(direct_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg1))) THEN
+    direct_stride_OP2HOST = getSetSizeFromOpArg(opArg1)
+    direct_stride_OP2CONSTANT = direct_stride_OP2HOST
+  END IF
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -236,7 +244,7 @@ attributes (host) SUBROUTINE getforce_visc_host_gpu( userSubroutine, set, &
   dataTransfer = dataTransfer + opArg3%size * getSetSizeFromOpArg(opArg3)
   dataTransfer = dataTransfer + opArg4%size * getSetSizeFromOpArg(opArg4)
   returnSetKernelTiming = setKernelTime(51 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, dataTransfer, 0.00000, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
   calledTimes = calledTimes + 1
 END SUBROUTINE
 

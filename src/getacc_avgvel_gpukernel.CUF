@@ -87,6 +87,7 @@ attributes (global) SUBROUTINE op_cuda_getacc_avgvel( &
 
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
+  INTEGER(kind=4) :: i2
 
 
   DO i1 = threadIdx%x - 1 + (blockIdx%x - 1) * blockDim%x, setSize - 1, blockDim%x * gridDim%x
@@ -168,10 +169,10 @@ attributes (host) SUBROUTINE getacc_avgvel_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: returnSetKernelTiming
 
 
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Devicegetacc_avgvel
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat2Devicegetacc_avgvel
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat3Devicegetacc_avgvel
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat4Devicegetacc_avgvel
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat1Devicegetacc_avgvel
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat2Devicegetacc_avgvel
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat3Devicegetacc_avgvel
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat4Devicegetacc_avgvel
 
   INTEGER(kind=4) :: opDat1Cardinality
   INTEGER(kind=4) :: opDat2Cardinality
@@ -184,13 +185,13 @@ attributes (host) SUBROUTINE getacc_avgvel_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: threadsPerBlock
   INTEGER(kind=4) :: dynamicSharedMemorySize
   INTEGER(kind=4) :: threadSynchRet
-  INTEGER(kind=4), SAVE :: calledTimes
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
   INTEGER(kind=4) :: i10
   INTEGER(kind=4) :: i20
   REAL(kind=4) :: dataTransfer
 
+  INTEGER(kind=4), SAVE :: calledTimes=0
   INTEGER(kind=4) :: istat
   real(8), POINTER :: opDat5Host
   real(8), POINTER :: opDat6Host
@@ -205,7 +206,7 @@ attributes (host) SUBROUTINE getacc_avgvel_host_gpu( userSubroutine, set, &
   opArgArray(6) = opArg6
 
   returnSetKernelTiming = setKernelTime(39 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000,0.00000, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -258,7 +259,7 @@ attributes (host) SUBROUTINE getacc_avgvel_host_gpu( userSubroutine, set, &
   dataTransfer = dataTransfer + opArg5%size
   dataTransfer = dataTransfer + opArg6%size
   returnSetKernelTiming = setKernelTime(39 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, dataTransfer, 0.00000, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
   calledTimes = calledTimes + 1
 END SUBROUTINE
 

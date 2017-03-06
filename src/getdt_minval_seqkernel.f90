@@ -32,6 +32,7 @@ SUBROUTINE op_wrap_getdt_minval( &
   & opDat1Local, &
   & opDat2Local, &
   & bottom,top)
+  implicit none
   real(8) opDat1Local(1,*)
   real(8) opDat2Local(1)
   INTEGER(kind=4) bottom,top,i1
@@ -71,6 +72,7 @@ SUBROUTINE getdt_minval_host( userSubroutine, set, &
   real(8), POINTER, DIMENSION(:) :: opDat2Local
 
   INTEGER(kind=4) :: i1
+  REAL(kind=4) :: dataTransfer
 
   numberOfOpDats = 2
 
@@ -78,7 +80,7 @@ SUBROUTINE getdt_minval_host( userSubroutine, set, &
   opArgArray(2) = opArg2
 
   returnSetKernelTiming = setKernelTime(42 , userSubroutine//C_NULL_CHAR, &
-  & 0.0_8, 0.00000_4,0.00000_4, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -90,11 +92,19 @@ SUBROUTINE getdt_minval_host( userSubroutine, set, &
   CALL c_f_pointer(opArg2%data,opDat2Local, (/opArg2%dim/))
 
 
+  CALL op_wrap_getdt_minval( &
+  & opDat1Local, &
+  & opDat2Local, &
+  & 0, opSetCore%core_size)
   CALL op_mpi_wait_all(numberOfOpDats,opArgArray)
   CALL op_wrap_getdt_minval( &
   & opDat1Local, &
   & opDat2Local, &
-  & 0, n_upper)
+  & opSetCore%core_size, n_upper)
+  IF ((n_upper .EQ. 0) .OR. (n_upper .EQ. opSetCore%core_size)) THEN
+    CALL op_mpi_wait_all(numberOfOpDats,opArgArray)
+  END IF
+
 
   CALL op_mpi_set_dirtybit(numberOfOpDats,opArgArray)
 
@@ -102,7 +112,10 @@ SUBROUTINE getdt_minval_host( userSubroutine, set, &
 
   call op_timers_core(endTime)
 
+  dataTransfer = 0.0
+  dataTransfer = dataTransfer + opArg1%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg2%size * 2.d0
   returnSetKernelTiming = setKernelTime(42 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime,0.00000_4,0.00000_4, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
 END SUBROUTINE
 END MODULE

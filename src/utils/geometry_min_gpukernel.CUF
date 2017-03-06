@@ -172,6 +172,7 @@ attributes (device) subroutine geometry_min_gpu(elvol,minval)
 
     INTEGER(kind=4), VALUE :: setSize
     INTEGER(kind=4) :: i1
+    INTEGER(kind=4) :: i2
 
     opGblDat2Devicegeometry_min = reductionArrayDevice2(blockIdx%x - 1 + 1)
 
@@ -231,7 +232,7 @@ attributes (device) subroutine geometry_min_gpu(elvol,minval)
     INTEGER(kind=4) :: returnSetKernelTiming
 
 
-    real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Devicegeometry_min
+    real(8), DIMENSION(:), DEVICE, POINTER :: opDat1Devicegeometry_min
 
     INTEGER(kind=4) :: opDat1Cardinality
     INTEGER(kind=4) :: opDat2Cardinality
@@ -240,13 +241,13 @@ attributes (device) subroutine geometry_min_gpu(elvol,minval)
     INTEGER(kind=4) :: threadsPerBlock
     INTEGER(kind=4) :: dynamicSharedMemorySize
     INTEGER(kind=4) :: threadSynchRet
-    INTEGER(kind=4), SAVE :: calledTimes
     INTEGER(kind=4) :: i1
     INTEGER(kind=4) :: i2
     INTEGER(kind=4) :: i10
     INTEGER(kind=4) :: i20
     REAL(kind=4) :: dataTransfer
 
+    INTEGER(kind=4), SAVE :: calledTimes=0
     INTEGER(kind=4) :: istat
     integer(4), POINTER :: opDat2Host
     integer(4), DIMENSION(:), ALLOCATABLE :: reductionArrayHost2
@@ -258,7 +259,7 @@ attributes (device) subroutine geometry_min_gpu(elvol,minval)
     opArgArray(2) = opArg2
 
     returnSetKernelTiming = setKernelTime(32 , userSubroutine//C_NULL_CHAR, &
-    & 0.d0, 0.00000,0.00000, 0)
+    & 0.d0, 0.00000_4,0.00000_4, 0)
     call op_timers_core(startTime)
 
     n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -289,7 +290,7 @@ attributes (device) subroutine geometry_min_gpu(elvol,minval)
 
     CALL op_cuda_geometry_min <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>>( &
     & opDat1Devicegeometry_min, &
-    reductionArrayDevice2geometry_min, &
+    & reductionArrayDevice2geometry_min, &
     set%setPtr%size)
 
     IF ((n_upper .EQ. 0) .OR. (n_upper .EQ. set%setPtr%core_size)) THEN
@@ -315,7 +316,7 @@ attributes (device) subroutine geometry_min_gpu(elvol,minval)
     dataTransfer = dataTransfer + opArg1%size * getSetSizeFromOpArg(opArg1)
     dataTransfer = dataTransfer + opArg2%size * 2.d0
     returnSetKernelTiming = setKernelTime(32 , userSubroutine//C_NULL_CHAR, &
-    & endTime-startTime, dataTransfer, 0.00000, 1)
+    & endTime-startTime, dataTransfer, 0.00000_4, 1)
     calledTimes = calledTimes + 1
   END SUBROUTINE
 

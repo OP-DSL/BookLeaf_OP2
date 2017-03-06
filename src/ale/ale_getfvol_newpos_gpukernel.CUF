@@ -77,6 +77,7 @@ attributes (global) SUBROUTINE op_cuda_ale_getfvol_newpos( &
 
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
+  INTEGER(kind=4) :: i2
 
 
   DO i1 = threadIdx%x - 1 + (blockIdx%x - 1) * blockDim%x, setSize - 1, blockDim%x * gridDim%x
@@ -152,10 +153,10 @@ attributes (host) SUBROUTINE ale_getfvol_newpos_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: returnSetKernelTiming
 
 
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Deviceale_getfvol_newpos
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat2Deviceale_getfvol_newpos
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat3Deviceale_getfvol_newpos
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat4Deviceale_getfvol_newpos
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat1Deviceale_getfvol_newpos
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat2Deviceale_getfvol_newpos
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat3Deviceale_getfvol_newpos
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat4Deviceale_getfvol_newpos
 
   INTEGER(kind=4) :: opDat1Cardinality
   INTEGER(kind=4) :: opDat2Cardinality
@@ -167,13 +168,13 @@ attributes (host) SUBROUTINE ale_getfvol_newpos_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: threadsPerBlock
   INTEGER(kind=4) :: dynamicSharedMemorySize
   INTEGER(kind=4) :: threadSynchRet
-  INTEGER(kind=4), SAVE :: calledTimes
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
   INTEGER(kind=4) :: i10
   INTEGER(kind=4) :: i20
   REAL(kind=4) :: dataTransfer
 
+  INTEGER(kind=4), SAVE :: calledTimes=0
   INTEGER(kind=4) :: istat
   real(8), POINTER :: opDat5Host
 
@@ -186,7 +187,7 @@ attributes (host) SUBROUTINE ale_getfvol_newpos_host_gpu( userSubroutine, set, &
   opArgArray(5) = opArg5
 
   returnSetKernelTiming = setKernelTime(17 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000,0.00000, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -235,7 +236,7 @@ attributes (host) SUBROUTINE ale_getfvol_newpos_host_gpu( userSubroutine, set, &
   dataTransfer = dataTransfer + opArg4%size * getSetSizeFromOpArg(opArg4)
   dataTransfer = dataTransfer + opArg5%size
   returnSetKernelTiming = setKernelTime(17 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, dataTransfer, 0.00000, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
   calledTimes = calledTimes + 1
 END SUBROUTINE
 

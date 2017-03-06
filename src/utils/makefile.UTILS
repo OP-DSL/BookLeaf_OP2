@@ -73,5 +73,11 @@ endif
 ifeq ($(OPTARGET),mpi_cuda)
 OBJ += $(shell cd utils; find . -maxdepth 1 -name "*_gpukernel.CUF" | sed s/\\.CUF/\\.o/g | sed s/\\.\\///g | tr "\n" ' '; cd ..)
 endif
+ifeq ($(OPTARGET),openacc)
+OBJ += $(shell cd utils; find . -maxdepth 1 -name "*_acckernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' '; cd ..)
+endif
+ifeq ($(OPTARGET),mpi_openacc)
+OBJ += $(shell cd utils; find . -maxdepth 1 -name "*_acckernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' '; cd ..)
+endif
 endif
 endif

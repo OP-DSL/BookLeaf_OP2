@@ -136,6 +136,7 @@ SUBROUTINE op_wrap_getq_christiensen1( &
 & opDat5Map, &
 & opDat5MapDim, &
 & bottom,top)
+implicit none
 real(8) opDat5Local(4,*)
 real(8) opDat9Local(4,*)
 real(8) opDat13Local(4,*)
@@ -335,7 +336,7 @@ opArgArray(22) = opArg22
 opArgArray(23) = opArg23
 
 returnSetKernelTiming = setKernelTime(24 , userSubroutine//C_NULL_CHAR, &
-& 0.0_8, 0.00000_4,0.00000_4, 0)
+& 0.d0, 0.00000_4,0.00000_4, 0)
 call op_timers_core(startTime)
 
 n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -379,14 +380,10 @@ n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
   & indirectionDescriptorArray,2)
 
   CALL c_f_pointer(planRet_getq_christiensen1,actualPlan_getq_christiensen1)
-  CALL c_f_pointer(actualPlan_getq_christiensen1%ncolblk, &
-&    ncolblk_getq_christiensen1,(/actualPlan_getq_christiensen1%ncolors_core/))
-  CALL c_f_pointer(actualPlan_getq_christiensen1%blkmap, &
-&    blkmap_getq_christiensen1,(/actualPlan_getq_christiensen1%nblocks/))
-  CALL c_f_pointer(actualPlan_getq_christiensen1%offset,&
-&    offset_getq_christiensen1,(/actualPlan_getq_christiensen1%nblocks/))
-  CALL c_f_pointer(actualPlan_getq_christiensen1%nelems,&
-&    nelems_getq_christiensen1,(/actualPlan_getq_christiensen1%nblocks/))
+  CALL c_f_pointer(actualPlan_getq_christiensen1%ncolblk,ncolblk_getq_christiensen1,(/actualPlan_getq_christiensen1%ncolors_core/))
+  CALL c_f_pointer(actualPlan_getq_christiensen1%blkmap,blkmap_getq_christiensen1,(/actualPlan_getq_christiensen1%nblocks/))
+  CALL c_f_pointer(actualPlan_getq_christiensen1%offset,offset_getq_christiensen1,(/actualPlan_getq_christiensen1%nblocks/))
+  CALL c_f_pointer(actualPlan_getq_christiensen1%nelems,nelems_getq_christiensen1,(/actualPlan_getq_christiensen1%nblocks/))
 
   opSetCore => set%setPtr
 

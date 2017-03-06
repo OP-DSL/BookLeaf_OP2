@@ -19,10 +19,15 @@ USE CUDACONFIGURATIONPARAMS
 
 ! sod_resetvariable declarations
 
+INTEGER(kind=4), CONSTANT :: opDat1_stride_OP2CONSTANT
+INTEGER(kind=4) :: opDat1_stride_OP2HOST
+INTEGER(kind=4), CONSTANT :: direct_stride_OP2CONSTANT
+INTEGER(kind=4) :: direct_stride_OP2HOST
 real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opGblDat12Devicesod_reset
 
 TYPE ( c_ptr )  :: planRet_sod_reset
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -90,10 +95,10 @@ attributes (device) subroutine sod_reset_gpu(ndx1,ndx2,ndx3,ndx4,xmid,ielmat,rho
     ENDIF
     ein=pre/(rho*(eos_param(1,ielmat)-1.0_rlk))
     elmass=rho*elvol
-    cnmass(1)=rho*cnwt(1)
-    cnmass(2)=rho*cnwt(2)
-    cnmass(3)=rho*cnwt(3)
-    cnmass(4)=rho*cnwt(4)
+    OP2_SOA(cnmass,1, elements_stride_OP2)=rho*OP2_SOA(cnwt,1, elements_stride_OP2)
+    OP2_SOA(cnmass,2, elements_stride_OP2)=rho*OP2_SOA(cnwt,2, elements_stride_OP2)
+    OP2_SOA(cnmass,3, elements_stride_OP2)=rho*OP2_SOA(cnwt,3, elements_stride_OP2)
+    OP2_SOA(cnmass,4, elements_stride_OP2)=rho*OP2_SOA(cnwt,4, elements_stride_OP2)
 
   END SUBROUTINE sod_reset_gpu
 
@@ -111,6 +116,7 @@ attributes (global) SUBROUTINE op_cuda_sod_reset( &
   & opDat13Devicesod_reset, &
   & opDat14Devicesod_reset, &
   & opGblDat5Devicesod_reset,   &
+  & opDat12Dim, &
   & pblkMap, &
   & poffset, &
   & pnelems, &
@@ -134,6 +140,7 @@ attributes (global) SUBROUTINE op_cuda_sod_reset( &
   real(8), DEVICE, INTENT(IN) :: opDat14Devicesod_reset(*)
 
   real(8), VALUE :: opGblDat5Devicesod_reset
+  INTEGER(kind=4), VALUE :: opDat12Dim
   INTEGER(kind=4) map1idx, map2idx, map3idx, map4idx
 
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pblkMap
@@ -153,9 +160,9 @@ attributes (global) SUBROUTINE op_cuda_sod_reset( &
   INTEGER(kind=4) :: colour1
   INTEGER(kind=4) :: colour2
   INTEGER(kind=4) :: n1
+  INTEGER(kind=4) :: i3
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
-  INTEGER(kind=4) :: i3
 
 
   IF (threadIdx%x - 1 .EQ. 0) THEN
@@ -168,6 +175,7 @@ attributes (global) SUBROUTINE op_cuda_sod_reset( &
   END IF
 
   CALL syncthreads()
+
 
   i1 = threadIdx%x - 1
 
@@ -191,10 +199,10 @@ attributes (global) SUBROUTINE op_cuda_sod_reset( &
       & opDat8Devicesod_reset((i3 + threadBlockOffset) * (1) +1), &
       & opDat9Devicesod_reset((i3 + threadBlockOffset) * (1) +1), &
       & opDat10Devicesod_reset((i3 + threadBlockOffset) * (1) +1), &
-      & opDat11Devicesod_reset((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+      & opDat11Devicesod_reset(1 + (i3 + threadBlockOffset)), &
       & opGblDat12Devicesod_reset, &
       & opDat13Devicesod_reset((i3 + threadBlockOffset) * (1) +1), &
-      & opDat14Devicesod_reset((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)) &
+      & opDat14Devicesod_reset(1 + (i3 + threadBlockOffset)) &
       & )
 
     END IF
@@ -307,16 +315,16 @@ attributes (host) SUBROUTINE sod_reset_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: returnSetKernelTiming
 
 
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Devicesod_reset
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: opMap1Devicesod_reset
-  integer(4), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat6Devicesod_reset
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat7Devicesod_reset
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat8Devicesod_reset
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat9Devicesod_reset
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat10Devicesod_reset
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat11Devicesod_reset
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat13Devicesod_reset
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat14Devicesod_reset
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat1Devicesod_reset
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: opMap1Devicesod_reset
+  integer(4), DIMENSION(:), DEVICE, POINTER :: opDat6Devicesod_reset
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat7Devicesod_reset
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat8Devicesod_reset
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat9Devicesod_reset
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat10Devicesod_reset
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat11Devicesod_reset
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat13Devicesod_reset
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat14Devicesod_reset
 
   INTEGER(kind=4) :: opDat1Cardinality
   INTEGER(kind=4) :: opMap1Cardinality
@@ -339,7 +347,6 @@ attributes (host) SUBROUTINE sod_reset_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: threadSynchRet
   INTEGER(kind=4), DIMENSION(1:14) :: opDatArray
   INTEGER(kind=4), DIMENSION(1:14) :: mappingIndicesArray
-  INTEGER(kind=4), DIMENSION(1:14) :: mappingArray
   INTEGER(kind=4), DIMENSION(1:14) :: accessDescriptorArray
   INTEGER(kind=4), DIMENSION(1:14) :: indirectionDescriptorArray
 
@@ -353,18 +360,18 @@ attributes (host) SUBROUTINE sod_reset_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: pnthrcolSize
   INTEGER(kind=4) :: pthrcolSize
   INTEGER(kind=4), POINTER, DIMENSION(:) :: ncolblk
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pblkMap
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: poffset
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pnelems
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pnthrcol
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pthrcol
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pblkMap
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: poffset
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pnelems
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pnthrcol
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pthrcol
   INTEGER(kind=4) :: partitionSize
   INTEGER(kind=4) :: blockSize
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
   INTEGER(kind=4) :: i10
-  INTEGER(kind=4), SAVE :: calledTimes
 
+  INTEGER(kind=4), SAVE :: calledTimes=0
   INTEGER(kind=4) :: istat
   real(8), POINTER :: opDat5Host
   real(8), DIMENSION(:), POINTER :: opDat12Host
@@ -387,7 +394,15 @@ attributes (host) SUBROUTINE sod_reset_host_gpu( userSubroutine, set, &
   opArgArray(14) = opArg14
 
   returnSetKernelTiming = setKernelTime(29 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000,0.00000, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
+  IF ((calledTimes.EQ.0).OR.(opDat1_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg1))) THEN
+    opDat1_stride_OP2HOST = getSetSizeFromOpArg(opArg1)
+    opDat1_stride_OP2CONSTANT = opDat1_stride_OP2HOST
+  END IF
+  IF ((calledTimes.EQ.0).OR.(direct_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg11))) THEN
+    direct_stride_OP2HOST = getSetSizeFromOpArg(opArg11)
+    direct_stride_OP2CONSTANT = direct_stride_OP2HOST
+  END IF
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -488,6 +503,7 @@ attributes (host) SUBROUTINE sod_reset_host_gpu( userSubroutine, set, &
     & opDat13Devicesod_reset, &
     & opDat14Devicesod_reset, &
     & opDat5Host, &
+    & opArg12%dim, &
     & pblkMap, &
     & poffset,pnelems,pnthrcol,pthrcol, &
     & set%setPtr%size+set%setPtr%exec_size, blockOffset)

@@ -60,6 +60,7 @@ SUBROUTINE op_wrap_ale_advectors_sumflux( &
 & opDat2Map, &
 & opDat2MapDim, &
 & bottom,top)
+implicit none
 real(8) opDat2Local(4,*)
 real(8) opDat1Local(4,*)
 real(8) opDat6Local(1,*)
@@ -185,7 +186,7 @@ opArgArray(9) = opArg9
 opArgArray(10) = opArg10
 
 returnSetKernelTiming = setKernelTime(15 , userSubroutine//C_NULL_CHAR, &
-& 0.0_8, 0.00000_4,0.00000_4, 0)
+& 0.d0, 0.00000_4,0.00000_4, 0)
 call op_timers_core(startTime)
 
 n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -216,14 +217,10 @@ n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
   & indirectionDescriptorArray,2)
 
   CALL c_f_pointer(planRet_ale_advectors_sumflux,actualPlan_ale_advectors_sumflux)
-  CALL c_f_pointer(actualPlan_ale_advectors_sumflux%ncolblk, &
-&    ncolblk_ale_advectors_sumflux,(/actualPlan_ale_advectors_sumflux%ncolors_core/))
-  CALL c_f_pointer(actualPlan_ale_advectors_sumflux%blkmap, &
-&    blkmap_ale_advectors_sumflux,(/actualPlan_ale_advectors_sumflux%nblocks/))
-  CALL c_f_pointer(actualPlan_ale_advectors_sumflux%offset,&
-&    offset_ale_advectors_sumflux,(/actualPlan_ale_advectors_sumflux%nblocks/))
-  CALL c_f_pointer(actualPlan_ale_advectors_sumflux%nelems,&
-&    nelems_ale_advectors_sumflux,(/actualPlan_ale_advectors_sumflux%nblocks/))
+  CALL c_f_pointer(actualPlan_ale_advectors_sumflux%ncolblk,ncolblk_ale_advectors_sumflux,(/actualPlan_ale_advectors_sumflux%ncolors_core/))
+  CALL c_f_pointer(actualPlan_ale_advectors_sumflux%blkmap,blkmap_ale_advectors_sumflux,(/actualPlan_ale_advectors_sumflux%nblocks/))
+  CALL c_f_pointer(actualPlan_ale_advectors_sumflux%offset,offset_ale_advectors_sumflux,(/actualPlan_ale_advectors_sumflux%nblocks/))
+  CALL c_f_pointer(actualPlan_ale_advectors_sumflux%nelems,nelems_ale_advectors_sumflux,(/actualPlan_ale_advectors_sumflux%nblocks/))
 
   opSetCore => set%setPtr
 

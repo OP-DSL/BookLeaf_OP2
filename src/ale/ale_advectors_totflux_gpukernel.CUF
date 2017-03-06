@@ -19,9 +19,14 @@ USE CUDACONFIGURATIONPARAMS
 
 ! ale_advectors_totfluxvariable declarations
 
+INTEGER(kind=4), CONSTANT :: opDat2_stride_OP2CONSTANT
+INTEGER(kind=4) :: opDat2_stride_OP2HOST
+INTEGER(kind=4), CONSTANT :: direct_stride_OP2CONSTANT
+INTEGER(kind=4) :: direct_stride_OP2HOST
 
 TYPE ( c_ptr )  :: planRet_ale_advectors_totflux
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -51,10 +56,10 @@ attributes (device) subroutine ale_advectors_totflux_gpu(rFlux,rTotFlux1,rTotFlu
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(IN) :: rFlux
     REAL(KIND=rlk), INTENT(INOUT) :: rTotFlux1,rTotFlux2,rTotFlux3,rTotFlux4
 
-    rTotFlux1 = rTotFlux1 + rFlux(1)
-    rTotFlux2 = rTotFlux2 + rFlux(2)
-    rTotFlux3 = rTotFlux3 + rFlux(3)
-    rTotFlux4 = rTotFlux4 + rFlux(4)
+    rTotFlux1 = rTotFlux1 + OP2_SOA(rFlux,1, elements_stride_OP2)
+    rTotFlux2 = rTotFlux2 + OP2_SOA(rFlux,2, elements_stride_OP2)
+    rTotFlux3 = rTotFlux3 + OP2_SOA(rFlux,3, elements_stride_OP2)
+    rTotFlux4 = rTotFlux4 + OP2_SOA(rFlux,4, elements_stride_OP2)
 
   END SUBROUTINE ale_advectors_totflux_gpu
 
@@ -102,9 +107,9 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_totflux( &
   INTEGER(kind=4) :: colour1
   INTEGER(kind=4) :: colour2
   INTEGER(kind=4) :: n1
+  INTEGER(kind=4) :: i3
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
-  INTEGER(kind=4) :: i3
 
 
   IF (threadIdx%x - 1 .EQ. 0) THEN
@@ -117,6 +122,7 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_totflux( &
   END IF
 
   CALL syncthreads()
+
 
   i1 = threadIdx%x - 1
 
@@ -135,7 +141,7 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_totflux( &
 
 ! kernel call
       CALL ale_advectors_totflux_gpu( &
-      & opDat1Deviceale_advectors_totflux((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+      & opDat1Deviceale_advectors_totflux(1 + (i3 + threadBlockOffset)), &
       & opDat2Local, &
       & opDat3Local, &
       & opDat4Local, &
@@ -227,9 +233,9 @@ attributes (host) SUBROUTINE ale_advectors_totflux_host_gpu( userSubroutine, set
   INTEGER(kind=4) :: returnSetKernelTiming
 
 
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat2Deviceale_advectors_totflux
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: opMap2Deviceale_advectors_totflux
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Deviceale_advectors_totflux
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat2Deviceale_advectors_totflux
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: opMap2Deviceale_advectors_totflux
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat1Deviceale_advectors_totflux
 
   INTEGER(kind=4) :: opDat2Cardinality
   INTEGER(kind=4) :: opMap2Cardinality
@@ -243,7 +249,6 @@ attributes (host) SUBROUTINE ale_advectors_totflux_host_gpu( userSubroutine, set
   INTEGER(kind=4) :: threadSynchRet
   INTEGER(kind=4), DIMENSION(1:5) :: opDatArray
   INTEGER(kind=4), DIMENSION(1:5) :: mappingIndicesArray
-  INTEGER(kind=4), DIMENSION(1:5) :: mappingArray
   INTEGER(kind=4), DIMENSION(1:5) :: accessDescriptorArray
   INTEGER(kind=4), DIMENSION(1:5) :: indirectionDescriptorArray
 
@@ -257,18 +262,18 @@ attributes (host) SUBROUTINE ale_advectors_totflux_host_gpu( userSubroutine, set
   INTEGER(kind=4) :: pnthrcolSize
   INTEGER(kind=4) :: pthrcolSize
   INTEGER(kind=4), POINTER, DIMENSION(:) :: ncolblk
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pblkMap
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: poffset
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pnelems
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pnthrcol
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pthrcol
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pblkMap
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: poffset
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pnelems
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pnthrcol
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pthrcol
   INTEGER(kind=4) :: partitionSize
   INTEGER(kind=4) :: blockSize
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
   INTEGER(kind=4) :: i10
-  INTEGER(kind=4), SAVE :: calledTimes
 
+  INTEGER(kind=4), SAVE :: calledTimes=0
   INTEGER(kind=4) :: istat
 
   numberOfOpDats = 5
@@ -280,7 +285,15 @@ attributes (host) SUBROUTINE ale_advectors_totflux_host_gpu( userSubroutine, set
   opArgArray(5) = opArg5
 
   returnSetKernelTiming = setKernelTime(13 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000,0.00000, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
+  IF ((calledTimes.EQ.0).OR.(opDat2_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg2))) THEN
+    opDat2_stride_OP2HOST = getSetSizeFromOpArg(opArg2)
+    opDat2_stride_OP2CONSTANT = opDat2_stride_OP2HOST
+  END IF
+  IF ((calledTimes.EQ.0).OR.(direct_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg1))) THEN
+    direct_stride_OP2HOST = getSetSizeFromOpArg(opArg1)
+    direct_stride_OP2CONSTANT = direct_stride_OP2HOST
+  END IF
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)

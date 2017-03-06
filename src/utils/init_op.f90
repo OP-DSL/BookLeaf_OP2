@@ -152,11 +152,9 @@ SUBROUTINE init()
   ! initialise time
   time=time_start
 
-print *,"1"
   ! initialise geometry
   CALL getgeom2(d_ndx,d_ndy,d_elx,d_ely,timer%time_in_getgeomi)
 
-print *,"2"
   ! initialise density, energy and mass
   call init_dem_host(&
                    & "init_dem",s_elements,  &
@@ -184,11 +182,9 @@ print *,"2"
 
   ENDIF
 
-print *,"3"
   ! initialise pressure and sound speed
   CALL getpc(d_rho,d_ein,d_pre,d_csqrd,timer%time_in_getpci)
 
-print *,"4"
   ! initialise artifical viscosity
   call set_zero1_host(&
                    & "set_zero1",s_elements,  &
@@ -203,7 +199,6 @@ print *,"4"
                    & op_arg_dat(d_qy,-1,OP_ID,4,'real(8)',OP_WRITE))
 
 
-print *,"5"
 
 END SUBROUTINE init
 

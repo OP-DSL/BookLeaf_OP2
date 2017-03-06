@@ -19,9 +19,14 @@ USE CUDACONFIGURATIONPARAMS
 
 ! gather_funvariable declarations
 
+INTEGER(kind=4), CONSTANT :: opDat1_stride_OP2CONSTANT
+INTEGER(kind=4) :: opDat1_stride_OP2HOST
+INTEGER(kind=4), CONSTANT :: direct_stride_OP2CONSTANT
+INTEGER(kind=4) :: direct_stride_OP2HOST
 
 TYPE ( c_ptr )  :: planRet_gather_fun
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -51,10 +56,10 @@ attributes (device) subroutine gather_fun_gpu(a1,a2,a3,a4,b)
     REAL(KIND=rlk), INTENT(IN) :: a1,a2,a3,a4
     REAL(KIND=rlk), DIMENSION(4), INTENT(OUT) :: b
 
-    b(1) = a1
-    b(2) = a2
-    b(3) = a3
-    b(4) = a4
+    OP2_SOA(b,1, elements_stride_OP2) = a1
+    OP2_SOA(b,2, elements_stride_OP2) = a2
+    OP2_SOA(b,3, elements_stride_OP2) = a3
+    OP2_SOA(b,4, elements_stride_OP2) = a4
 
   END SUBROUTINE gather_fun_gpu
 
@@ -98,9 +103,9 @@ attributes (global) SUBROUTINE op_cuda_gather_fun( &
   INTEGER(kind=4) :: colour1
   INTEGER(kind=4) :: colour2
   INTEGER(kind=4) :: n1
+  INTEGER(kind=4) :: i3
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
-  INTEGER(kind=4) :: i3
 
 
   IF (threadIdx%x - 1 .EQ. 0) THEN
@@ -113,6 +118,7 @@ attributes (global) SUBROUTINE op_cuda_gather_fun( &
   END IF
 
   CALL syncthreads()
+
 
   i1 = threadIdx%x - 1
 
@@ -130,7 +136,7 @@ attributes (global) SUBROUTINE op_cuda_gather_fun( &
       & opDat1Devicegather_fun(1 + map2idx), &
       & opDat1Devicegather_fun(1 + map3idx), &
       & opDat1Devicegather_fun(1 + map4idx), &
-      & opDat5Devicegather_fun((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)) &
+      & opDat5Devicegather_fun(1 + (i3 + threadBlockOffset)) &
       & )
 
     END IF
@@ -198,9 +204,9 @@ attributes (host) SUBROUTINE gather_fun_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: returnSetKernelTiming
 
 
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Devicegather_fun
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: opMap1Devicegather_fun
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat5Devicegather_fun
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat1Devicegather_fun
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: opMap1Devicegather_fun
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat5Devicegather_fun
 
   INTEGER(kind=4) :: opDat1Cardinality
   INTEGER(kind=4) :: opMap1Cardinality
@@ -214,7 +220,6 @@ attributes (host) SUBROUTINE gather_fun_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: threadSynchRet
   INTEGER(kind=4), DIMENSION(1:5) :: opDatArray
   INTEGER(kind=4), DIMENSION(1:5) :: mappingIndicesArray
-  INTEGER(kind=4), DIMENSION(1:5) :: mappingArray
   INTEGER(kind=4), DIMENSION(1:5) :: accessDescriptorArray
   INTEGER(kind=4), DIMENSION(1:5) :: indirectionDescriptorArray
 
@@ -228,18 +233,18 @@ attributes (host) SUBROUTINE gather_fun_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: pnthrcolSize
   INTEGER(kind=4) :: pthrcolSize
   INTEGER(kind=4), POINTER, DIMENSION(:) :: ncolblk
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pblkMap
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: poffset
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pnelems
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pnthrcol
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pthrcol
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pblkMap
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: poffset
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pnelems
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pnthrcol
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pthrcol
   INTEGER(kind=4) :: partitionSize
   INTEGER(kind=4) :: blockSize
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
   INTEGER(kind=4) :: i10
-  INTEGER(kind=4), SAVE :: calledTimes
 
+  INTEGER(kind=4), SAVE :: calledTimes=0
   INTEGER(kind=4) :: istat
 
   numberOfOpDats = 5
@@ -251,7 +256,15 @@ attributes (host) SUBROUTINE gather_fun_host_gpu( userSubroutine, set, &
   opArgArray(5) = opArg5
 
   returnSetKernelTiming = setKernelTime(35 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000,0.00000, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
+  IF ((calledTimes.EQ.0).OR.(opDat1_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg1))) THEN
+    opDat1_stride_OP2HOST = getSetSizeFromOpArg(opArg1)
+    opDat1_stride_OP2CONSTANT = opDat1_stride_OP2HOST
+  END IF
+  IF ((calledTimes.EQ.0).OR.(direct_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg5))) THEN
+    direct_stride_OP2HOST = getSetSizeFromOpArg(opArg5)
+    direct_stride_OP2CONSTANT = direct_stride_OP2HOST
+  END IF
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)

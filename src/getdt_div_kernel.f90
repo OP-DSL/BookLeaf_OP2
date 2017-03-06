@@ -54,6 +54,7 @@ SUBROUTINE op_wrap_getdt_div( &
 & opDat8Local, &
 & opDat9Local, &
 & bottom,top)
+implicit none
 real(8) opDat1Local(4,*)
 real(8) opDat2Local(4,*)
 real(8) opDat3Local(1,*)
@@ -163,7 +164,7 @@ opArgArray(8) = opArg8
 opArgArray(9) = opArg9
 
 returnSetKernelTiming = setKernelTime(44 , userSubroutine//C_NULL_CHAR, &
-& 0.0_8, 0.00000_4,0.00000_4, 0)
+& 0.d0, 0.00000_4,0.00000_4, 0)
 call op_timers_core(startTime)
 
 n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)

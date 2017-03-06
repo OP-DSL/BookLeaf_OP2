@@ -43,7 +43,9 @@ SUBROUTINE init_dem(im,mat_rho,mat_ein,rho,ein,elmass,elvol,cnmass,cnwt)
 
 SUBROUTINE op_wrap_init_dem( &
 & opDat1Local, &
+& opDat2Dim, &
 & opDat2Local, &
+& opDat3Dim, &
 & opDat3Local, &
 & opDat4Local, &
 & opDat5Local, &
@@ -52,9 +54,12 @@ SUBROUTINE op_wrap_init_dem( &
 & opDat8Local, &
 & opDat9Local, &
 & bottom,top)
+implicit none
 integer(4) opDat1Local(1,*)
-real(8) opDat2Local(LI)
-real(8) opDat3Local(LI)
+INTEGER(kind=4) opDat2Dim
+real(8) opDat2Local(opDat2Dim)
+INTEGER(kind=4) opDat3Dim
+real(8) opDat3Local(opDat3Dim)
 real(8) opDat4Local(1,*)
 real(8) opDat5Local(1,*)
 real(8) opDat6Local(1,*)
@@ -158,7 +163,7 @@ opArgArray(8) = opArg8
 opArgArray(9) = opArg9
 
 returnSetKernelTiming = setKernelTime(33 , userSubroutine//C_NULL_CHAR, &
-& 0.0_8, 0.00000_4,0.00000_4, 0)
+& 0.d0, 0.00000_4,0.00000_4, 0)
 call op_timers_core(startTime)
 
 n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -194,7 +199,9 @@ n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
 ! kernel call
     CALL op_wrap_init_dem( &
     & opDat1Local, &
+    & opArg2%dim, &
     & opDat2Local, &
+    & opArg3%dim, &
     & opDat3Local, &
     & opDat4Local, &
     & opDat5Local, &

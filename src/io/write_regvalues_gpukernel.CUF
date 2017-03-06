@@ -19,6 +19,10 @@ USE CUDACONFIGURATIONPARAMS
 
 ! write_regvaluesvariable declarations
 
+INTEGER(kind=4), CONSTANT :: opDat8_stride_OP2CONSTANT
+INTEGER(kind=4) :: opDat8_stride_OP2HOST
+INTEGER(kind=4), CONSTANT :: direct_stride_OP2CONSTANT
+INTEGER(kind=4) :: direct_stride_OP2HOST
 real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: reductionArrayDevice16write_regvalues
 real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: reductionArrayDevice17write_regvalues
 real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: reductionArrayDevice18write_regvalues
@@ -33,6 +37,7 @@ real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: reductionArrayDevice26write_regval
 
 TYPE ( c_ptr )  :: planRet_write_regvalues
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -256,9 +261,9 @@ attributes (device) subroutine write_regvalues_gpu(elvol,elmass,ein,pre, &    !4
         w2=ndua(ii)
         w3=ndva(ii)
         IF (elmass.GT.c1) THEN
-          reg_ke=0.5_rlk*cnmass(ii)*(w2*w2+w3*w3)+reg_ke
+          reg_ke=0.5_rlk*OP2_SOA(cnmass,ii, elements_stride_OP2)*(w2*w2+w3*w3)+reg_ke
         ENDIF
-        w4=rho*cnwt(ii)
+        w4=rho*OP2_SOA(cnwt,ii, elements_stride_OP2)
         tot_mom_u=tot_mom_u+w2*w4
         tot_mom_v=tot_mom_v+w3*w4
       ENDDO
@@ -357,9 +362,9 @@ attributes (device) subroutine write_regvalues_gpu(elvol,elmass,ein,pre, &    !4
     INTEGER(kind=4) :: colour1
     INTEGER(kind=4) :: colour2
     INTEGER(kind=4) :: n1
+    INTEGER(kind=4) :: i3
     INTEGER(kind=4) :: i1
     INTEGER(kind=4) :: i2
-    INTEGER(kind=4) :: i3
 
     opGblDat16Devicewrite_regvalues = 0
     opGblDat17Devicewrite_regvalues = 0
@@ -384,6 +389,7 @@ attributes (device) subroutine write_regvalues_gpu(elvol,elmass,ein,pre, &    !4
 
     CALL syncthreads()
 
+
     i1 = threadIdx%x - 1
 
     DO WHILE (i1 < numberOfActiveThreadsCeiling )
@@ -401,8 +407,8 @@ attributes (device) subroutine write_regvalues_gpu(elvol,elmass,ein,pre, &    !4
         & opDat3Devicewrite_regvalues((i3 + threadBlockOffset) * (1) +1), &
         & opDat4Devicewrite_regvalues((i3 + threadBlockOffset) * (1) +1), &
         & opDat5Devicewrite_regvalues((i3 + threadBlockOffset) * (1) +1), &
-        & opDat6Devicewrite_regvalues((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
-        & opDat7Devicewrite_regvalues((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+        & opDat6Devicewrite_regvalues(1 + (i3 + threadBlockOffset)), &
+        & opDat7Devicewrite_regvalues(1 + (i3 + threadBlockOffset)), &
         & opDat8Devicewrite_regvalues(1 + map8idx), &
         & opDat8Devicewrite_regvalues(1 + map9idx), &
         & opDat8Devicewrite_regvalues(1 + map10idx), &
@@ -617,18 +623,18 @@ attributes (device) subroutine write_regvalues_gpu(elvol,elmass,ein,pre, &    !4
     INTEGER(kind=4) :: returnSetKernelTiming
 
 
-    real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat8Devicewrite_regvalues
-    INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: opMap8Devicewrite_regvalues
-    real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat12Devicewrite_regvalues
-    INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: opMap12Devicewrite_regvalues
-    real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Devicewrite_regvalues
-    real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat2Devicewrite_regvalues
-    real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat3Devicewrite_regvalues
-    real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat4Devicewrite_regvalues
-    real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat5Devicewrite_regvalues
-    real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat6Devicewrite_regvalues
-    real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat7Devicewrite_regvalues
-    integer(4), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat28Devicewrite_regvalues
+    real(8), DIMENSION(:), DEVICE, POINTER :: opDat8Devicewrite_regvalues
+    INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: opMap8Devicewrite_regvalues
+    real(8), DIMENSION(:), DEVICE, POINTER :: opDat12Devicewrite_regvalues
+    INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: opMap12Devicewrite_regvalues
+    real(8), DIMENSION(:), DEVICE, POINTER :: opDat1Devicewrite_regvalues
+    real(8), DIMENSION(:), DEVICE, POINTER :: opDat2Devicewrite_regvalues
+    real(8), DIMENSION(:), DEVICE, POINTER :: opDat3Devicewrite_regvalues
+    real(8), DIMENSION(:), DEVICE, POINTER :: opDat4Devicewrite_regvalues
+    real(8), DIMENSION(:), DEVICE, POINTER :: opDat5Devicewrite_regvalues
+    real(8), DIMENSION(:), DEVICE, POINTER :: opDat6Devicewrite_regvalues
+    real(8), DIMENSION(:), DEVICE, POINTER :: opDat7Devicewrite_regvalues
+    integer(4), DIMENSION(:), DEVICE, POINTER :: opDat28Devicewrite_regvalues
 
     INTEGER(kind=4) :: opDat8Cardinality
     INTEGER(kind=4) :: opMap8Cardinality
@@ -663,7 +669,6 @@ attributes (device) subroutine write_regvalues_gpu(elvol,elmass,ein,pre, &    !4
     INTEGER(kind=4) :: threadSynchRet
     INTEGER(kind=4), DIMENSION(1:28) :: opDatArray
     INTEGER(kind=4), DIMENSION(1:28) :: mappingIndicesArray
-    INTEGER(kind=4), DIMENSION(1:28) :: mappingArray
     INTEGER(kind=4), DIMENSION(1:28) :: accessDescriptorArray
     INTEGER(kind=4), DIMENSION(1:28) :: indirectionDescriptorArray
 
@@ -678,18 +683,18 @@ attributes (device) subroutine write_regvalues_gpu(elvol,elmass,ein,pre, &    !4
     INTEGER(kind=4) :: pnthrcolSize
     INTEGER(kind=4) :: pthrcolSize
     INTEGER(kind=4), POINTER, DIMENSION(:) :: ncolblk
-    INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pblkMap
-    INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: poffset
-    INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pnelems
-    INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pnthrcol
-    INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pthrcol
+    INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pblkMap
+    INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: poffset
+    INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pnelems
+    INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pnthrcol
+    INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pthrcol
     INTEGER(kind=4) :: partitionSize
     INTEGER(kind=4) :: blockSize
     INTEGER(kind=4) :: i1
     INTEGER(kind=4) :: i2
     INTEGER(kind=4) :: i10
-    INTEGER(kind=4), SAVE :: calledTimes
 
+    INTEGER(kind=4), SAVE :: calledTimes=0
     INTEGER(kind=4) :: istat
     real(8), POINTER :: opDat16Host
     real(8), DIMENSION(:), ALLOCATABLE :: reductionArrayHost16
@@ -758,7 +763,15 @@ attributes (device) subroutine write_regvalues_gpu(elvol,elmass,ein,pre, &    !4
     opArgArray(28) = opArg28
 
     returnSetKernelTiming = setKernelTime(54 , userSubroutine//C_NULL_CHAR, &
-    & 0.d0, 0.00000,0.00000, 0)
+    & 0.d0, 0.00000_4,0.00000_4, 0)
+    IF ((calledTimes.EQ.0).OR.(opDat8_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg8))) THEN
+      opDat8_stride_OP2HOST = getSetSizeFromOpArg(opArg8)
+      opDat8_stride_OP2CONSTANT = opDat8_stride_OP2HOST
+    END IF
+    IF ((calledTimes.EQ.0).OR.(direct_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg6))) THEN
+      direct_stride_OP2HOST = getSetSizeFromOpArg(opArg6)
+      direct_stride_OP2CONSTANT = direct_stride_OP2HOST
+    END IF
     call op_timers_core(startTime)
 
     n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -1018,17 +1031,17 @@ attributes (device) subroutine write_regvalues_gpu(elvol,elmass,ein,pre, &    !4
       & opDat6Devicewrite_regvalues, &
       & opDat7Devicewrite_regvalues, &
       & opDat28Devicewrite_regvalues, &
-      reductionArrayDevice16write_regvalues, &
-      reductionArrayDevice17write_regvalues, &
-      reductionArrayDevice18write_regvalues, &
-      reductionArrayDevice19write_regvalues, &
-      reductionArrayDevice20write_regvalues, &
-      reductionArrayDevice21write_regvalues, &
-      reductionArrayDevice22write_regvalues, &
-      reductionArrayDevice23write_regvalues, &
-      reductionArrayDevice24write_regvalues, &
-      reductionArrayDevice25write_regvalues, &
-      reductionArrayDevice26write_regvalues, &
+      & reductionArrayDevice16write_regvalues, &
+      & reductionArrayDevice17write_regvalues, &
+      & reductionArrayDevice18write_regvalues, &
+      & reductionArrayDevice19write_regvalues, &
+      & reductionArrayDevice20write_regvalues, &
+      & reductionArrayDevice21write_regvalues, &
+      & reductionArrayDevice22write_regvalues, &
+      & reductionArrayDevice23write_regvalues, &
+      & reductionArrayDevice24write_regvalues, &
+      & reductionArrayDevice25write_regvalues, &
+      & reductionArrayDevice26write_regvalues, &
       & opDat27Host, &
       & pblkMap, &
       & poffset,pnelems,pnthrcol,pthrcol, &

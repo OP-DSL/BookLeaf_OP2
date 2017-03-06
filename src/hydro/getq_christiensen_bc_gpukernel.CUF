@@ -19,9 +19,14 @@ USE CUDACONFIGURATIONPARAMS
 
 ! getq_christiensen_bcvariable declarations
 
+INTEGER(kind=4), CONSTANT :: opDat4_stride_OP2CONSTANT
+INTEGER(kind=4) :: opDat4_stride_OP2HOST
+INTEGER(kind=4), CONSTANT :: direct_stride_OP2CONSTANT
+INTEGER(kind=4) :: direct_stride_OP2HOST
 
 TYPE ( c_ptr )  :: planRet_getq_christiensen_bc
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -99,18 +104,18 @@ attributes (device) subroutine getq_christiensen_bc_gpu(ielel,scratch,iel,indtyp
     indtype(4) = indtype4
 
     ins=iside+2_ink
-    in1=ielel(iside)
-    in2=ielel(ins)
+    in1=OP2_SOA(ielel,iside, elements_stride_OP2)
+    in2=OP2_SOA(ielel,ins, elements_stride_OP2)
     IF (in1.EQ.iel) THEN
       ic1=iside
       ic2=MOD(iside,N_SHAPE)+1_ink
       IF (((indtype(ic1).LT.0_ink).AND.(indtype(ic2).LT.0_ink)).AND.&
 &          (in2.NE.iel)) THEN
-        scratch(1)=1.0_rlk
-        scratch(3)=1.0_rlk
+        OP2_SOA(scratch,1, elements_stride_OP2)=1.0_rlk
+        OP2_SOA(scratch,3, elements_stride_OP2)=1.0_rlk
       ELSE
-        scratch(1)=0.0_rlk
-        scratch(3)=0.0_rlk
+        OP2_SOA(scratch,1, elements_stride_OP2)=0.0_rlk
+        OP2_SOA(scratch,3, elements_stride_OP2)=0.0_rlk
       ENDIF
     ENDIF
     IF (in2.EQ.iel) THEN
@@ -118,11 +123,11 @@ attributes (device) subroutine getq_christiensen_bc_gpu(ielel,scratch,iel,indtyp
       ic2=MOD(ins,N_SHAPE)+1_ink
       IF (((indtype(ic1).LT.0_ink).AND.(indtype(ic2).LT.0_ink)).AND.&
 &          (in1.NE.iel)) THEN
-        scratch(2)=1.0_rlk
-        scratch(4)=1.0_rlk
+        OP2_SOA(scratch,2, elements_stride_OP2)=1.0_rlk
+        OP2_SOA(scratch,4, elements_stride_OP2)=1.0_rlk
       ELSE
-        scratch(2)=0.0_rlk
-        scratch(4)=0.0_rlk
+        OP2_SOA(scratch,2, elements_stride_OP2)=0.0_rlk
+        OP2_SOA(scratch,4, elements_stride_OP2)=0.0_rlk
       ENDIF
     ENDIF
 
@@ -174,9 +179,9 @@ attributes (global) SUBROUTINE op_cuda_getq_christiensen_bc( &
   INTEGER(kind=4) :: colour1
   INTEGER(kind=4) :: colour2
   INTEGER(kind=4) :: n1
+  INTEGER(kind=4) :: i3
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
-  INTEGER(kind=4) :: i3
 
 
   IF (threadIdx%x - 1 .EQ. 0) THEN
@@ -190,6 +195,7 @@ attributes (global) SUBROUTINE op_cuda_getq_christiensen_bc( &
 
   CALL syncthreads()
 
+
   i1 = threadIdx%x - 1
 
   DO WHILE (i1 < numberOfActiveThreadsCeiling )
@@ -202,8 +208,8 @@ attributes (global) SUBROUTINE op_cuda_getq_christiensen_bc( &
 
 ! kernel call
       CALL getq_christiensen_bc_gpu( &
-      & opDat1Devicegetq_christiensen_bc((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
-      & opDat2Devicegetq_christiensen_bc((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+      & opDat1Devicegetq_christiensen_bc(1 + (i3 + threadBlockOffset)), &
+      & opDat2Devicegetq_christiensen_bc(1 + (i3 + threadBlockOffset)), &
       & opDat3Devicegetq_christiensen_bc((i3 + threadBlockOffset) * (1) +1), &
       & opDat4Devicegetq_christiensen_bc(1 + map4idx), &
       & opDat4Devicegetq_christiensen_bc(1 + map5idx), &
@@ -292,11 +298,11 @@ attributes (host) SUBROUTINE getq_christiensen_bc_host_gpu( userSubroutine, set,
   INTEGER(kind=4) :: returnSetKernelTiming
 
 
-  integer(4), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat4Devicegetq_christiensen_bc
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: opMap4Devicegetq_christiensen_bc
-  integer(4), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Devicegetq_christiensen_bc
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat2Devicegetq_christiensen_bc
-  integer(4), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat3Devicegetq_christiensen_bc
+  integer(4), DIMENSION(:), DEVICE, POINTER :: opDat4Devicegetq_christiensen_bc
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: opMap4Devicegetq_christiensen_bc
+  integer(4), DIMENSION(:), DEVICE, POINTER :: opDat1Devicegetq_christiensen_bc
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat2Devicegetq_christiensen_bc
+  integer(4), DIMENSION(:), DEVICE, POINTER :: opDat3Devicegetq_christiensen_bc
 
   INTEGER(kind=4) :: opDat4Cardinality
   INTEGER(kind=4) :: opMap4Cardinality
@@ -313,7 +319,6 @@ attributes (host) SUBROUTINE getq_christiensen_bc_host_gpu( userSubroutine, set,
   INTEGER(kind=4) :: threadSynchRet
   INTEGER(kind=4), DIMENSION(1:8) :: opDatArray
   INTEGER(kind=4), DIMENSION(1:8) :: mappingIndicesArray
-  INTEGER(kind=4), DIMENSION(1:8) :: mappingArray
   INTEGER(kind=4), DIMENSION(1:8) :: accessDescriptorArray
   INTEGER(kind=4), DIMENSION(1:8) :: indirectionDescriptorArray
 
@@ -327,18 +332,18 @@ attributes (host) SUBROUTINE getq_christiensen_bc_host_gpu( userSubroutine, set,
   INTEGER(kind=4) :: pnthrcolSize
   INTEGER(kind=4) :: pthrcolSize
   INTEGER(kind=4), POINTER, DIMENSION(:) :: ncolblk
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pblkMap
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: poffset
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pnelems
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pnthrcol
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pthrcol
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pblkMap
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: poffset
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pnelems
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pnthrcol
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pthrcol
   INTEGER(kind=4) :: partitionSize
   INTEGER(kind=4) :: blockSize
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
   INTEGER(kind=4) :: i10
-  INTEGER(kind=4), SAVE :: calledTimes
 
+  INTEGER(kind=4), SAVE :: calledTimes=0
   INTEGER(kind=4) :: istat
   integer(4), POINTER :: opDat8Host
 
@@ -354,7 +359,15 @@ attributes (host) SUBROUTINE getq_christiensen_bc_host_gpu( userSubroutine, set,
   opArgArray(8) = opArg8
 
   returnSetKernelTiming = setKernelTime(25 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000,0.00000, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
+  IF ((calledTimes.EQ.0).OR.(opDat4_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg4))) THEN
+    opDat4_stride_OP2HOST = getSetSizeFromOpArg(opArg4)
+    opDat4_stride_OP2CONSTANT = opDat4_stride_OP2HOST
+  END IF
+  IF ((calledTimes.EQ.0).OR.(direct_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg1))) THEN
+    direct_stride_OP2HOST = getSetSizeFromOpArg(opArg1)
+    direct_stride_OP2CONSTANT = direct_stride_OP2HOST
+  END IF
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)

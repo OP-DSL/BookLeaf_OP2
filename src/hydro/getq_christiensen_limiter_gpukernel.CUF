@@ -19,8 +19,11 @@ USE CUDACONFIGURATIONPARAMS
 
 ! getq_christiensen_limitervariable declarations
 
+INTEGER(kind=4), CONSTANT :: direct_stride_OP2CONSTANT
+INTEGER(kind=4) :: direct_stride_OP2HOST
 
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -84,26 +87,26 @@ attributes (device) subroutine getq_christiensen_limiter_gpu(du,dv,qx,qy,csqrd,r
     is2=iside+1_ink
 
     w1=cq1*SQRT(csqrd)
-    w2=scratch(1)
-    w3=scratch(2)
+    w2=OP2_SOA(scratch,1, elements_stride_OP2)
+    w3=OP2_SOA(scratch,2, elements_stride_OP2)
     w2=MIN(0.5_rlk*(w2+w3),2.0_rlk*w2,2.0_rlk*w3,1.0_rlk)
     w2=MAX(0.0_rlk,w2)
-    w3=du(is1)
-    w4=dv(is1)
+    w3=OP2_SOA(du,is1, elements_stride_OP2)
+    w4=OP2_SOA(dv,is1, elements_stride_OP2)
     w3=SQRT(w3*w3+w4*w4)
     w3=(1.0_rlk-w2)*rho*(w1+cq2*w3)
-    qx(is1)=w3
-    qy(is1)=w3
-    w2=scratch(3)
-    w3=scratch(4)
+    OP2_SOA(qx,is1, elements_stride_OP2)=w3
+    OP2_SOA(qy,is1, elements_stride_OP2)=w3
+    w2=OP2_SOA(scratch,3, elements_stride_OP2)
+    w3=OP2_SOA(scratch,4, elements_stride_OP2)
     w2=MIN(0.5_rlk*(w2+w3),2.0_rlk*w2,2.0_rlk*w3,1.0_rlk)
     w2=MAX(0.0_rlk,w2)
-    w3=du(is2)
-    w4=dv(is2)
+    w3=OP2_SOA(du,is2, elements_stride_OP2)
+    w4=OP2_SOA(dv,is2, elements_stride_OP2)
     w3=SQRT(w3*w3+w4*w4)
     w3=(1.0_rlk-w2)*rho*(w1+cq2*w3)
-    qx(is2)=w3
-    qy(is2)=w3
+    OP2_SOA(qx,is2, elements_stride_OP2)=w3
+    OP2_SOA(qy,is2, elements_stride_OP2)=w3
 
   END SUBROUTINE getq_christiensen_limiter_gpu
 
@@ -139,6 +142,7 @@ attributes (global) SUBROUTINE op_cuda_getq_christiensen_limiter( &
 
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
+  INTEGER(kind=4) :: i2
 
 
   DO i1 = threadIdx%x - 1 + (blockIdx%x - 1) * blockDim%x, setSize - 1, blockDim%x * gridDim%x
@@ -146,13 +150,13 @@ attributes (global) SUBROUTINE op_cuda_getq_christiensen_limiter( &
 ! kernel call
 
     CALL getq_christiensen_limiter_gpu( &
-    & opDat1Devicegetq_christiensen_limiter(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat2Devicegetq_christiensen_limiter(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat3Devicegetq_christiensen_limiter(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat4Devicegetq_christiensen_limiter(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat1Devicegetq_christiensen_limiter(1 + i1), &
+    & opDat2Devicegetq_christiensen_limiter(1 + i1), &
+    & opDat3Devicegetq_christiensen_limiter(1 + i1), &
+    & opDat4Devicegetq_christiensen_limiter(1 + i1), &
     & opDat5Devicegetq_christiensen_limiter(i1 + 1), &
     & opDat6Devicegetq_christiensen_limiter(i1 + 1), &
-    & opDat7Devicegetq_christiensen_limiter(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat7Devicegetq_christiensen_limiter(1 + i1), &
     & opGblDat8Devicegetq_christiensen_limiter, &
     & opGblDat9Devicegetq_christiensen_limiter, &
     & opGblDat10Devicegetq_christiensen_limiter &
@@ -244,13 +248,13 @@ attributes (host) SUBROUTINE getq_christiensen_limiter_host_gpu( userSubroutine,
   INTEGER(kind=4) :: returnSetKernelTiming
 
 
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Devicegetq_christiensen_limiter
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat2Devicegetq_christiensen_limiter
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat3Devicegetq_christiensen_limiter
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat4Devicegetq_christiensen_limiter
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat5Devicegetq_christiensen_limiter
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat6Devicegetq_christiensen_limiter
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat7Devicegetq_christiensen_limiter
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat1Devicegetq_christiensen_limiter
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat2Devicegetq_christiensen_limiter
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat3Devicegetq_christiensen_limiter
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat4Devicegetq_christiensen_limiter
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat5Devicegetq_christiensen_limiter
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat6Devicegetq_christiensen_limiter
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat7Devicegetq_christiensen_limiter
 
   INTEGER(kind=4) :: opDat1Cardinality
   INTEGER(kind=4) :: opDat2Cardinality
@@ -267,13 +271,13 @@ attributes (host) SUBROUTINE getq_christiensen_limiter_host_gpu( userSubroutine,
   INTEGER(kind=4) :: threadsPerBlock
   INTEGER(kind=4) :: dynamicSharedMemorySize
   INTEGER(kind=4) :: threadSynchRet
-  INTEGER(kind=4), SAVE :: calledTimes
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
   INTEGER(kind=4) :: i10
   INTEGER(kind=4) :: i20
   REAL(kind=4) :: dataTransfer
 
+  INTEGER(kind=4), SAVE :: calledTimes=0
   INTEGER(kind=4) :: istat
   real(8), POINTER :: opDat8Host
   real(8), POINTER :: opDat9Host
@@ -293,7 +297,11 @@ attributes (host) SUBROUTINE getq_christiensen_limiter_host_gpu( userSubroutine,
   opArgArray(10) = opArg10
 
   returnSetKernelTiming = setKernelTime(26 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000,0.00000, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
+  IF ((calledTimes.EQ.0).OR.(direct_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg1))) THEN
+    direct_stride_OP2HOST = getSetSizeFromOpArg(opArg1)
+    direct_stride_OP2CONSTANT = direct_stride_OP2HOST
+  END IF
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -362,7 +370,7 @@ attributes (host) SUBROUTINE getq_christiensen_limiter_host_gpu( userSubroutine,
   dataTransfer = dataTransfer + opArg9%size
   dataTransfer = dataTransfer + opArg10%size
   returnSetKernelTiming = setKernelTime(26 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, dataTransfer, 0.00000, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
   calledTimes = calledTimes + 1
 END SUBROUTINE
 

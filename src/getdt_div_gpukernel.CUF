@@ -19,9 +19,12 @@ USE CUDACONFIGURATIONPARAMS
 
 ! getdt_divvariable declarations
 
+INTEGER(kind=4), CONSTANT :: direct_stride_OP2CONSTANT
+INTEGER(kind=4) :: direct_stride_OP2HOST
 real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: reductionArrayDevice9getdt_div
 
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -163,10 +166,10 @@ attributes (device) subroutine getdt_div_gpu(elu,elv,a1,a3,b1,b3,elvol,w2_s,w2)
 
     REAL(KIND=rlk) :: w1
 
-    w1=elu(1)*(-b3+b1)+elv(1)*( a3-a1)+   &
-&        elu(2)*( b3+b1)+elv(2)*(-a3-a1)+   &
-&        elu(3)*( b3-b1)+elv(3)*(-a3+a1)+   &
-&        elu(4)*(-b3-b1)+elv(4)*( a3+a1)
+    w1=OP2_SOA(elu,1, elements_stride_OP2)*(-b3+b1)+OP2_SOA(elv,1, elements_stride_OP2)*( a3-a1)+   &
+&        OP2_SOA(elu,2, elements_stride_OP2)*( b3+b1)+OP2_SOA(elv,2, elements_stride_OP2)*(-a3-a1)+   &
+&        OP2_SOA(elu,3, elements_stride_OP2)*( b3-b1)+OP2_SOA(elv,3, elements_stride_OP2)*(-a3+a1)+   &
+&        OP2_SOA(elu,4, elements_stride_OP2)*(-b3-b1)+OP2_SOA(elv,4, elements_stride_OP2)*( a3+a1)
     w1=ABS(w1)/elvol
     w2_s=w1
     IF (w1.GT.w2) THEN
@@ -206,6 +209,7 @@ attributes (device) subroutine getdt_div_gpu(elu,elv,a1,a3,b1,b3,elvol,w2_s,w2)
 
     INTEGER(kind=4), VALUE :: setSize
     INTEGER(kind=4) :: i1
+    INTEGER(kind=4) :: i2
 
     opGblDat9Devicegetdt_div = reductionArrayDevice9(blockIdx%x - 1 + 1)
 
@@ -214,8 +218,8 @@ attributes (device) subroutine getdt_div_gpu(elu,elv,a1,a3,b1,b3,elvol,w2_s,w2)
 ! kernel call
 
       CALL getdt_div_gpu( &
-      & opDat1Devicegetdt_div(i1 * (4) + 1: i1 * (4) + 4), &
-      & opDat2Devicegetdt_div(i1 * (4) + 1: i1 * (4) + 4), &
+      & opDat1Devicegetdt_div(1 + i1), &
+      & opDat2Devicegetdt_div(1 + i1), &
       & opDat3Devicegetdt_div(i1 + 1), &
       & opDat4Devicegetdt_div(i1 + 1), &
       & opDat5Devicegetdt_div(i1 + 1), &
@@ -307,14 +311,14 @@ attributes (device) subroutine getdt_div_gpu(elu,elv,a1,a3,b1,b3,elvol,w2_s,w2)
     INTEGER(kind=4) :: returnSetKernelTiming
 
 
-    real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Devicegetdt_div
-    real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat2Devicegetdt_div
-    real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat3Devicegetdt_div
-    real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat4Devicegetdt_div
-    real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat5Devicegetdt_div
-    real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat6Devicegetdt_div
-    real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat7Devicegetdt_div
-    real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat8Devicegetdt_div
+    real(8), DIMENSION(:), DEVICE, POINTER :: opDat1Devicegetdt_div
+    real(8), DIMENSION(:), DEVICE, POINTER :: opDat2Devicegetdt_div
+    real(8), DIMENSION(:), DEVICE, POINTER :: opDat3Devicegetdt_div
+    real(8), DIMENSION(:), DEVICE, POINTER :: opDat4Devicegetdt_div
+    real(8), DIMENSION(:), DEVICE, POINTER :: opDat5Devicegetdt_div
+    real(8), DIMENSION(:), DEVICE, POINTER :: opDat6Devicegetdt_div
+    real(8), DIMENSION(:), DEVICE, POINTER :: opDat7Devicegetdt_div
+    real(8), DIMENSION(:), DEVICE, POINTER :: opDat8Devicegetdt_div
 
     INTEGER(kind=4) :: opDat1Cardinality
     INTEGER(kind=4) :: opDat2Cardinality
@@ -330,13 +334,13 @@ attributes (device) subroutine getdt_div_gpu(elu,elv,a1,a3,b1,b3,elvol,w2_s,w2)
     INTEGER(kind=4) :: threadsPerBlock
     INTEGER(kind=4) :: dynamicSharedMemorySize
     INTEGER(kind=4) :: threadSynchRet
-    INTEGER(kind=4), SAVE :: calledTimes
     INTEGER(kind=4) :: i1
     INTEGER(kind=4) :: i2
     INTEGER(kind=4) :: i10
     INTEGER(kind=4) :: i20
     REAL(kind=4) :: dataTransfer
 
+    INTEGER(kind=4), SAVE :: calledTimes=0
     INTEGER(kind=4) :: istat
     real(8), POINTER :: opDat9Host
     real(8), DIMENSION(:), ALLOCATABLE :: reductionArrayHost9
@@ -355,7 +359,11 @@ attributes (device) subroutine getdt_div_gpu(elu,elv,a1,a3,b1,b3,elvol,w2_s,w2)
     opArgArray(9) = opArg9
 
     returnSetKernelTiming = setKernelTime(44 , userSubroutine//C_NULL_CHAR, &
-    & 0.d0, 0.00000,0.00000, 0)
+    & 0.d0, 0.00000_4,0.00000_4, 0)
+    IF ((calledTimes.EQ.0).OR.(direct_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg1))) THEN
+      direct_stride_OP2HOST = getSetSizeFromOpArg(opArg1)
+      direct_stride_OP2CONSTANT = direct_stride_OP2HOST
+    END IF
     call op_timers_core(startTime)
 
     n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -407,7 +415,7 @@ attributes (device) subroutine getdt_div_gpu(elu,elv,a1,a3,b1,b3,elvol,w2_s,w2)
     & opDat6Devicegetdt_div, &
     & opDat7Devicegetdt_div, &
     & opDat8Devicegetdt_div, &
-    reductionArrayDevice9getdt_div, &
+    & reductionArrayDevice9getdt_div, &
     set%setPtr%size)
 
     IF ((n_upper .EQ. 0) .OR. (n_upper .EQ. set%setPtr%core_size)) THEN
@@ -440,7 +448,7 @@ attributes (device) subroutine getdt_div_gpu(elu,elv,a1,a3,b1,b3,elvol,w2_s,w2)
     dataTransfer = dataTransfer + opArg8%size * getSetSizeFromOpArg(opArg8)
     dataTransfer = dataTransfer + opArg9%size * 2.d0
     returnSetKernelTiming = setKernelTime(44 , userSubroutine//C_NULL_CHAR, &
-    & endTime-startTime, dataTransfer, 0.00000, 1)
+    & endTime-startTime, dataTransfer, 0.00000_4, 1)
     calledTimes = calledTimes + 1
   END SUBROUTINE
 

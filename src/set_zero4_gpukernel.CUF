@@ -19,8 +19,11 @@ USE CUDACONFIGURATIONPARAMS
 
 ! set_zero4variable declarations
 
+INTEGER(kind=4), CONSTANT :: direct_stride_OP2CONSTANT
+INTEGER(kind=4) :: direct_stride_OP2HOST
 
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -48,10 +51,10 @@ attributes (device) subroutine set_zero4_gpu(a)
 
     REAL(KIND=rlk), DIMENSION(4), INTENT(OUT) :: a
 
-    a(1) = 0.0_rlk
-    a(2) = 0.0_rlk
-    a(3) = 0.0_rlk
-    a(4) = 0.0_rlk
+    OP2_SOA(a,1, elements_stride_OP2) = 0.0_rlk
+    OP2_SOA(a,2, elements_stride_OP2) = 0.0_rlk
+    OP2_SOA(a,3, elements_stride_OP2) = 0.0_rlk
+    OP2_SOA(a,4, elements_stride_OP2) = 0.0_rlk
 
   END SUBROUTINE set_zero4_gpu
 
@@ -69,6 +72,7 @@ attributes (global) SUBROUTINE op_cuda_set_zero4( &
 
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
+  INTEGER(kind=4) :: i2
 
 
   DO i1 = threadIdx%x - 1 + (blockIdx%x - 1) * blockDim%x, setSize - 1, blockDim%x * gridDim%x
@@ -76,7 +80,7 @@ attributes (global) SUBROUTINE op_cuda_set_zero4( &
 ! kernel call
 
     CALL set_zero4_gpu( &
-    & opDat1Deviceset_zero4(i1 * (4) + 1: i1 * (4) + 4) &
+    & opDat1Deviceset_zero4(1 + i1) &
     & )
   END DO
 
@@ -120,7 +124,7 @@ attributes (host) SUBROUTINE set_zero4_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: returnSetKernelTiming
 
 
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Deviceset_zero4
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat1Deviceset_zero4
 
   INTEGER(kind=4) :: opDat1Cardinality
 
@@ -128,13 +132,13 @@ attributes (host) SUBROUTINE set_zero4_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: threadsPerBlock
   INTEGER(kind=4) :: dynamicSharedMemorySize
   INTEGER(kind=4) :: threadSynchRet
-  INTEGER(kind=4), SAVE :: calledTimes
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
   INTEGER(kind=4) :: i10
   INTEGER(kind=4) :: i20
   REAL(kind=4) :: dataTransfer
 
+  INTEGER(kind=4), SAVE :: calledTimes=0
   INTEGER(kind=4) :: istat
 
   numberOfOpDats = 1
@@ -142,7 +146,11 @@ attributes (host) SUBROUTINE set_zero4_host_gpu( userSubroutine, set, &
   opArgArray(1) = opArg1
 
   returnSetKernelTiming = setKernelTime(3 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000,0.00000, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
+  IF ((calledTimes.EQ.0).OR.(direct_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg1))) THEN
+    direct_stride_OP2HOST = getSetSizeFromOpArg(opArg1)
+    direct_stride_OP2CONSTANT = direct_stride_OP2HOST
+  END IF
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -175,7 +183,7 @@ attributes (host) SUBROUTINE set_zero4_host_gpu( userSubroutine, set, &
   dataTransfer = 0.0
   dataTransfer = dataTransfer + opArg1%size * getSetSizeFromOpArg(opArg1)
   returnSetKernelTiming = setKernelTime(3 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, dataTransfer, 0.00000, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
   calledTimes = calledTimes + 1
 END SUBROUTINE
 

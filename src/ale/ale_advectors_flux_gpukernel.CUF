@@ -19,9 +19,14 @@ USE CUDACONFIGURATIONPARAMS
 
 ! ale_advectors_fluxvariable declarations
 
+INTEGER(kind=4), CONSTANT :: opDat2_stride_OP2CONSTANT
+INTEGER(kind=4) :: opDat2_stride_OP2HOST
+INTEGER(kind=4), CONSTANT :: direct_stride_OP2CONSTANT
+INTEGER(kind=4) :: direct_stride_OP2HOST
 
 TYPE ( c_ptr )  :: planRet_ale_advectors_flux
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -113,26 +118,26 @@ attributes (device) subroutine ale_advectors_flux_gpu(rCorner,rCorner1,rCorner2,
 !    iE2=iElEl(i2)
     j2=iElSd(i2)
     j1=MOD(i2,N_SHAPE)+1_ink
-    r3=rCorner(i2)+rCorner(j1)
+    r3=OP2_SOA(rCorner,i2, elements_stride_OP2)+OP2_SOA(rCorner,j1, elements_stride_OP2)
     j1=MOD(j2,N_SHAPE)+1_ink
     IF (i2.EQ.3) THEN
-      w5=r3+rCorner3(j2)+rCorner3(j1)
+      w5=r3+OP2_SOA(rCorner3,j2, elements_stride_OP2)+OP2_SOA(rCorner3,j1, elements_stride_OP2)
     ELSEIF (i2.EQ.4) THEN
-      w5=r3+rCorner4(j2)+rCorner4(j1)
+      w5=r3+OP2_SOA(rCorner4,j2, elements_stride_OP2)+OP2_SOA(rCorner4,j1, elements_stride_OP2)
     ENDIF
 !    iE1=iElEl(i1)
     j2=iElSd(i1)
     j1=i1+1_ink
-    r4=rCorner(i1)+rCorner(j1)
+    r4=OP2_SOA(rCorner,i1, elements_stride_OP2)+OP2_SOA(rCorner,j1, elements_stride_OP2)
     j1=MOD(j2,N_SHAPE)+1_ink
     IF (i1.EQ.1) THEN
-      w6=r4+rCorner1(j2)+rCorner1(j1)
+      w6=r4+OP2_SOA(rCorner1,j2, elements_stride_OP2)+OP2_SOA(rCorner1,j1, elements_stride_OP2)
     ELSEIF (i1.EQ.2) THEN
-      w6=r4+rCorner2(j2)+rCorner2(j1)
+      w6=r4+OP2_SOA(rCorner2,j2, elements_stride_OP2)+OP2_SOA(rCorner2,j1, elements_stride_OP2)
     ENDIF
     rV=rVar
-    r1=rDel(i1)
-    r2=rDel(i2)
+    r1=OP2_SOA(rDel,i1, elements_stride_OP2)
+    r2=OP2_SOA(rDel,i2, elements_stride_OP2)
     IF (i2.EQ.3) THEN
       w1=rV-rVar3
     ELSEIF (i2.EQ.4) THEN
@@ -151,8 +156,8 @@ attributes (device) subroutine ale_advectors_flux_gpu(rCorner,rCorner1,rCorner2,
     IF (w1*w2.LE.0.0_rlk) rGrad=0.0_rlk
     r1=r1*(rV+rGrad*(r3-0.5_rlk*r1))
     r2=r2*(rV-rGrad*(r4-0.5_rlk*r2))
-    rFlux(i1)=r1
-    rFlux(i2)=r2
+    OP2_SOA(rFlux,i1, elements_stride_OP2)=r1
+    OP2_SOA(rFlux,i2, elements_stride_OP2)=r2
 
   END SUBROUTINE ale_advectors_flux_gpu
 
@@ -208,9 +213,9 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_flux( &
   INTEGER(kind=4) :: colour1
   INTEGER(kind=4) :: colour2
   INTEGER(kind=4) :: n1
+  INTEGER(kind=4) :: i3
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
-  INTEGER(kind=4) :: i3
 
 
   IF (threadIdx%x - 1 .EQ. 0) THEN
@@ -224,6 +229,7 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_flux( &
 
   CALL syncthreads()
 
+
   i1 = threadIdx%x - 1
 
   DO WHILE (i1 < numberOfActiveThreadsCeiling )
@@ -236,19 +242,19 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_flux( &
 
 ! kernel call
       CALL ale_advectors_flux_gpu( &
-      & opDat1Deviceale_advectors_flux((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
-      & opDat2Deviceale_advectors_flux(1 + map2idx * (4):     map2idx * (4) + 4), &
-      & opDat2Deviceale_advectors_flux(1 + map3idx * (4):     map3idx * (4) + 4), &
-      & opDat2Deviceale_advectors_flux(1 + map4idx * (4):     map4idx * (4) + 4), &
-      & opDat2Deviceale_advectors_flux(1 + map5idx * (4):     map5idx * (4) + 4), &
+      & opDat1Deviceale_advectors_flux(1 + (i3 + threadBlockOffset)), &
+      & opDat2Deviceale_advectors_flux(1 + map2idx), &
+      & opDat2Deviceale_advectors_flux(1 + map3idx), &
+      & opDat2Deviceale_advectors_flux(1 + map4idx), &
+      & opDat2Deviceale_advectors_flux(1 + map5idx), &
       & opDat6Deviceale_advectors_flux((i3 + threadBlockOffset) * (1) +1), &
       & opDat7Deviceale_advectors_flux(1 + map2idx), &
       & opDat7Deviceale_advectors_flux(1 + map3idx), &
       & opDat7Deviceale_advectors_flux(1 + map4idx), &
       & opDat7Deviceale_advectors_flux(1 + map5idx), &
-      & opDat11Deviceale_advectors_flux((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
-      & opDat12Deviceale_advectors_flux((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
-      & opDat13Deviceale_advectors_flux((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+      & opDat11Deviceale_advectors_flux(1 + (i3 + threadBlockOffset)), &
+      & opDat12Deviceale_advectors_flux(1 + (i3 + threadBlockOffset)), &
+      & opDat13Deviceale_advectors_flux(1 + (i3 + threadBlockOffset)), &
       & opGblDat14Deviceale_advectors_flux &
       & )
 
@@ -362,15 +368,15 @@ attributes (host) SUBROUTINE ale_advectors_flux_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: returnSetKernelTiming
 
 
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat2Deviceale_advectors_flux
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: opMap2Deviceale_advectors_flux
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat7Deviceale_advectors_flux
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: opMap7Deviceale_advectors_flux
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Deviceale_advectors_flux
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat6Deviceale_advectors_flux
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat11Deviceale_advectors_flux
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat12Deviceale_advectors_flux
-  integer(4), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat13Deviceale_advectors_flux
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat2Deviceale_advectors_flux
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: opMap2Deviceale_advectors_flux
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat7Deviceale_advectors_flux
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: opMap7Deviceale_advectors_flux
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat1Deviceale_advectors_flux
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat6Deviceale_advectors_flux
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat11Deviceale_advectors_flux
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat12Deviceale_advectors_flux
+  integer(4), DIMENSION(:), DEVICE, POINTER :: opDat13Deviceale_advectors_flux
 
   INTEGER(kind=4) :: opDat2Cardinality
   INTEGER(kind=4) :: opMap2Cardinality
@@ -391,7 +397,6 @@ attributes (host) SUBROUTINE ale_advectors_flux_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: threadSynchRet
   INTEGER(kind=4), DIMENSION(1:14) :: opDatArray
   INTEGER(kind=4), DIMENSION(1:14) :: mappingIndicesArray
-  INTEGER(kind=4), DIMENSION(1:14) :: mappingArray
   INTEGER(kind=4), DIMENSION(1:14) :: accessDescriptorArray
   INTEGER(kind=4), DIMENSION(1:14) :: indirectionDescriptorArray
 
@@ -406,18 +411,18 @@ attributes (host) SUBROUTINE ale_advectors_flux_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: pnthrcolSize
   INTEGER(kind=4) :: pthrcolSize
   INTEGER(kind=4), POINTER, DIMENSION(:) :: ncolblk
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pblkMap
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: poffset
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pnelems
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pnthrcol
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pthrcol
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pblkMap
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: poffset
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pnelems
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pnthrcol
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pthrcol
   INTEGER(kind=4) :: partitionSize
   INTEGER(kind=4) :: blockSize
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
   INTEGER(kind=4) :: i10
-  INTEGER(kind=4), SAVE :: calledTimes
 
+  INTEGER(kind=4), SAVE :: calledTimes=0
   INTEGER(kind=4) :: istat
   integer(4), POINTER :: opDat14Host
 
@@ -439,7 +444,15 @@ attributes (host) SUBROUTINE ale_advectors_flux_host_gpu( userSubroutine, set, &
   opArgArray(14) = opArg14
 
   returnSetKernelTiming = setKernelTime(10 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000,0.00000, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
+  IF ((calledTimes.EQ.0).OR.(opDat2_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg2))) THEN
+    opDat2_stride_OP2HOST = getSetSizeFromOpArg(opArg2)
+    opDat2_stride_OP2CONSTANT = opDat2_stride_OP2HOST
+  END IF
+  IF ((calledTimes.EQ.0).OR.(direct_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg1))) THEN
+    direct_stride_OP2HOST = getSetSizeFromOpArg(opArg1)
+    direct_stride_OP2CONSTANT = direct_stride_OP2HOST
+  END IF
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)

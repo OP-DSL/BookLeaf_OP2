@@ -58,6 +58,7 @@ SUBROUTINE op_wrap_ale_advectors_sumflux( &
   & opDat2Map, &
   & opDat2MapDim, &
   & bottom,top)
+  implicit none
   real(8) opDat2Local(4,*)
   real(8) opDat1Local(4,*)
   real(8) opDat6Local(1,*)
@@ -150,6 +151,7 @@ SUBROUTINE ale_advectors_sumflux_host( userSubroutine, set, &
   integer(4), POINTER, DIMENSION(:) :: opDat10Local
 
   INTEGER(kind=4) :: i1
+  REAL(kind=4) :: dataTransfer
 
   numberOfOpDats = 10
 
@@ -165,7 +167,7 @@ SUBROUTINE ale_advectors_sumflux_host( userSubroutine, set, &
   opArgArray(10) = opArg10
 
   returnSetKernelTiming = setKernelTime(15 , userSubroutine//C_NULL_CHAR, &
-  & 0.0_8, 0.00000_4,0.00000_4, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -189,6 +191,17 @@ SUBROUTINE ale_advectors_sumflux_host( userSubroutine, set, &
   CALL c_f_pointer(opArg10%data,opDat10Local, (/opArg10%dim/))
 
 
+  CALL op_wrap_ale_advectors_sumflux( &
+  & opDat2Local, &
+  & opDat1Local, &
+  & opDat6Local, &
+  & opDat7Local, &
+  & opDat8Local, &
+  & opDat9Local, &
+  & opDat10Local, &
+  & opDat2Map, &
+  & opDat2MapDim, &
+  & 0, opSetCore%core_size)
   CALL op_mpi_wait_all(numberOfOpDats,opArgArray)
   CALL op_wrap_ale_advectors_sumflux( &
   & opDat2Local, &
@@ -200,13 +213,25 @@ SUBROUTINE ale_advectors_sumflux_host( userSubroutine, set, &
   & opDat10Local, &
   & opDat2Map, &
   & opDat2MapDim, &
-  & 0, n_upper)
+  & opSetCore%core_size, n_upper)
+  IF ((n_upper .EQ. 0) .OR. (n_upper .EQ. opSetCore%core_size)) THEN
+    CALL op_mpi_wait_all(numberOfOpDats,opArgArray)
+  END IF
+
 
   CALL op_mpi_set_dirtybit(numberOfOpDats,opArgArray)
 
   call op_timers_core(endTime)
 
+  dataTransfer = 0.0
+  dataTransfer = dataTransfer + opArg2%size * MIN(n_upper,getSetSizeFromOpArg(opArg2))
+  dataTransfer = dataTransfer + opArg6%size * MIN(n_upper,getSetSizeFromOpArg(opArg6))
+  dataTransfer = dataTransfer + opArg7%size * MIN(n_upper,getSetSizeFromOpArg(opArg7))
+  dataTransfer = dataTransfer + opArg8%size * MIN(n_upper,getSetSizeFromOpArg(opArg8))
+  dataTransfer = dataTransfer + opArg9%size * MIN(n_upper,getSetSizeFromOpArg(opArg9))
+  dataTransfer = dataTransfer + opArg10%size
+  dataTransfer = dataTransfer + n_upper * opDat2MapDim * 4.d0
   returnSetKernelTiming = setKernelTime(15 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime,0.00000_4,0.00000_4, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
 END SUBROUTINE
 END MODULE

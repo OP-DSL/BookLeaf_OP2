@@ -19,8 +19,11 @@ USE CUDACONFIGURATIONPARAMS
 
 ! getein_updatevariable declarations
 
+INTEGER(kind=4), CONSTANT :: direct_stride_OP2CONSTANT
+INTEGER(kind=4) :: direct_stride_OP2HOST
 
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -63,10 +66,10 @@ attributes (device) subroutine getein_update_gpu(elfx,elfy,elu,elv,elmass,ein,ei
 
     REAL(KIND=rlk) :: w1
 
-    w1=elfx(1)*elu(1)+elfy(1)*elv(1)+                 &
-&   elfx(2)*elu(2)+elfy(2)*elv(2)+                 &
-&   elfx(3)*elu(3)+elfy(3)*elv(3)+                 &
-&   elfx(4)*elu(4)+elfy(4)*elv(4)
+    w1=OP2_SOA(elfx,1, elements_stride_OP2)*OP2_SOA(elu,1, elements_stride_OP2)+OP2_SOA(elfy,1, elements_stride_OP2)*OP2_SOA(elv,1, elements_stride_OP2)+                 &
+&   OP2_SOA(elfx,2, elements_stride_OP2)*OP2_SOA(elu,2, elements_stride_OP2)+OP2_SOA(elfy,2, elements_stride_OP2)*OP2_SOA(elv,2, elements_stride_OP2)+                 &
+&   OP2_SOA(elfx,3, elements_stride_OP2)*OP2_SOA(elu,3, elements_stride_OP2)+OP2_SOA(elfy,3, elements_stride_OP2)*OP2_SOA(elv,3, elements_stride_OP2)+                 &
+&   OP2_SOA(elfx,4, elements_stride_OP2)*OP2_SOA(elu,4, elements_stride_OP2)+OP2_SOA(elfy,4, elements_stride_OP2)*OP2_SOA(elv,4, elements_stride_OP2)
       !# Missing code here that can't be merged
     w1=-w1/MAX(elmass,zerocut_OP2)
     ein_out=ein+w1*dt
@@ -101,6 +104,7 @@ attributes (global) SUBROUTINE op_cuda_getein_update( &
 
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
+  INTEGER(kind=4) :: i2
 
 
   DO i1 = threadIdx%x - 1 + (blockIdx%x - 1) * blockDim%x, setSize - 1, blockDim%x * gridDim%x
@@ -108,10 +112,10 @@ attributes (global) SUBROUTINE op_cuda_getein_update( &
 ! kernel call
 
     CALL getein_update_gpu( &
-    & opDat1Devicegetein_update(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat2Devicegetein_update(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat3Devicegetein_update(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat4Devicegetein_update(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat1Devicegetein_update(1 + i1), &
+    & opDat2Devicegetein_update(1 + i1), &
+    & opDat3Devicegetein_update(1 + i1), &
+    & opDat4Devicegetein_update(1 + i1), &
     & opDat5Devicegetein_update(i1 + 1), &
     & opDat6Devicegetein_update(i1 + 1), &
     & opDat7Devicegetein_update(i1 + 1), &
@@ -194,13 +198,13 @@ attributes (host) SUBROUTINE getein_update_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: returnSetKernelTiming
 
 
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Devicegetein_update
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat2Devicegetein_update
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat3Devicegetein_update
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat4Devicegetein_update
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat5Devicegetein_update
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat6Devicegetein_update
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat7Devicegetein_update
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat1Devicegetein_update
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat2Devicegetein_update
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat3Devicegetein_update
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat4Devicegetein_update
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat5Devicegetein_update
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat6Devicegetein_update
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat7Devicegetein_update
 
   INTEGER(kind=4) :: opDat1Cardinality
   INTEGER(kind=4) :: opDat2Cardinality
@@ -215,13 +219,13 @@ attributes (host) SUBROUTINE getein_update_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: threadsPerBlock
   INTEGER(kind=4) :: dynamicSharedMemorySize
   INTEGER(kind=4) :: threadSynchRet
-  INTEGER(kind=4), SAVE :: calledTimes
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
   INTEGER(kind=4) :: i10
   INTEGER(kind=4) :: i20
   REAL(kind=4) :: dataTransfer
 
+  INTEGER(kind=4), SAVE :: calledTimes=0
   INTEGER(kind=4) :: istat
   real(8), POINTER :: opDat8Host
 
@@ -237,7 +241,11 @@ attributes (host) SUBROUTINE getein_update_host_gpu( userSubroutine, set, &
   opArgArray(8) = opArg8
 
   returnSetKernelTiming = setKernelTime(49 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000,0.00000, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
+  IF ((calledTimes.EQ.0).OR.(direct_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg1))) THEN
+    direct_stride_OP2HOST = getSetSizeFromOpArg(opArg1)
+    direct_stride_OP2CONSTANT = direct_stride_OP2HOST
+  END IF
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -298,7 +306,7 @@ attributes (host) SUBROUTINE getein_update_host_gpu( userSubroutine, set, &
   dataTransfer = dataTransfer + opArg7%size * getSetSizeFromOpArg(opArg7)
   dataTransfer = dataTransfer + opArg8%size
   returnSetKernelTiming = setKernelTime(49 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, dataTransfer, 0.00000, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
   calledTimes = calledTimes + 1
 END SUBROUTINE
 

@@ -19,10 +19,13 @@ USE CUDACONFIGURATIONPARAMS
 
 ! init_demvariable declarations
 
+INTEGER(kind=4), CONSTANT :: direct_stride_OP2CONSTANT
+INTEGER(kind=4) :: direct_stride_OP2HOST
 real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opGblDat2Deviceinit_dem
 real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opGblDat3Deviceinit_dem
 
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -69,10 +72,10 @@ attributes (device) subroutine init_dem_gpu(im,mat_rho,mat_ein,rho,ein,elmass,el
     rho=mat_rho(im)
     ein=mat_ein(im)
     elmass=rho*elvol
-    cnmass(1) = rho*cnwt(1)
-    cnmass(2) = rho*cnwt(2)
-    cnmass(3) = rho*cnwt(3)
-    cnmass(4) = rho*cnwt(4)
+    OP2_SOA(cnmass,1, elements_stride_OP2) = rho*OP2_SOA(cnwt,1, elements_stride_OP2)
+    OP2_SOA(cnmass,2, elements_stride_OP2) = rho*OP2_SOA(cnwt,2, elements_stride_OP2)
+    OP2_SOA(cnmass,3, elements_stride_OP2) = rho*OP2_SOA(cnwt,3, elements_stride_OP2)
+    OP2_SOA(cnmass,4, elements_stride_OP2) = rho*OP2_SOA(cnwt,4, elements_stride_OP2)
 
 
   END SUBROUTINE init_dem_gpu
@@ -87,6 +90,8 @@ attributes (global) SUBROUTINE op_cuda_init_dem( &
   & opDat7Deviceinit_dem, &
   & opDat8Deviceinit_dem, &
   & opDat9Deviceinit_dem, &
+  & opDat2Dim, &
+  & opDat3Dim, &
   & setSize)
 
   IMPLICIT NONE
@@ -100,9 +105,12 @@ attributes (global) SUBROUTINE op_cuda_init_dem( &
   real(8), DEVICE :: opDat8Deviceinit_dem(*)
   real(8), DEVICE, INTENT(IN) :: opDat9Deviceinit_dem(*)
 
+  INTEGER(kind=4), VALUE :: opDat2Dim
+  INTEGER(kind=4), VALUE :: opDat3Dim
 
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
+  INTEGER(kind=4) :: i2
 
 
   DO i1 = threadIdx%x - 1 + (blockIdx%x - 1) * blockDim%x, setSize - 1, blockDim%x * gridDim%x
@@ -117,8 +125,8 @@ attributes (global) SUBROUTINE op_cuda_init_dem( &
     & opDat5Deviceinit_dem(i1 + 1), &
     & opDat6Deviceinit_dem(i1 + 1), &
     & opDat7Deviceinit_dem(i1 + 1), &
-    & opDat8Deviceinit_dem(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat9Deviceinit_dem(i1 * (4) + 1: i1 * (4) + 4) &
+    & opDat8Deviceinit_dem(1 + i1), &
+    & opDat9Deviceinit_dem(1 + i1) &
     & )
   END DO
 
@@ -202,13 +210,13 @@ attributes (host) SUBROUTINE init_dem_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: returnSetKernelTiming
 
 
-  integer(4), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Deviceinit_dem
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat4Deviceinit_dem
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat5Deviceinit_dem
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat6Deviceinit_dem
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat7Deviceinit_dem
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat8Deviceinit_dem
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat9Deviceinit_dem
+  integer(4), DIMENSION(:), DEVICE, POINTER :: opDat1Deviceinit_dem
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat4Deviceinit_dem
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat5Deviceinit_dem
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat6Deviceinit_dem
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat7Deviceinit_dem
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat8Deviceinit_dem
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat9Deviceinit_dem
 
   INTEGER(kind=4) :: opDat1Cardinality
   INTEGER(kind=4) :: opDat2Cardinality
@@ -224,13 +232,13 @@ attributes (host) SUBROUTINE init_dem_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: threadsPerBlock
   INTEGER(kind=4) :: dynamicSharedMemorySize
   INTEGER(kind=4) :: threadSynchRet
-  INTEGER(kind=4), SAVE :: calledTimes
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
   INTEGER(kind=4) :: i10
   INTEGER(kind=4) :: i20
   REAL(kind=4) :: dataTransfer
 
+  INTEGER(kind=4), SAVE :: calledTimes=0
   INTEGER(kind=4) :: istat
   real(8), DIMENSION(:), POINTER :: opDat2Host
   real(8), DIMENSION(:), POINTER :: opDat3Host
@@ -248,7 +256,11 @@ attributes (host) SUBROUTINE init_dem_host_gpu( userSubroutine, set, &
   opArgArray(9) = opArg9
 
   returnSetKernelTiming = setKernelTime(33 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000,0.00000, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
+  IF ((calledTimes.EQ.0).OR.(direct_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg8))) THEN
+    direct_stride_OP2HOST = getSetSizeFromOpArg(opArg8)
+    direct_stride_OP2CONSTANT = direct_stride_OP2HOST
+  END IF
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -296,6 +308,8 @@ attributes (host) SUBROUTINE init_dem_host_gpu( userSubroutine, set, &
   & opDat7Deviceinit_dem, &
   & opDat8Deviceinit_dem, &
   & opDat9Deviceinit_dem, &
+  & opArg2%dim, &
+  & opArg3%dim, &
   set%setPtr%size)
 
   IF ((n_upper .EQ. 0) .OR. (n_upper .EQ. set%setPtr%core_size)) THEN
@@ -319,7 +333,7 @@ attributes (host) SUBROUTINE init_dem_host_gpu( userSubroutine, set, &
   dataTransfer = dataTransfer + opArg8%size * getSetSizeFromOpArg(opArg8)
   dataTransfer = dataTransfer + opArg9%size * getSetSizeFromOpArg(opArg9)
   returnSetKernelTiming = setKernelTime(33 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, dataTransfer, 0.00000, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
   calledTimes = calledTimes + 1
 END SUBROUTINE
 

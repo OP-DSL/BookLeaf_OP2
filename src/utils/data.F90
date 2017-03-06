@@ -88,7 +88,8 @@ MODULE reals_mod
   REAL(KIND=rlk)                 :: time_alemin,time_alemax
   REAL(KIND=rlk),DIMENSION(LI)   :: patch_ontime,patch_offtime,         &
 &                                   patch_minvel,patch_maxvel,patch_om
-
+  !$acc declare create(dt_min, dt_initial, dt_max, cfl_sf, div_sf, dt_g)
+  !$acc declare create(ccut, zcut, zerocut, pcut, dencut, accut)
 END MODULE reals_mod
 
 MODULE strings_mod
@@ -413,6 +414,8 @@ MODULE op2_constants
 
   CONTAINS
   SUBROUTINE bookleaf_op2_init_const
+  !$acc update device(dt_min, dt_initial, dt_max, cfl_sf, div_sf, dt_g)
+  !$acc update device(ccut, zcut, zerocut, pcut, dencut, accut)
   END SUBROUTINE bookleaf_op2_init_const
 #endif
 

@@ -37,6 +37,7 @@ SUBROUTINE op_wrap_ale_advectors_update_n1( &
   & opDat5Local, &
   & opDat6Local, &
   & bottom,top)
+  implicit none
   real(8) opDat1Local(1,*)
   real(8) opDat2Local(1,*)
   real(8) opDat3Local(1,*)
@@ -106,6 +107,7 @@ SUBROUTINE ale_advectors_update_n1_host( userSubroutine, set, &
 
 
   INTEGER(kind=4) :: i1
+  REAL(kind=4) :: dataTransfer
 
   numberOfOpDats = 6
 
@@ -117,7 +119,7 @@ SUBROUTINE ale_advectors_update_n1_host( userSubroutine, set, &
   opArgArray(6) = opArg6
 
   returnSetKernelTiming = setKernelTime(14 , userSubroutine//C_NULL_CHAR, &
-  & 0.0_8, 0.00000_4,0.00000_4, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -138,6 +140,14 @@ SUBROUTINE ale_advectors_update_n1_host( userSubroutine, set, &
   CALL c_f_pointer(opArg6%data,opDat6Local,(/opDat6Cardinality/))
 
 
+  CALL op_wrap_ale_advectors_update_n1( &
+  & opDat1Local, &
+  & opDat2Local, &
+  & opDat3Local, &
+  & opDat4Local, &
+  & opDat5Local, &
+  & opDat6Local, &
+  & 0, opSetCore%core_size)
   CALL op_mpi_wait_all(numberOfOpDats,opArgArray)
   CALL op_wrap_ale_advectors_update_n1( &
   & opDat1Local, &
@@ -146,13 +156,24 @@ SUBROUTINE ale_advectors_update_n1_host( userSubroutine, set, &
   & opDat4Local, &
   & opDat5Local, &
   & opDat6Local, &
-  & 0, n_upper)
+  & opSetCore%core_size, n_upper)
+  IF ((n_upper .EQ. 0) .OR. (n_upper .EQ. opSetCore%core_size)) THEN
+    CALL op_mpi_wait_all(numberOfOpDats,opArgArray)
+  END IF
+
 
   CALL op_mpi_set_dirtybit(numberOfOpDats,opArgArray)
 
   call op_timers_core(endTime)
 
+  dataTransfer = 0.0
+  dataTransfer = dataTransfer + opArg1%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg2%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg3%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg4%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg5%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg6%size * opSetCore%size
   returnSetKernelTiming = setKernelTime(14 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime,0.00000_4,0.00000_4, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
 END SUBROUTINE
 END MODULE

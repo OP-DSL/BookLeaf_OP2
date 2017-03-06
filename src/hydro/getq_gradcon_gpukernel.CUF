@@ -19,8 +19,11 @@ USE CUDACONFIGURATIONPARAMS
 
 ! getq_gradconvariable declarations
 
+INTEGER(kind=4), CONSTANT :: direct_stride_OP2CONSTANT
+INTEGER(kind=4) :: direct_stride_OP2HOST
 
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -68,22 +71,22 @@ attributes (device) subroutine getq_gradcon_gpu(du,dv,dx,dy,elu,elv,elx,ely)
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(IN) :: elu,elv,elx,ely
 
 
-    du(1)=elu(2)-elu(1)
-    du(2)=elu(3)-elu(2)
-    du(3)=elu(4)-elu(3)
-    du(4)=elu(1)-elu(4)
-    dv(1)=elv(2)-elv(1)
-    dv(2)=elv(3)-elv(2)
-    dv(3)=elv(4)-elv(3)
-    dv(4)=elv(1)-elv(4)
-    dx(1)=elx(2)-elx(1)
-    dx(2)=elx(3)-elx(2)
-    dx(3)=elx(4)-elx(3)
-    dx(4)=elx(1)-elx(4)
-    dy(1)=ely(2)-ely(1)
-    dy(2)=ely(3)-ely(2)
-    dy(3)=ely(4)-ely(3)
-    dy(4)=ely(1)-ely(4)
+    OP2_SOA(du,1, elements_stride_OP2)=OP2_SOA(elu,2, elements_stride_OP2)-OP2_SOA(elu,1, elements_stride_OP2)
+    OP2_SOA(du,2, elements_stride_OP2)=OP2_SOA(elu,3, elements_stride_OP2)-OP2_SOA(elu,2, elements_stride_OP2)
+    OP2_SOA(du,3, elements_stride_OP2)=OP2_SOA(elu,4, elements_stride_OP2)-OP2_SOA(elu,3, elements_stride_OP2)
+    OP2_SOA(du,4, elements_stride_OP2)=OP2_SOA(elu,1, elements_stride_OP2)-OP2_SOA(elu,4, elements_stride_OP2)
+    OP2_SOA(dv,1, elements_stride_OP2)=OP2_SOA(elv,2, elements_stride_OP2)-OP2_SOA(elv,1, elements_stride_OP2)
+    OP2_SOA(dv,2, elements_stride_OP2)=OP2_SOA(elv,3, elements_stride_OP2)-OP2_SOA(elv,2, elements_stride_OP2)
+    OP2_SOA(dv,3, elements_stride_OP2)=OP2_SOA(elv,4, elements_stride_OP2)-OP2_SOA(elv,3, elements_stride_OP2)
+    OP2_SOA(dv,4, elements_stride_OP2)=OP2_SOA(elv,1, elements_stride_OP2)-OP2_SOA(elv,4, elements_stride_OP2)
+    OP2_SOA(dx,1, elements_stride_OP2)=OP2_SOA(elx,2, elements_stride_OP2)-OP2_SOA(elx,1, elements_stride_OP2)
+    OP2_SOA(dx,2, elements_stride_OP2)=OP2_SOA(elx,3, elements_stride_OP2)-OP2_SOA(elx,2, elements_stride_OP2)
+    OP2_SOA(dx,3, elements_stride_OP2)=OP2_SOA(elx,4, elements_stride_OP2)-OP2_SOA(elx,3, elements_stride_OP2)
+    OP2_SOA(dx,4, elements_stride_OP2)=OP2_SOA(elx,1, elements_stride_OP2)-OP2_SOA(elx,4, elements_stride_OP2)
+    OP2_SOA(dy,1, elements_stride_OP2)=OP2_SOA(ely,2, elements_stride_OP2)-OP2_SOA(ely,1, elements_stride_OP2)
+    OP2_SOA(dy,2, elements_stride_OP2)=OP2_SOA(ely,3, elements_stride_OP2)-OP2_SOA(ely,2, elements_stride_OP2)
+    OP2_SOA(dy,3, elements_stride_OP2)=OP2_SOA(ely,4, elements_stride_OP2)-OP2_SOA(ely,3, elements_stride_OP2)
+    OP2_SOA(dy,4, elements_stride_OP2)=OP2_SOA(ely,1, elements_stride_OP2)-OP2_SOA(ely,4, elements_stride_OP2)
 
   END SUBROUTINE getq_gradcon_gpu
 
@@ -115,6 +118,7 @@ attributes (global) SUBROUTINE op_cuda_getq_gradcon( &
 
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
+  INTEGER(kind=4) :: i2
 
 
   DO i1 = threadIdx%x - 1 + (blockIdx%x - 1) * blockDim%x, setSize - 1, blockDim%x * gridDim%x
@@ -122,14 +126,14 @@ attributes (global) SUBROUTINE op_cuda_getq_gradcon( &
 ! kernel call
 
     CALL getq_gradcon_gpu( &
-    & opDat1Devicegetq_gradcon(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat2Devicegetq_gradcon(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat3Devicegetq_gradcon(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat4Devicegetq_gradcon(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat5Devicegetq_gradcon(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat6Devicegetq_gradcon(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat7Devicegetq_gradcon(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat8Devicegetq_gradcon(i1 * (4) + 1: i1 * (4) + 4) &
+    & opDat1Devicegetq_gradcon(1 + i1), &
+    & opDat2Devicegetq_gradcon(1 + i1), &
+    & opDat3Devicegetq_gradcon(1 + i1), &
+    & opDat4Devicegetq_gradcon(1 + i1), &
+    & opDat5Devicegetq_gradcon(1 + i1), &
+    & opDat6Devicegetq_gradcon(1 + i1), &
+    & opDat7Devicegetq_gradcon(1 + i1), &
+    & opDat8Devicegetq_gradcon(1 + i1) &
     & )
   END DO
 
@@ -208,14 +212,14 @@ attributes (host) SUBROUTINE getq_gradcon_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: returnSetKernelTiming
 
 
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Devicegetq_gradcon
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat2Devicegetq_gradcon
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat3Devicegetq_gradcon
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat4Devicegetq_gradcon
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat5Devicegetq_gradcon
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat6Devicegetq_gradcon
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat7Devicegetq_gradcon
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat8Devicegetq_gradcon
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat1Devicegetq_gradcon
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat2Devicegetq_gradcon
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat3Devicegetq_gradcon
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat4Devicegetq_gradcon
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat5Devicegetq_gradcon
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat6Devicegetq_gradcon
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat7Devicegetq_gradcon
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat8Devicegetq_gradcon
 
   INTEGER(kind=4) :: opDat1Cardinality
   INTEGER(kind=4) :: opDat2Cardinality
@@ -230,13 +234,13 @@ attributes (host) SUBROUTINE getq_gradcon_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: threadsPerBlock
   INTEGER(kind=4) :: dynamicSharedMemorySize
   INTEGER(kind=4) :: threadSynchRet
-  INTEGER(kind=4), SAVE :: calledTimes
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
   INTEGER(kind=4) :: i10
   INTEGER(kind=4) :: i20
   REAL(kind=4) :: dataTransfer
 
+  INTEGER(kind=4), SAVE :: calledTimes=0
   INTEGER(kind=4) :: istat
 
   numberOfOpDats = 8
@@ -251,7 +255,11 @@ attributes (host) SUBROUTINE getq_gradcon_host_gpu( userSubroutine, set, &
   opArgArray(8) = opArg8
 
   returnSetKernelTiming = setKernelTime(23 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000,0.00000, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
+  IF ((calledTimes.EQ.0).OR.(direct_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg1))) THEN
+    direct_stride_OP2HOST = getSetSizeFromOpArg(opArg1)
+    direct_stride_OP2CONSTANT = direct_stride_OP2HOST
+  END IF
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -312,7 +320,7 @@ attributes (host) SUBROUTINE getq_gradcon_host_gpu( userSubroutine, set, &
   dataTransfer = dataTransfer + opArg7%size * getSetSizeFromOpArg(opArg7)
   dataTransfer = dataTransfer + opArg8%size * getSetSizeFromOpArg(opArg8)
   returnSetKernelTiming = setKernelTime(23 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, dataTransfer, 0.00000, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
   calledTimes = calledTimes + 1
 END SUBROUTINE
 

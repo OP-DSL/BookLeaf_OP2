@@ -45,6 +45,7 @@ SUBROUTINE op_wrap_ale_advect_postmass( &
 & opDat3Map, &
 & opDat3MapDim, &
 & bottom,top)
+implicit none
 real(8) opDat3Local(1,*)
 real(8) opDat1Local(4,*)
 real(8) opDat2Local(4,*)
@@ -140,7 +141,7 @@ opArgArray(5) = opArg5
 opArgArray(6) = opArg6
 
 returnSetKernelTiming = setKernelTime(6 , userSubroutine//C_NULL_CHAR, &
-& 0.0_8, 0.00000_4,0.00000_4, 0)
+& 0.d0, 0.00000_4,0.00000_4, 0)
 call op_timers_core(startTime)
 
 n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -167,14 +168,10 @@ n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
   & indirectionDescriptorArray,2)
 
   CALL c_f_pointer(planRet_ale_advect_postmass,actualPlan_ale_advect_postmass)
-  CALL c_f_pointer(actualPlan_ale_advect_postmass%ncolblk, &
-&    ncolblk_ale_advect_postmass,(/actualPlan_ale_advect_postmass%ncolors_core/))
-  CALL c_f_pointer(actualPlan_ale_advect_postmass%blkmap, &
-&    blkmap_ale_advect_postmass,(/actualPlan_ale_advect_postmass%nblocks/))
-  CALL c_f_pointer(actualPlan_ale_advect_postmass%offset,&
-&    offset_ale_advect_postmass,(/actualPlan_ale_advect_postmass%nblocks/))
-  CALL c_f_pointer(actualPlan_ale_advect_postmass%nelems,&
-&    nelems_ale_advect_postmass,(/actualPlan_ale_advect_postmass%nblocks/))
+  CALL c_f_pointer(actualPlan_ale_advect_postmass%ncolblk,ncolblk_ale_advect_postmass,(/actualPlan_ale_advect_postmass%ncolors_core/))
+  CALL c_f_pointer(actualPlan_ale_advect_postmass%blkmap,blkmap_ale_advect_postmass,(/actualPlan_ale_advect_postmass%nblocks/))
+  CALL c_f_pointer(actualPlan_ale_advect_postmass%offset,offset_ale_advect_postmass,(/actualPlan_ale_advect_postmass%nblocks/))
+  CALL c_f_pointer(actualPlan_ale_advect_postmass%nelems,nelems_ale_advect_postmass,(/actualPlan_ale_advect_postmass%nblocks/))
 
   opSetCore => set%setPtr
 

@@ -158,9 +158,12 @@ SUBROUTINE op_wrap_getdt_cfl( &
 & opDat6Local, &
 & opDat7Local, &
 & opDat8Local, &
+& opDat9Dim, &
 & opDat9Local, &
+& opDat10Dim, &
 & opDat10Local, &
 & bottom,top)
+implicit none
 real(8) opDat1Local(1,*)
 real(8) opDat2Local(1,*)
 real(8) opDat3Local(1,*)
@@ -169,8 +172,10 @@ real(8) opDat5Local(1,*)
 real(8) opDat6Local(4,*)
 real(8) opDat7Local(4,*)
 integer(4) opDat8Local(1,*)
-integer(4) opDat9Local(LI)
-integer(4) opDat10Local(LI)
+INTEGER(kind=4) opDat9Dim
+integer(4) opDat9Local(opDat9Dim)
+INTEGER(kind=4) opDat10Dim
+integer(4) opDat10Local(opDat10Dim)
 INTEGER(kind=4) bottom,top,i1
 
 DO i1 = bottom, top-1, 1
@@ -275,7 +280,7 @@ opArgArray(9) = opArg9
 opArgArray(10) = opArg10
 
 returnSetKernelTiming = setKernelTime(41 , userSubroutine//C_NULL_CHAR, &
-& 0.0_8, 0.00000_4,0.00000_4, 0)
+& 0.d0, 0.00000_4,0.00000_4, 0)
 call op_timers_core(startTime)
 
 n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -320,7 +325,9 @@ n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
     & opDat6Local, &
     & opDat7Local, &
     & opDat8Local, &
+    & opArg9%dim, &
     & opDat9Local, &
+    & opArg10%dim, &
     & opDat10Local, &
     & sliceStart, sliceEnd)
   END DO

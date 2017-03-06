@@ -19,8 +19,11 @@ USE CUDACONFIGURATIONPARAMS
 
 ! geometry_calcvariable declarations
 
+INTEGER(kind=4), CONSTANT :: direct_stride_OP2CONSTANT
+INTEGER(kind=4) :: direct_stride_OP2HOST
 
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -69,22 +72,22 @@ attributes (device) subroutine geometry_calc_gpu(a1,a2,a3,b1,b2,b3,elx,ely,cnwt,
     REAL(KIND=rlk), DIMENSION(4), INTENT(OUT) :: cnwt
     REAL(KIND=rlk), INTENT(OUT) :: a1,a2,a3,b1,b2,b3,elvol
 
-    a1=0.25_rlk*(-elx(1)+elx(2)+elx(3)-elx(4))
-    a2=0.25_rlk*( elx(1)-elx(2)+elx(3)-elx(4))
-    a3=0.25_rlk*(-elx(1)-elx(2)+elx(3)+elx(4))
-    b1=0.25_rlk*(-ely(1)+ely(2)+ely(3)-ely(4))
-    b2=0.25_rlk*( ely(1)-ely(2)+ely(3)-ely(4))
-    b3=0.25_rlk*(-ely(1)-ely(2)+ely(3)+ely(4))
-    cnwt(1)=ONEBYNINE*                            &
+    a1=0.25_rlk*(-OP2_SOA(elx,1, elements_stride_OP2)+OP2_SOA(elx,2, elements_stride_OP2)+OP2_SOA(elx,3, elements_stride_OP2)-OP2_SOA(elx,4, elements_stride_OP2))
+    a2=0.25_rlk*( OP2_SOA(elx,1, elements_stride_OP2)-OP2_SOA(elx,2, elements_stride_OP2)+OP2_SOA(elx,3, elements_stride_OP2)-OP2_SOA(elx,4, elements_stride_OP2))
+    a3=0.25_rlk*(-OP2_SOA(elx,1, elements_stride_OP2)-OP2_SOA(elx,2, elements_stride_OP2)+OP2_SOA(elx,3, elements_stride_OP2)+OP2_SOA(elx,4, elements_stride_OP2))
+    b1=0.25_rlk*(-OP2_SOA(ely,1, elements_stride_OP2)+OP2_SOA(ely,2, elements_stride_OP2)+OP2_SOA(ely,3, elements_stride_OP2)-OP2_SOA(ely,4, elements_stride_OP2))
+    b2=0.25_rlk*( OP2_SOA(ely,1, elements_stride_OP2)-OP2_SOA(ely,2, elements_stride_OP2)+OP2_SOA(ely,3, elements_stride_OP2)-OP2_SOA(ely,4, elements_stride_OP2))
+    b3=0.25_rlk*(-OP2_SOA(ely,1, elements_stride_OP2)-OP2_SOA(ely,2, elements_stride_OP2)+OP2_SOA(ely,3, elements_stride_OP2)+OP2_SOA(ely,4, elements_stride_OP2))
+    OP2_SOA(cnwt,1, elements_stride_OP2)=ONEBYNINE*                            &
 &               ((3.0_rlk*b3-b2)*(3.0_rlk*a1-a2)  &
 &               -(3.0_rlk*a3-a2)*(3.0_rlk*b1-b2))
-    cnwt(2)=ONEBYNINE*                            &
+    OP2_SOA(cnwt,2, elements_stride_OP2)=ONEBYNINE*                            &
 &               ((3.0_rlk*b3+b2)*(3.0_rlk*a1-a2)  &
 &               -(3.0_rlk*a3+a2)*(3.0_rlk*b1-b2))
-    cnwt(3)=ONEBYNINE*                            &
+    OP2_SOA(cnwt,3, elements_stride_OP2)=ONEBYNINE*                            &
 &               ((3.0_rlk*b3+b2)*(3.0_rlk*a1+a2)  &
                 -(3.0_rlk*a3+a2)*(3.0_rlk*b1+b2))
-    cnwt(4)=ONEBYNINE*                            &
+    OP2_SOA(cnwt,4, elements_stride_OP2)=ONEBYNINE*                            &
 &               ((3.0_rlk*b3-b2)*(3.0_rlk*a1+a2)  &
                 -(3.0_rlk*a3-a2)*(3.0_rlk*b1+b2))
     elvol=4.0_rlk*(a1*b3-a3*b1)
@@ -123,6 +126,7 @@ attributes (global) SUBROUTINE op_cuda_geometry_calc( &
 
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
+  INTEGER(kind=4) :: i2
 
 
   DO i1 = threadIdx%x - 1 + (blockIdx%x - 1) * blockDim%x, setSize - 1, blockDim%x * gridDim%x
@@ -136,9 +140,9 @@ attributes (global) SUBROUTINE op_cuda_geometry_calc( &
     & opDat4Devicegeometry_calc(i1 + 1), &
     & opDat5Devicegeometry_calc(i1 + 1), &
     & opDat6Devicegeometry_calc(i1 + 1), &
-    & opDat7Devicegeometry_calc(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat8Devicegeometry_calc(i1 * (4) + 1: i1 * (4) + 4), &
-    & opDat9Devicegeometry_calc(i1 * (4) + 1: i1 * (4) + 4), &
+    & opDat7Devicegeometry_calc(1 + i1), &
+    & opDat8Devicegeometry_calc(1 + i1), &
+    & opDat9Devicegeometry_calc(1 + i1), &
     & opDat10Devicegeometry_calc(i1 + 1) &
     & )
   END DO
@@ -228,16 +232,16 @@ attributes (host) SUBROUTINE geometry_calc_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: returnSetKernelTiming
 
 
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Devicegeometry_calc
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat2Devicegeometry_calc
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat3Devicegeometry_calc
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat4Devicegeometry_calc
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat5Devicegeometry_calc
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat6Devicegeometry_calc
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat7Devicegeometry_calc
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat8Devicegeometry_calc
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat9Devicegeometry_calc
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat10Devicegeometry_calc
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat1Devicegeometry_calc
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat2Devicegeometry_calc
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat3Devicegeometry_calc
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat4Devicegeometry_calc
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat5Devicegeometry_calc
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat6Devicegeometry_calc
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat7Devicegeometry_calc
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat8Devicegeometry_calc
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat9Devicegeometry_calc
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat10Devicegeometry_calc
 
   INTEGER(kind=4) :: opDat1Cardinality
   INTEGER(kind=4) :: opDat2Cardinality
@@ -254,13 +258,13 @@ attributes (host) SUBROUTINE geometry_calc_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: threadsPerBlock
   INTEGER(kind=4) :: dynamicSharedMemorySize
   INTEGER(kind=4) :: threadSynchRet
-  INTEGER(kind=4), SAVE :: calledTimes
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
   INTEGER(kind=4) :: i10
   INTEGER(kind=4) :: i20
   REAL(kind=4) :: dataTransfer
 
+  INTEGER(kind=4), SAVE :: calledTimes=0
   INTEGER(kind=4) :: istat
 
   numberOfOpDats = 10
@@ -277,7 +281,11 @@ attributes (host) SUBROUTINE geometry_calc_host_gpu( userSubroutine, set, &
   opArgArray(10) = opArg10
 
   returnSetKernelTiming = setKernelTime(31 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000,0.00000, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
+  IF ((calledTimes.EQ.0).OR.(direct_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg7))) THEN
+    direct_stride_OP2HOST = getSetSizeFromOpArg(opArg7)
+    direct_stride_OP2CONSTANT = direct_stride_OP2HOST
+  END IF
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -346,7 +354,7 @@ attributes (host) SUBROUTINE geometry_calc_host_gpu( userSubroutine, set, &
   dataTransfer = dataTransfer + opArg9%size * getSetSizeFromOpArg(opArg9)
   dataTransfer = dataTransfer + opArg10%size * getSetSizeFromOpArg(opArg10)
   returnSetKernelTiming = setKernelTime(31 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, dataTransfer, 0.00000, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
   calledTimes = calledTimes + 1
 END SUBROUTINE
 

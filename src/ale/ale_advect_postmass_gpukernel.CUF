@@ -19,9 +19,14 @@ USE CUDACONFIGURATIONPARAMS
 
 ! ale_advect_postmassvariable declarations
 
+INTEGER(kind=4), CONSTANT :: opDat3_stride_OP2CONSTANT
+INTEGER(kind=4) :: opDat3_stride_OP2HOST
+INTEGER(kind=4), CONSTANT :: direct_stride_OP2CONSTANT
+INTEGER(kind=4) :: direct_stride_OP2HOST
 
 TYPE ( c_ptr )  :: planRet_ale_advect_postmass
 
+#define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
 CONTAINS
 
@@ -59,14 +64,14 @@ attributes (device) subroutine ale_advect_postmass_gpu(cnm1,flux, &
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(INOUT) :: cnm1
     REAL(KIND=rlk), INTENT(INOUT) :: elv0ndm11,elv0ndm12,elv0ndm13,elv0ndm14
 
-    cnm1(1)=cnm1(1)+flux(1)
-    cnm1(2)=cnm1(2)+flux(2)
-    cnm1(3)=cnm1(3)+flux(3)
-    cnm1(4)=cnm1(4)+flux(4)
-    elv0ndm11=elv0ndm11+flux(1)
-    elv0ndm12=elv0ndm12+flux(2)
-    elv0ndm13=elv0ndm13+flux(3)
-    elv0ndm14=elv0ndm14+flux(4)
+    OP2_SOA(cnm1,1, elements_stride_OP2)=OP2_SOA(cnm1,1, elements_stride_OP2)+OP2_SOA(flux,1, elements_stride_OP2)
+    OP2_SOA(cnm1,2, elements_stride_OP2)=OP2_SOA(cnm1,2, elements_stride_OP2)+OP2_SOA(flux,2, elements_stride_OP2)
+    OP2_SOA(cnm1,3, elements_stride_OP2)=OP2_SOA(cnm1,3, elements_stride_OP2)+OP2_SOA(flux,3, elements_stride_OP2)
+    OP2_SOA(cnm1,4, elements_stride_OP2)=OP2_SOA(cnm1,4, elements_stride_OP2)+OP2_SOA(flux,4, elements_stride_OP2)
+    elv0ndm11=elv0ndm11+OP2_SOA(flux,1, elements_stride_OP2)
+    elv0ndm12=elv0ndm12+OP2_SOA(flux,2, elements_stride_OP2)
+    elv0ndm13=elv0ndm13+OP2_SOA(flux,3, elements_stride_OP2)
+    elv0ndm14=elv0ndm14+OP2_SOA(flux,4, elements_stride_OP2)
 
   END SUBROUTINE ale_advect_postmass_gpu
 
@@ -116,9 +121,9 @@ attributes (global) SUBROUTINE op_cuda_ale_advect_postmass( &
   INTEGER(kind=4) :: colour1
   INTEGER(kind=4) :: colour2
   INTEGER(kind=4) :: n1
+  INTEGER(kind=4) :: i3
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
-  INTEGER(kind=4) :: i3
 
 
   IF (threadIdx%x - 1 .EQ. 0) THEN
@@ -131,6 +136,7 @@ attributes (global) SUBROUTINE op_cuda_ale_advect_postmass( &
   END IF
 
   CALL syncthreads()
+
 
   i1 = threadIdx%x - 1
 
@@ -149,8 +155,8 @@ attributes (global) SUBROUTINE op_cuda_ale_advect_postmass( &
 
 ! kernel call
       CALL ale_advect_postmass_gpu( &
-      & opDat1Deviceale_advect_postmass((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
-      & opDat2Deviceale_advect_postmass((i3 + threadBlockOffset) * (4) +1:(i3 + threadBlockOffset) * (4) + (4)), &
+      & opDat1Deviceale_advect_postmass(1 + (i3 + threadBlockOffset)), &
+      & opDat2Deviceale_advect_postmass(1 + (i3 + threadBlockOffset)), &
       & opDat3Local, &
       & opDat4Local, &
       & opDat5Local, &
@@ -247,10 +253,10 @@ attributes (host) SUBROUTINE ale_advect_postmass_host_gpu( userSubroutine, set, 
   INTEGER(kind=4) :: returnSetKernelTiming
 
 
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat3Deviceale_advect_postmass
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: opMap3Deviceale_advect_postmass
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Deviceale_advect_postmass
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat2Deviceale_advect_postmass
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat3Deviceale_advect_postmass
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: opMap3Deviceale_advect_postmass
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat1Deviceale_advect_postmass
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat2Deviceale_advect_postmass
 
   INTEGER(kind=4) :: opDat3Cardinality
   INTEGER(kind=4) :: opMap3Cardinality
@@ -265,7 +271,6 @@ attributes (host) SUBROUTINE ale_advect_postmass_host_gpu( userSubroutine, set, 
   INTEGER(kind=4) :: threadSynchRet
   INTEGER(kind=4), DIMENSION(1:6) :: opDatArray
   INTEGER(kind=4), DIMENSION(1:6) :: mappingIndicesArray
-  INTEGER(kind=4), DIMENSION(1:6) :: mappingArray
   INTEGER(kind=4), DIMENSION(1:6) :: accessDescriptorArray
   INTEGER(kind=4), DIMENSION(1:6) :: indirectionDescriptorArray
 
@@ -279,18 +284,18 @@ attributes (host) SUBROUTINE ale_advect_postmass_host_gpu( userSubroutine, set, 
   INTEGER(kind=4) :: pnthrcolSize
   INTEGER(kind=4) :: pthrcolSize
   INTEGER(kind=4), POINTER, DIMENSION(:) :: ncolblk
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pblkMap
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: poffset
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pnelems
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pnthrcol
-  INTEGER(kind=4), DIMENSION(:), DEVICE, ALLOCATABLE :: pthrcol
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pblkMap
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: poffset
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pnelems
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pnthrcol
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: pthrcol
   INTEGER(kind=4) :: partitionSize
   INTEGER(kind=4) :: blockSize
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
   INTEGER(kind=4) :: i10
-  INTEGER(kind=4), SAVE :: calledTimes
 
+  INTEGER(kind=4), SAVE :: calledTimes=0
   INTEGER(kind=4) :: istat
 
   numberOfOpDats = 6
@@ -303,7 +308,15 @@ attributes (host) SUBROUTINE ale_advect_postmass_host_gpu( userSubroutine, set, 
   opArgArray(6) = opArg6
 
   returnSetKernelTiming = setKernelTime(6 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000,0.00000, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
+  IF ((calledTimes.EQ.0).OR.(opDat3_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg3))) THEN
+    opDat3_stride_OP2HOST = getSetSizeFromOpArg(opArg3)
+    opDat3_stride_OP2CONSTANT = opDat3_stride_OP2HOST
+  END IF
+  IF ((calledTimes.EQ.0).OR.(direct_stride_OP2HOST.NE.getSetSizeFromOpArg(opArg1))) THEN
+    direct_stride_OP2HOST = getSetSizeFromOpArg(opArg1)
+    direct_stride_OP2CONSTANT = direct_stride_OP2HOST
+  END IF
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)

@@ -41,7 +41,9 @@ SUBROUTINE init_dem(im,mat_rho,mat_ein,rho,ein,elmass,elvol,cnmass,cnwt)
 
 SUBROUTINE op_wrap_init_dem( &
   & opDat1Local, &
+  & opDat2Dim, &
   & opDat2Local, &
+  & opDat3Dim, &
   & opDat3Local, &
   & opDat4Local, &
   & opDat5Local, &
@@ -50,9 +52,12 @@ SUBROUTINE op_wrap_init_dem( &
   & opDat8Local, &
   & opDat9Local, &
   & bottom,top)
+  implicit none
   integer(4) opDat1Local(1,*)
-  real(8) opDat2Local(LI)
-  real(8) opDat3Local(LI)
+  INTEGER(kind=4) opDat2Dim
+  real(8) opDat2Local(opDat2Dim)
+  INTEGER(kind=4) opDat3Dim
+  real(8) opDat3Local(opDat3Dim)
   real(8) opDat4Local(1,*)
   real(8) opDat5Local(1,*)
   real(8) opDat6Local(1,*)
@@ -136,6 +141,7 @@ SUBROUTINE init_dem_host( userSubroutine, set, &
 
 
   INTEGER(kind=4) :: i1
+  REAL(kind=4) :: dataTransfer
 
   numberOfOpDats = 9
 
@@ -150,7 +156,7 @@ SUBROUTINE init_dem_host( userSubroutine, set, &
   opArgArray(9) = opArg9
 
   returnSetKernelTiming = setKernelTime(33 , userSubroutine//C_NULL_CHAR, &
-  & 0.0_8, 0.00000_4,0.00000_4, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -175,10 +181,11 @@ SUBROUTINE init_dem_host( userSubroutine, set, &
   CALL c_f_pointer(opArg9%data,opDat9Local,(/opDat9Cardinality/))
 
 
-  CALL op_mpi_wait_all(numberOfOpDats,opArgArray)
   CALL op_wrap_init_dem( &
   & opDat1Local, &
+  & opArg2%dim, &
   & opDat2Local, &
+  & opArg3%dim, &
   & opDat3Local, &
   & opDat4Local, &
   & opDat5Local, &
@@ -186,13 +193,41 @@ SUBROUTINE init_dem_host( userSubroutine, set, &
   & opDat7Local, &
   & opDat8Local, &
   & opDat9Local, &
-  & 0, n_upper)
+  & 0, opSetCore%core_size)
+  CALL op_mpi_wait_all(numberOfOpDats,opArgArray)
+  CALL op_wrap_init_dem( &
+  & opDat1Local, &
+  & opArg2%dim, &
+  & opDat2Local, &
+  & opArg3%dim, &
+  & opDat3Local, &
+  & opDat4Local, &
+  & opDat5Local, &
+  & opDat6Local, &
+  & opDat7Local, &
+  & opDat8Local, &
+  & opDat9Local, &
+  & opSetCore%core_size, n_upper)
+  IF ((n_upper .EQ. 0) .OR. (n_upper .EQ. opSetCore%core_size)) THEN
+    CALL op_mpi_wait_all(numberOfOpDats,opArgArray)
+  END IF
+
 
   CALL op_mpi_set_dirtybit(numberOfOpDats,opArgArray)
 
   call op_timers_core(endTime)
 
+  dataTransfer = 0.0
+  dataTransfer = dataTransfer + opArg1%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg2%size
+  dataTransfer = dataTransfer + opArg3%size
+  dataTransfer = dataTransfer + opArg4%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg5%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg6%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg7%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg8%size * opSetCore%size
+  dataTransfer = dataTransfer + opArg9%size * opSetCore%size
   returnSetKernelTiming = setKernelTime(33 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime,0.00000_4,0.00000_4, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
 END SUBROUTINE
 END MODULE

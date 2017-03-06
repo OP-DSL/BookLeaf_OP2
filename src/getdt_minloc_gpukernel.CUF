@@ -182,6 +182,7 @@ attributes (device) subroutine getdt_minloc_gpu(rscratch11,elidx,w1,ii)
 
     INTEGER(kind=4), VALUE :: setSize
     INTEGER(kind=4) :: i1
+    INTEGER(kind=4) :: i2
 
     opGblDat4Devicegetdt_minloc = reductionArrayDevice4(blockIdx%x - 1 + 1)
 
@@ -253,8 +254,8 @@ attributes (device) subroutine getdt_minloc_gpu(rscratch11,elidx,w1,ii)
     INTEGER(kind=4) :: returnSetKernelTiming
 
 
-    real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Devicegetdt_minloc
-    integer(4), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat2Devicegetdt_minloc
+    real(8), DIMENSION(:), DEVICE, POINTER :: opDat1Devicegetdt_minloc
+    integer(4), DIMENSION(:), DEVICE, POINTER :: opDat2Devicegetdt_minloc
 
     INTEGER(kind=4) :: opDat1Cardinality
     INTEGER(kind=4) :: opDat2Cardinality
@@ -265,13 +266,13 @@ attributes (device) subroutine getdt_minloc_gpu(rscratch11,elidx,w1,ii)
     INTEGER(kind=4) :: threadsPerBlock
     INTEGER(kind=4) :: dynamicSharedMemorySize
     INTEGER(kind=4) :: threadSynchRet
-    INTEGER(kind=4), SAVE :: calledTimes
     INTEGER(kind=4) :: i1
     INTEGER(kind=4) :: i2
     INTEGER(kind=4) :: i10
     INTEGER(kind=4) :: i20
     REAL(kind=4) :: dataTransfer
 
+    INTEGER(kind=4), SAVE :: calledTimes=0
     INTEGER(kind=4) :: istat
     real(8), POINTER :: opDat3Host
     integer(4), POINTER :: opDat4Host
@@ -286,7 +287,7 @@ attributes (device) subroutine getdt_minloc_gpu(rscratch11,elidx,w1,ii)
     opArgArray(4) = opArg4
 
     returnSetKernelTiming = setKernelTime(43 , userSubroutine//C_NULL_CHAR, &
-    & 0.d0, 0.00000,0.00000, 0)
+    & 0.d0, 0.00000_4,0.00000_4, 0)
     call op_timers_core(startTime)
 
     n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -323,7 +324,7 @@ attributes (device) subroutine getdt_minloc_gpu(rscratch11,elidx,w1,ii)
     & opDat1Devicegetdt_minloc, &
     & opDat2Devicegetdt_minloc, &
     & opDat3Host, &
-    reductionArrayDevice4getdt_minloc, &
+    & reductionArrayDevice4getdt_minloc, &
     set%setPtr%size)
 
     IF ((n_upper .EQ. 0) .OR. (n_upper .EQ. set%setPtr%core_size)) THEN
@@ -351,7 +352,7 @@ attributes (device) subroutine getdt_minloc_gpu(rscratch11,elidx,w1,ii)
     dataTransfer = dataTransfer + opArg3%size
     dataTransfer = dataTransfer + opArg4%size * 2.d0
     returnSetKernelTiming = setKernelTime(43 , userSubroutine//C_NULL_CHAR, &
-    & endTime-startTime, dataTransfer, 0.00000, 1)
+    & endTime-startTime, dataTransfer, 0.00000_4, 1)
     calledTimes = calledTimes + 1
   END SUBROUTINE
 

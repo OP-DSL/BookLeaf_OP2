@@ -74,6 +74,7 @@ SUBROUTINE op_wrap_getq_christiensen_bc( &
   & opDat4Map, &
   & opDat4MapDim, &
   & bottom,top)
+  implicit none
   integer(4) opDat4Local(1,*)
   integer(4) opDat1Local(4,*)
   real(8) opDat2Local(4,*)
@@ -152,6 +153,7 @@ SUBROUTINE getq_christiensen_bc_host( userSubroutine, set, &
   integer(4), POINTER, DIMENSION(:) :: opDat8Local
 
   INTEGER(kind=4) :: i1
+  REAL(kind=4) :: dataTransfer
 
   numberOfOpDats = 8
 
@@ -165,7 +167,7 @@ SUBROUTINE getq_christiensen_bc_host( userSubroutine, set, &
   opArgArray(8) = opArg8
 
   returnSetKernelTiming = setKernelTime(25 , userSubroutine//C_NULL_CHAR, &
-  & 0.0_8, 0.00000_4,0.00000_4, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -185,6 +187,15 @@ SUBROUTINE getq_christiensen_bc_host( userSubroutine, set, &
   CALL c_f_pointer(opArg8%data,opDat8Local, (/opArg8%dim/))
 
 
+  CALL op_wrap_getq_christiensen_bc( &
+  & opDat4Local, &
+  & opDat1Local, &
+  & opDat2Local, &
+  & opDat3Local, &
+  & opDat8Local, &
+  & opDat4Map, &
+  & opDat4MapDim, &
+  & 0, opSetCore%core_size)
   CALL op_mpi_wait_all(numberOfOpDats,opArgArray)
   CALL op_wrap_getq_christiensen_bc( &
   & opDat4Local, &
@@ -194,13 +205,24 @@ SUBROUTINE getq_christiensen_bc_host( userSubroutine, set, &
   & opDat8Local, &
   & opDat4Map, &
   & opDat4MapDim, &
-  & 0, n_upper)
+  & opSetCore%core_size, n_upper)
+  IF ((n_upper .EQ. 0) .OR. (n_upper .EQ. opSetCore%core_size)) THEN
+    CALL op_mpi_wait_all(numberOfOpDats,opArgArray)
+  END IF
+
 
   CALL op_mpi_set_dirtybit(numberOfOpDats,opArgArray)
 
   call op_timers_core(endTime)
 
+  dataTransfer = 0.0
+  dataTransfer = dataTransfer + opArg4%size * MIN(n_upper,getSetSizeFromOpArg(opArg4))
+  dataTransfer = dataTransfer + opArg1%size * MIN(n_upper,getSetSizeFromOpArg(opArg1))
+  dataTransfer = dataTransfer + opArg2%size * MIN(n_upper,getSetSizeFromOpArg(opArg2))
+  dataTransfer = dataTransfer + opArg3%size * MIN(n_upper,getSetSizeFromOpArg(opArg3))
+  dataTransfer = dataTransfer + opArg8%size
+  dataTransfer = dataTransfer + n_upper * opDat4MapDim * 4.d0
   returnSetKernelTiming = setKernelTime(25 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime,0.00000_4,0.00000_4, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
 END SUBROUTINE
 END MODULE

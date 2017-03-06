@@ -165,6 +165,8 @@ attributes (global) SUBROUTINE op_cuda_getpc_update( &
   & opDat5Devicegetpc_update, &
   & opDat6Devicegetpc_update, &
   & opDat7Devicegetpc_update, &
+  & opDat2Dim, &
+  & opDat3Dim, &
   & setSize)
 
   IMPLICIT NONE
@@ -176,9 +178,12 @@ attributes (global) SUBROUTINE op_cuda_getpc_update( &
   real(8), DEVICE :: opDat6Devicegetpc_update(*)
   real(8), DEVICE :: opDat7Devicegetpc_update(*)
 
+  INTEGER(kind=4), VALUE :: opDat2Dim
+  INTEGER(kind=4), VALUE :: opDat3Dim
 
   INTEGER(kind=4), VALUE :: setSize
   INTEGER(kind=4) :: i1
+  INTEGER(kind=4) :: i2
 
 
   DO i1 = threadIdx%x - 1 + (blockIdx%x - 1) * blockDim%x, setSize - 1, blockDim%x * gridDim%x
@@ -266,11 +271,11 @@ attributes (host) SUBROUTINE getpc_update_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: returnSetKernelTiming
 
 
-  integer(4), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat1Devicegetpc_update
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat4Devicegetpc_update
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat5Devicegetpc_update
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat6Devicegetpc_update
-  real(8), DIMENSION(:), DEVICE, ALLOCATABLE :: opDat7Devicegetpc_update
+  integer(4), DIMENSION(:), DEVICE, POINTER :: opDat1Devicegetpc_update
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat4Devicegetpc_update
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat5Devicegetpc_update
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat6Devicegetpc_update
+  real(8), DIMENSION(:), DEVICE, POINTER :: opDat7Devicegetpc_update
 
   INTEGER(kind=4) :: opDat1Cardinality
   INTEGER(kind=4) :: opDat2Cardinality
@@ -284,13 +289,13 @@ attributes (host) SUBROUTINE getpc_update_host_gpu( userSubroutine, set, &
   INTEGER(kind=4) :: threadsPerBlock
   INTEGER(kind=4) :: dynamicSharedMemorySize
   INTEGER(kind=4) :: threadSynchRet
-  INTEGER(kind=4), SAVE :: calledTimes
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
   INTEGER(kind=4) :: i10
   INTEGER(kind=4) :: i20
   REAL(kind=4) :: dataTransfer
 
+  INTEGER(kind=4), SAVE :: calledTimes=0
   INTEGER(kind=4) :: istat
   integer(4), DIMENSION(:), POINTER :: opDat2Host
   real(8), DIMENSION(:), POINTER :: opDat3Host
@@ -306,7 +311,7 @@ attributes (host) SUBROUTINE getpc_update_host_gpu( userSubroutine, set, &
   opArgArray(7) = opArg7
 
   returnSetKernelTiming = setKernelTime(21 , userSubroutine//C_NULL_CHAR, &
-  & 0.d0, 0.00000,0.00000, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges_cuda(set%setCPtr,numberOfOpDats,opArgArray)
@@ -348,6 +353,8 @@ attributes (host) SUBROUTINE getpc_update_host_gpu( userSubroutine, set, &
   & opDat5Devicegetpc_update, &
   & opDat6Devicegetpc_update, &
   & opDat7Devicegetpc_update, &
+  & opArg2%dim, &
+  & opArg3%dim, &
   set%setPtr%size)
 
   IF ((n_upper .EQ. 0) .OR. (n_upper .EQ. set%setPtr%core_size)) THEN
@@ -369,7 +376,7 @@ attributes (host) SUBROUTINE getpc_update_host_gpu( userSubroutine, set, &
   dataTransfer = dataTransfer + opArg6%size * getSetSizeFromOpArg(opArg6)
   dataTransfer = dataTransfer + opArg7%size * getSetSizeFromOpArg(opArg7)
   returnSetKernelTiming = setKernelTime(21 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime, dataTransfer, 0.00000, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
   calledTimes = calledTimes + 1
 END SUBROUTINE
 

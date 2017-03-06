@@ -60,12 +60,14 @@ SUBROUTINE op_wrap_sod_reset( &
 & opDat9Local, &
 & opDat10Local, &
 & opDat11Local, &
+& opDat12Dim, &
 & opDat12Local, &
 & opDat13Local, &
 & opDat14Local, &
 & opDat1Map, &
 & opDat1MapDim, &
 & bottom,top)
+implicit none
 real(8) opDat1Local(1,*)
 real(8) opDat5Local(1)
 integer(4) opDat6Local(1,*)
@@ -74,7 +76,8 @@ real(8) opDat8Local(1,*)
 real(8) opDat9Local(1,*)
 real(8) opDat10Local(1,*)
 real(8) opDat11Local(4,*)
-real(8) opDat12Local(LI*6)
+INTEGER(kind=4) opDat12Dim
+real(8) opDat12Local(opDat12Dim)
 real(8) opDat13Local(1,*)
 real(8) opDat14Local(4,*)
 INTEGER(kind=4) opDat1Map(*)
@@ -221,7 +224,7 @@ opArgArray(13) = opArg13
 opArgArray(14) = opArg14
 
 returnSetKernelTiming = setKernelTime(29 , userSubroutine//C_NULL_CHAR, &
-& 0.0_8, 0.00000_4,0.00000_4, 0)
+& 0.d0, 0.00000_4,0.00000_4, 0)
 call op_timers_core(startTime)
 
 n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -256,14 +259,10 @@ n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
   & indirectionDescriptorArray,2)
 
   CALL c_f_pointer(planRet_sod_reset,actualPlan_sod_reset)
-  CALL c_f_pointer(actualPlan_sod_reset%ncolblk, &
-&    ncolblk_sod_reset,(/actualPlan_sod_reset%ncolors_core/))
-  CALL c_f_pointer(actualPlan_sod_reset%blkmap, &
-&    blkmap_sod_reset,(/actualPlan_sod_reset%nblocks/))
-  CALL c_f_pointer(actualPlan_sod_reset%offset,&
-&    offset_sod_reset,(/actualPlan_sod_reset%nblocks/))
-  CALL c_f_pointer(actualPlan_sod_reset%nelems,&
-&    nelems_sod_reset,(/actualPlan_sod_reset%nblocks/))
+  CALL c_f_pointer(actualPlan_sod_reset%ncolblk,ncolblk_sod_reset,(/actualPlan_sod_reset%ncolors_core/))
+  CALL c_f_pointer(actualPlan_sod_reset%blkmap,blkmap_sod_reset,(/actualPlan_sod_reset%nblocks/))
+  CALL c_f_pointer(actualPlan_sod_reset%offset,offset_sod_reset,(/actualPlan_sod_reset%nblocks/))
+  CALL c_f_pointer(actualPlan_sod_reset%nelems,nelems_sod_reset,(/actualPlan_sod_reset%nblocks/))
 
   opSetCore => set%setPtr
 
@@ -314,6 +313,7 @@ n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
       & opDat9Local, &
       & opDat10Local, &
       & opDat11Local, &
+      & opArg12%dim, &
       & opDat12Local, &
       & opDat13Local, &
       & opDat14Local, &

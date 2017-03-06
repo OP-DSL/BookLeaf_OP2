@@ -58,12 +58,14 @@ SUBROUTINE op_wrap_sod_reset( &
   & opDat9Local, &
   & opDat10Local, &
   & opDat11Local, &
+  & opDat12Dim, &
   & opDat12Local, &
   & opDat13Local, &
   & opDat14Local, &
   & opDat1Map, &
   & opDat1MapDim, &
   & bottom,top)
+  implicit none
   real(8) opDat1Local(1,*)
   real(8) opDat5Local(1)
   integer(4) opDat6Local(1,*)
@@ -72,7 +74,8 @@ SUBROUTINE op_wrap_sod_reset( &
   real(8) opDat9Local(1,*)
   real(8) opDat10Local(1,*)
   real(8) opDat11Local(4,*)
-  real(8) opDat12Local(LI*6)
+  INTEGER(kind=4) opDat12Dim
+  real(8) opDat12Local(opDat12Dim)
   real(8) opDat13Local(1,*)
   real(8) opDat14Local(4,*)
   INTEGER(kind=4) opDat1Map(*)
@@ -182,6 +185,7 @@ SUBROUTINE sod_reset_host( userSubroutine, set, &
 
 
   INTEGER(kind=4) :: i1
+  REAL(kind=4) :: dataTransfer
 
   numberOfOpDats = 14
 
@@ -201,7 +205,7 @@ SUBROUTINE sod_reset_host( userSubroutine, set, &
   opArgArray(14) = opArg14
 
   returnSetKernelTiming = setKernelTime(29 , userSubroutine//C_NULL_CHAR, &
-  & 0.0_8, 0.00000_4,0.00000_4, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -232,6 +236,22 @@ SUBROUTINE sod_reset_host( userSubroutine, set, &
   CALL c_f_pointer(opArg14%data,opDat14Local,(/opDat14Cardinality/))
 
 
+  CALL op_wrap_sod_reset( &
+  & opDat1Local, &
+  & opDat5Local, &
+  & opDat6Local, &
+  & opDat7Local, &
+  & opDat8Local, &
+  & opDat9Local, &
+  & opDat10Local, &
+  & opDat11Local, &
+  & opArg12%dim, &
+  & opDat12Local, &
+  & opDat13Local, &
+  & opDat14Local, &
+  & opDat1Map, &
+  & opDat1MapDim, &
+  & 0, opSetCore%core_size)
   CALL op_mpi_wait_all(numberOfOpDats,opArgArray)
   CALL op_wrap_sod_reset( &
   & opDat1Local, &
@@ -242,18 +262,36 @@ SUBROUTINE sod_reset_host( userSubroutine, set, &
   & opDat9Local, &
   & opDat10Local, &
   & opDat11Local, &
+  & opArg12%dim, &
   & opDat12Local, &
   & opDat13Local, &
   & opDat14Local, &
   & opDat1Map, &
   & opDat1MapDim, &
-  & 0, n_upper)
+  & opSetCore%core_size, n_upper)
+  IF ((n_upper .EQ. 0) .OR. (n_upper .EQ. opSetCore%core_size)) THEN
+    CALL op_mpi_wait_all(numberOfOpDats,opArgArray)
+  END IF
+
 
   CALL op_mpi_set_dirtybit(numberOfOpDats,opArgArray)
 
   call op_timers_core(endTime)
 
+  dataTransfer = 0.0
+  dataTransfer = dataTransfer + opArg1%size * MIN(n_upper,getSetSizeFromOpArg(opArg1))
+  dataTransfer = dataTransfer + opArg5%size
+  dataTransfer = dataTransfer + opArg6%size * MIN(n_upper,getSetSizeFromOpArg(opArg6))
+  dataTransfer = dataTransfer + opArg7%size * MIN(n_upper,getSetSizeFromOpArg(opArg7))
+  dataTransfer = dataTransfer + opArg8%size * MIN(n_upper,getSetSizeFromOpArg(opArg8))
+  dataTransfer = dataTransfer + opArg9%size * MIN(n_upper,getSetSizeFromOpArg(opArg9))
+  dataTransfer = dataTransfer + opArg10%size * MIN(n_upper,getSetSizeFromOpArg(opArg10))
+  dataTransfer = dataTransfer + opArg11%size * MIN(n_upper,getSetSizeFromOpArg(opArg11))
+  dataTransfer = dataTransfer + opArg12%size
+  dataTransfer = dataTransfer + opArg13%size * MIN(n_upper,getSetSizeFromOpArg(opArg13))
+  dataTransfer = dataTransfer + opArg14%size * MIN(n_upper,getSetSizeFromOpArg(opArg14))
+  dataTransfer = dataTransfer + n_upper * opDat1MapDim * 4.d0
   returnSetKernelTiming = setKernelTime(29 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime,0.00000_4,0.00000_4, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
 END SUBROUTINE
 END MODULE

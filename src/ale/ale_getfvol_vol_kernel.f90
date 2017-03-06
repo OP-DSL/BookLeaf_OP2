@@ -109,6 +109,7 @@ SUBROUTINE op_wrap_ale_getfvol_vol( &
 & opDat1Map, &
 & opDat1MapDim, &
 & bottom,top)
+implicit none
 real(8) opDat1Local(1,*)
 real(8) opDat5Local(1,*)
 real(8) opDat9Local(1,*)
@@ -268,7 +269,7 @@ opArgArray(17) = opArg17
 opArgArray(18) = opArg18
 
 returnSetKernelTiming = setKernelTime(18 , userSubroutine//C_NULL_CHAR, &
-& 0.0_8, 0.00000_4,0.00000_4, 0)
+& 0.d0, 0.00000_4,0.00000_4, 0)
 call op_timers_core(startTime)
 
 n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -307,14 +308,10 @@ n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
   & indirectionDescriptorArray,2)
 
   CALL c_f_pointer(planRet_ale_getfvol_vol,actualPlan_ale_getfvol_vol)
-  CALL c_f_pointer(actualPlan_ale_getfvol_vol%ncolblk, &
-&    ncolblk_ale_getfvol_vol,(/actualPlan_ale_getfvol_vol%ncolors_core/))
-  CALL c_f_pointer(actualPlan_ale_getfvol_vol%blkmap, &
-&    blkmap_ale_getfvol_vol,(/actualPlan_ale_getfvol_vol%nblocks/))
-  CALL c_f_pointer(actualPlan_ale_getfvol_vol%offset,&
-&    offset_ale_getfvol_vol,(/actualPlan_ale_getfvol_vol%nblocks/))
-  CALL c_f_pointer(actualPlan_ale_getfvol_vol%nelems,&
-&    nelems_ale_getfvol_vol,(/actualPlan_ale_getfvol_vol%nblocks/))
+  CALL c_f_pointer(actualPlan_ale_getfvol_vol%ncolblk,ncolblk_ale_getfvol_vol,(/actualPlan_ale_getfvol_vol%ncolors_core/))
+  CALL c_f_pointer(actualPlan_ale_getfvol_vol%blkmap,blkmap_ale_getfvol_vol,(/actualPlan_ale_getfvol_vol%nblocks/))
+  CALL c_f_pointer(actualPlan_ale_getfvol_vol%offset,offset_ale_getfvol_vol,(/actualPlan_ale_getfvol_vol%nblocks/))
+  CALL c_f_pointer(actualPlan_ale_getfvol_vol%nelems,nelems_ale_getfvol_vol,(/actualPlan_ale_getfvol_vol%nblocks/))
 
   opSetCore => set%setPtr
 

@@ -49,6 +49,7 @@ SUBROUTINE op_wrap_getacc_bc( &
   & opDat2Local, &
   & opDat3Local, &
   & bottom,top)
+  implicit none
   real(8) opDat1Local(1,*)
   real(8) opDat2Local(1,*)
   integer(4) opDat3Local(1,*)
@@ -97,6 +98,7 @@ SUBROUTINE getacc_bc_host( userSubroutine, set, &
 
 
   INTEGER(kind=4) :: i1
+  REAL(kind=4) :: dataTransfer
 
   numberOfOpDats = 3
 
@@ -105,7 +107,7 @@ SUBROUTINE getacc_bc_host( userSubroutine, set, &
   opArgArray(3) = opArg3
 
   returnSetKernelTiming = setKernelTime(38 , userSubroutine//C_NULL_CHAR, &
-  & 0.0_8, 0.00000_4,0.00000_4, 0)
+  & 0.d0, 0.00000_4,0.00000_4, 0)
   call op_timers_core(startTime)
 
   n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -120,18 +122,31 @@ SUBROUTINE getacc_bc_host( userSubroutine, set, &
   CALL c_f_pointer(opArg3%data,opDat3Local,(/opDat3Cardinality/))
 
 
+  CALL op_wrap_getacc_bc( &
+  & opDat1Local, &
+  & opDat2Local, &
+  & opDat3Local, &
+  & 0, opSetCore%core_size)
   CALL op_mpi_wait_all(numberOfOpDats,opArgArray)
   CALL op_wrap_getacc_bc( &
   & opDat1Local, &
   & opDat2Local, &
   & opDat3Local, &
-  & 0, n_upper)
+  & opSetCore%core_size, n_upper)
+  IF ((n_upper .EQ. 0) .OR. (n_upper .EQ. opSetCore%core_size)) THEN
+    CALL op_mpi_wait_all(numberOfOpDats,opArgArray)
+  END IF
+
 
   CALL op_mpi_set_dirtybit(numberOfOpDats,opArgArray)
 
   call op_timers_core(endTime)
 
+  dataTransfer = 0.0
+  dataTransfer = dataTransfer + opArg1%size * opSetCore%size * 2.d0
+  dataTransfer = dataTransfer + opArg2%size * opSetCore%size * 2.d0
+  dataTransfer = dataTransfer + opArg3%size * opSetCore%size
   returnSetKernelTiming = setKernelTime(38 , userSubroutine//C_NULL_CHAR, &
-  & endTime-startTime,0.00000_4,0.00000_4, 1)
+  & endTime-startTime, dataTransfer, 0.00000_4, 1)
 END SUBROUTINE
 END MODULE

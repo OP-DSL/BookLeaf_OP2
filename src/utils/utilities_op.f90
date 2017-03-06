@@ -116,7 +116,7 @@ CONTAINS
     ! USE common_kernels, ONLY: gather_fun
     use GATHER_FUN_MODULE
      USE op2_bookleaf
-
+    
 
     ! Argument list
     type(op_set) :: iterset

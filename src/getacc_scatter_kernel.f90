@@ -114,6 +114,7 @@ SUBROUTINE op_wrap_getacc_scatter( &
 & opDat6Map, &
 & opDat6MapDim, &
 & bottom,top)
+implicit none
 real(8) opDat6Local(1,*)
 real(8) opDat10Local(1,*)
 real(8) opDat14Local(1,*)
@@ -299,7 +300,7 @@ opArgArray(20) = opArg20
 opArgArray(21) = opArg21
 
 returnSetKernelTiming = setKernelTime(36 , userSubroutine//C_NULL_CHAR, &
-& 0.0_8, 0.00000_4,0.00000_4, 0)
+& 0.d0, 0.00000_4,0.00000_4, 0)
 call op_timers_core(startTime)
 
 n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
@@ -341,14 +342,10 @@ n_upper = op_mpi_halo_exchanges(set%setCPtr,numberOfOpDats,opArgArray)
   & indirectionDescriptorArray,2)
 
   CALL c_f_pointer(planRet_getacc_scatter,actualPlan_getacc_scatter)
-  CALL c_f_pointer(actualPlan_getacc_scatter%ncolblk, &
-&    ncolblk_getacc_scatter,(/actualPlan_getacc_scatter%ncolors_core/))
-  CALL c_f_pointer(actualPlan_getacc_scatter%blkmap, &
-&    blkmap_getacc_scatter,(/actualPlan_getacc_scatter%nblocks/))
-  CALL c_f_pointer(actualPlan_getacc_scatter%offset,&
-&    offset_getacc_scatter,(/actualPlan_getacc_scatter%nblocks/))
-  CALL c_f_pointer(actualPlan_getacc_scatter%nelems,&
-&    nelems_getacc_scatter,(/actualPlan_getacc_scatter%nblocks/))
+  CALL c_f_pointer(actualPlan_getacc_scatter%ncolblk,ncolblk_getacc_scatter,(/actualPlan_getacc_scatter%ncolors_core/))
+  CALL c_f_pointer(actualPlan_getacc_scatter%blkmap,blkmap_getacc_scatter,(/actualPlan_getacc_scatter%nblocks/))
+  CALL c_f_pointer(actualPlan_getacc_scatter%offset,offset_getacc_scatter,(/actualPlan_getacc_scatter%nblocks/))
+  CALL c_f_pointer(actualPlan_getacc_scatter%nelems,nelems_getacc_scatter,(/actualPlan_getacc_scatter%nblocks/))
 
   opSetCore => set%setPtr
 
