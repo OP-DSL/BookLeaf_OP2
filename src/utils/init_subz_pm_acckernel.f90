@@ -38,23 +38,23 @@ SUBROUTINE init_subz_pm_gpu(elx,ely,rho,spmass)
     REAL(KIND=rlk) :: x1,x2,x3,x4,y1,y2,y3,y4,w1,w2,w3,w4
     INTEGER(KIND=ink) :: j1,j2
 
-    x3=0.25_rlk*(elx(1)+elx(2)+elx(3)+elx(4))
-    y3=0.25_rlk*(ely(1)+ely(2)+ely(3)+ely(4))
+    x3=0.25_rlk*(OP2_SOA(elx,1, direct_stride_OP2CONSTANT)+OP2_SOA(elx,2, direct_stride_OP2CONSTANT)+OP2_SOA(elx,3, direct_stride_OP2CONSTANT)+OP2_SOA(elx,4, direct_stride_OP2CONSTANT))
+    y3=0.25_rlk*(OP2_SOA(ely,1, direct_stride_OP2CONSTANT)+OP2_SOA(ely,2, direct_stride_OP2CONSTANT)+OP2_SOA(ely,3, direct_stride_OP2CONSTANT)+OP2_SOA(ely,4, direct_stride_OP2CONSTANT))
     DO j1=1,N_SHAPE
-      x1=elx(j1)
-      y1=ely(j1)
+      x1=OP2_SOA(elx,j1, direct_stride_OP2CONSTANT)
+      y1=OP2_SOA(ely,j1, direct_stride_OP2CONSTANT)
       j2=MOD(j1,N_SHAPE)+1_ink
-      x2=0.5_rlk*(x1+elx(j2))
-      y2=0.5_rlk*(y1+ely(j2))
+      x2=0.5_rlk*(x1+OP2_SOA(elx,j2, direct_stride_OP2CONSTANT))
+      y2=0.5_rlk*(y1+OP2_SOA(ely,j2, direct_stride_OP2CONSTANT))
       j2=MOD(j1+2,N_SHAPE)+1_ink
-      x4=0.5_rlk*(x1+elx(j2))
-      y4=0.5_rlk*(y1+ely(j2))
+      x4=0.5_rlk*(x1+OP2_SOA(elx,j2, direct_stride_OP2CONSTANT))
+      y4=0.5_rlk*(y1+OP2_SOA(ely,j2, direct_stride_OP2CONSTANT))
       !# Axi-symmetric alternative
       w1=0.25_rlk*(-x1+x2+x3-x4)
       w2=0.25_rlk*(-x1-x2+x3+x4)
       w3=0.25_rlk*(-y1+y2+y3-y4)
       w4=0.25_rlk*(-y1-y2+y3+y4)
-      spmass(j1)=4.0_rlk*rho*(w1*w4-w2*w3)
+      OP2_SOA(spmass,j1, direct_stride_OP2CONSTANT)=4.0_rlk*rho*(w1*w4-w2*w3)
     ENDDO
 
 

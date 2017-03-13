@@ -32,10 +32,12 @@ SUBROUTINE set_zero4_gpu(a)
 
     REAL(KIND=rlk), DIMENSION(4), INTENT(OUT) :: a
 
-    a(1) = 0.0_rlk
-    a(2) = 0.0_rlk
-    a(3) = 0.0_rlk
-    a(4) = 0.0_rlk
+!asdf
+
+    OP2_SOA(a,1, direct_stride_OP2CONSTANT) = 0.0_rlk
+    OP2_SOA(a,2, direct_stride_OP2CONSTANT) = 0.0_rlk
+    OP2_SOA(a,3, direct_stride_OP2CONSTANT) = 0.0_rlk
+    OP2_SOA(a,4, direct_stride_OP2CONSTANT) = 0.0_rlk
 
   END SUBROUTINE set_zero4_gpu
 

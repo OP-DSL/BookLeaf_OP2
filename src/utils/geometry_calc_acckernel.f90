@@ -35,22 +35,22 @@ SUBROUTINE geometry_calc_gpu(a1,a2,a3,b1,b2,b3,elx,ely,cnwt,elvol)
     REAL(KIND=rlk), DIMENSION(4), INTENT(OUT) :: cnwt
     REAL(KIND=rlk), INTENT(OUT) :: a1,a2,a3,b1,b2,b3,elvol
 
-    a1=0.25_rlk*(-elx(1)+elx(2)+elx(3)-elx(4))
-    a2=0.25_rlk*( elx(1)-elx(2)+elx(3)-elx(4))
-    a3=0.25_rlk*(-elx(1)-elx(2)+elx(3)+elx(4))
-    b1=0.25_rlk*(-ely(1)+ely(2)+ely(3)-ely(4))
-    b2=0.25_rlk*( ely(1)-ely(2)+ely(3)-ely(4))
-    b3=0.25_rlk*(-ely(1)-ely(2)+ely(3)+ely(4))
-    cnwt(1)=ONEBYNINE*                            &
+    a1=0.25_rlk*(-OP2_SOA(elx,1, direct_stride_OP2CONSTANT)+OP2_SOA(elx,2, direct_stride_OP2CONSTANT)+OP2_SOA(elx,3, direct_stride_OP2CONSTANT)-OP2_SOA(elx,4, direct_stride_OP2CONSTANT))
+    a2=0.25_rlk*( OP2_SOA(elx,1, direct_stride_OP2CONSTANT)-OP2_SOA(elx,2, direct_stride_OP2CONSTANT)+OP2_SOA(elx,3, direct_stride_OP2CONSTANT)-OP2_SOA(elx,4, direct_stride_OP2CONSTANT))
+    a3=0.25_rlk*(-OP2_SOA(elx,1, direct_stride_OP2CONSTANT)-OP2_SOA(elx,2, direct_stride_OP2CONSTANT)+OP2_SOA(elx,3, direct_stride_OP2CONSTANT)+OP2_SOA(elx,4, direct_stride_OP2CONSTANT))
+    b1=0.25_rlk*(-OP2_SOA(ely,1, direct_stride_OP2CONSTANT)+OP2_SOA(ely,2, direct_stride_OP2CONSTANT)+OP2_SOA(ely,3, direct_stride_OP2CONSTANT)-OP2_SOA(ely,4, direct_stride_OP2CONSTANT))
+    b2=0.25_rlk*( OP2_SOA(ely,1, direct_stride_OP2CONSTANT)-OP2_SOA(ely,2, direct_stride_OP2CONSTANT)+OP2_SOA(ely,3, direct_stride_OP2CONSTANT)-OP2_SOA(ely,4, direct_stride_OP2CONSTANT))
+    b3=0.25_rlk*(-OP2_SOA(ely,1, direct_stride_OP2CONSTANT)-OP2_SOA(ely,2, direct_stride_OP2CONSTANT)+OP2_SOA(ely,3, direct_stride_OP2CONSTANT)+OP2_SOA(ely,4, direct_stride_OP2CONSTANT))
+    OP2_SOA(cnwt,1, direct_stride_OP2CONSTANT)=ONEBYNINE*                            &
 &               ((3.0_rlk*b3-b2)*(3.0_rlk*a1-a2)  &
 &               -(3.0_rlk*a3-a2)*(3.0_rlk*b1-b2))
-    cnwt(2)=ONEBYNINE*                            &
+    OP2_SOA(cnwt,2, direct_stride_OP2CONSTANT)=ONEBYNINE*                            &
 &               ((3.0_rlk*b3+b2)*(3.0_rlk*a1-a2)  &
 &               -(3.0_rlk*a3+a2)*(3.0_rlk*b1-b2))
-    cnwt(3)=ONEBYNINE*                            &
+    OP2_SOA(cnwt,3, direct_stride_OP2CONSTANT)=ONEBYNINE*                            &
 &               ((3.0_rlk*b3+b2)*(3.0_rlk*a1+a2)  &
                 -(3.0_rlk*a3+a2)*(3.0_rlk*b1+b2))
-    cnwt(4)=ONEBYNINE*                            &
+    OP2_SOA(cnwt,4, direct_stride_OP2CONSTANT)=ONEBYNINE*                            &
 &               ((3.0_rlk*b3-b2)*(3.0_rlk*a1+a2)  &
                 -(3.0_rlk*a3-a2)*(3.0_rlk*b1+b2))
     elvol=4.0_rlk*(a1*b3-a3*b1)

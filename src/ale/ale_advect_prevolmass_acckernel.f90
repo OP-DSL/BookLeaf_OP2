@@ -43,26 +43,26 @@ SUBROUTINE ale_advect_prevolmass_gpu(elv0ndm1,elv1,cnm0,cnm1, &
     w1=0.25_rlk*elv0ndm1
     w2=0.25_rlk*elv1
     !1st
-    w3=cnm1(1)
-    cnm0(1)=w3
+    w3=OP2_SOA(cnm1,1, direct_stride_OP2CONSTANT)
+    OP2_SOA(cnm0,1, direct_stride_OP2CONSTANT)=w3
     ndv00=ndv00+w1
     ndv10=ndv10+w2
     ndm00=ndm00+w3
     !2nd
-    w3=cnm1(2)
-    cnm0(2)=w3
+    w3=OP2_SOA(cnm1,2, direct_stride_OP2CONSTANT)
+    OP2_SOA(cnm0,2, direct_stride_OP2CONSTANT)=w3
     ndv01=ndv01+w1
     ndv11=ndv11+w2
     ndm01=ndm01+w3
     !3rd
-    w3=cnm1(3)
-    cnm0(3)=w3
+    w3=OP2_SOA(cnm1,3, direct_stride_OP2CONSTANT)
+    OP2_SOA(cnm0,3, direct_stride_OP2CONSTANT)=w3
     ndv02=ndv02+w1
     ndv12=ndv12+w2
     ndm02=ndm02+w3
     !4th
-    w3=cnm1(4)
-    cnm0(4)=w3
+    w3=OP2_SOA(cnm1,4, direct_stride_OP2CONSTANT)
+    OP2_SOA(cnm0,4, direct_stride_OP2CONSTANT)=w3
     ndv03=ndv03+w1
     ndv13=ndv13+w2
     ndm03=ndm03+w3

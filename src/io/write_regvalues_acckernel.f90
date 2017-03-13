@@ -83,9 +83,9 @@ SUBROUTINE write_regvalues_gpu(elvol,elmass,ein,pre, &    !4
 !$acc routine seq
         w3=ndva(ii)
         IF (elmass.GT.c1) THEN
-          reg_ke=0.5_rlk*cnmass(ii)*(w2*w2+w3*w3)+reg_ke
+          reg_ke=0.5_rlk*OP2_SOA(cnmass,ii, direct_stride_OP2CONSTANT)*(w2*w2+w3*w3)+reg_ke
         ENDIF
-        w4=rho*cnwt(ii)
+        w4=rho*OP2_SOA(cnwt,ii, direct_stride_OP2CONSTANT)
         tot_mom_u=tot_mom_u+w2*w4
         tot_mom_v=tot_mom_v+w3*w4
       ENDDO

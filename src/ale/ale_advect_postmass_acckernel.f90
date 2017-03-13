@@ -37,14 +37,14 @@ SUBROUTINE ale_advect_postmass_gpu(cnm1,flux, &
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(INOUT) :: cnm1
     REAL(KIND=rlk), INTENT(INOUT) :: elv0ndm11,elv0ndm12,elv0ndm13,elv0ndm14
 
-    cnm1(1)=cnm1(1)+flux(1)
-    cnm1(2)=cnm1(2)+flux(2)
-    cnm1(3)=cnm1(3)+flux(3)
-    cnm1(4)=cnm1(4)+flux(4)
-    elv0ndm11=elv0ndm11+flux(1)
-    elv0ndm12=elv0ndm12+flux(2)
-    elv0ndm13=elv0ndm13+flux(3)
-    elv0ndm14=elv0ndm14+flux(4)
+    OP2_SOA(cnm1,1, direct_stride_OP2CONSTANT)=OP2_SOA(cnm1,1, direct_stride_OP2CONSTANT)+OP2_SOA(flux,1, direct_stride_OP2CONSTANT)
+    OP2_SOA(cnm1,2, direct_stride_OP2CONSTANT)=OP2_SOA(cnm1,2, direct_stride_OP2CONSTANT)+OP2_SOA(flux,2, direct_stride_OP2CONSTANT)
+    OP2_SOA(cnm1,3, direct_stride_OP2CONSTANT)=OP2_SOA(cnm1,3, direct_stride_OP2CONSTANT)+OP2_SOA(flux,3, direct_stride_OP2CONSTANT)
+    OP2_SOA(cnm1,4, direct_stride_OP2CONSTANT)=OP2_SOA(cnm1,4, direct_stride_OP2CONSTANT)+OP2_SOA(flux,4, direct_stride_OP2CONSTANT)
+    elv0ndm11=elv0ndm11+OP2_SOA(flux,1, direct_stride_OP2CONSTANT)
+    elv0ndm12=elv0ndm12+OP2_SOA(flux,2, direct_stride_OP2CONSTANT)
+    elv0ndm13=elv0ndm13+OP2_SOA(flux,3, direct_stride_OP2CONSTANT)
+    elv0ndm14=elv0ndm14+OP2_SOA(flux,4, direct_stride_OP2CONSTANT)
 
   END SUBROUTINE ale_advect_postmass_gpu
 

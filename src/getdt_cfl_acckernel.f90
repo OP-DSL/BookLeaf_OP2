@@ -51,17 +51,17 @@ SUBROUTINE getdt_cfl_gpu(rscratch11,rscratch12,rho,csqrd,qq,elx,ely,ielreg,zdtno
       w1=MAX(rho,zcut)
       w2=MAX(ccut,csqrd)+2.0_rlk*qq/w1
       IF (zmidlength(ielreg+1).EQ.1) THEN
-        x1=elx(1)+elx(2)
-        x2=elx(3)+elx(4)
-        y1=ely(1)+ely(2)
-        y2=ely(3)+ely(4)
+        x1=OP2_SOA(elx,1, direct_stride_OP2CONSTANT)+OP2_SOA(elx,2, direct_stride_OP2CONSTANT)
+        x2=OP2_SOA(elx,3, direct_stride_OP2CONSTANT)+OP2_SOA(elx,4, direct_stride_OP2CONSTANT)
+        y1=OP2_SOA(ely,1, direct_stride_OP2CONSTANT)+OP2_SOA(ely,2, direct_stride_OP2CONSTANT)
+        y2=OP2_SOA(ely,3, direct_stride_OP2CONSTANT)+OP2_SOA(ely,4, direct_stride_OP2CONSTANT)
         x1=0.5_rlk*(x1-x2)
         y1=0.5_rlk*(y1-y2)
         res(1)=x1*x1+y1*y1
-        x1=elx(3)+elx(2)
-        x2=elx(1)+elx(4)
-        y1=ely(3)+ely(2)
-        y2=ely(1)+ely(4)
+        x1=OP2_SOA(elx,3, direct_stride_OP2CONSTANT)+OP2_SOA(elx,2, direct_stride_OP2CONSTANT)
+        x2=OP2_SOA(elx,1, direct_stride_OP2CONSTANT)+OP2_SOA(elx,4, direct_stride_OP2CONSTANT)
+        y1=OP2_SOA(ely,3, direct_stride_OP2CONSTANT)+OP2_SOA(ely,2, direct_stride_OP2CONSTANT)
+        y2=OP2_SOA(ely,1, direct_stride_OP2CONSTANT)+OP2_SOA(ely,4, direct_stride_OP2CONSTANT)
         x1=0.5_rlk*(x1-x2)
         y1=0.5_rlk*(y1-y2)
         res(2)=x1*x1+y1*y1
@@ -69,82 +69,82 @@ SUBROUTINE getdt_cfl_gpu(rscratch11,rscratch12,rho,csqrd,qq,elx,ely,ielreg,zdtno
         res(4)=res(2)
         w1=MIN(res(1),res(2),res(3),res(4))
       ELSE
-        w3=(ely(3)-ely(4))* &
-    &      (ely(3)-ely(4))+ &
-    &      (elx(3)-elx(4))* &
-    &      (elx(3)-elx(4))
+        w3=(OP2_SOA(ely,3, direct_stride_OP2CONSTANT)-OP2_SOA(ely,4, direct_stride_OP2CONSTANT))* &
+    &      (OP2_SOA(ely,3, direct_stride_OP2CONSTANT)-OP2_SOA(ely,4, direct_stride_OP2CONSTANT))+ &
+    &      (OP2_SOA(elx,3, direct_stride_OP2CONSTANT)-OP2_SOA(elx,4, direct_stride_OP2CONSTANT))* &
+    &      (OP2_SOA(elx,3, direct_stride_OP2CONSTANT)-OP2_SOA(elx,4, direct_stride_OP2CONSTANT))
         !denom(elx(3),ely(3),elx(4),ely(4))
         IF (w3.LT.zcut) THEN
-          res(1)=(0.5_rlk*(elx(1)+elx(2)) &
-    &           -elx(3))*(0.5_rlk*(elx(1)+elx(2))-elx(3))+ &
-    &         (0.5_rlk*(ely(1)+ely(2))-ely(3))* &
-    &         (0.5_rlk*(ely(1)+ely(2))-ely(3))
+          res(1)=(0.5_rlk*(OP2_SOA(elx,1, direct_stride_OP2CONSTANT)+OP2_SOA(elx,2, direct_stride_OP2CONSTANT)) &
+    &           -OP2_SOA(elx,3, direct_stride_OP2CONSTANT))*(0.5_rlk*(OP2_SOA(elx,1, direct_stride_OP2CONSTANT)+OP2_SOA(elx,2, direct_stride_OP2CONSTANT))-OP2_SOA(elx,3, direct_stride_OP2CONSTANT))+ &
+    &         (0.5_rlk*(OP2_SOA(ely,1, direct_stride_OP2CONSTANT)+OP2_SOA(ely,2, direct_stride_OP2CONSTANT))-OP2_SOA(ely,3, direct_stride_OP2CONSTANT))* &
+    &         (0.5_rlk*(OP2_SOA(ely,1, direct_stride_OP2CONSTANT)+OP2_SOA(ely,2, direct_stride_OP2CONSTANT))-OP2_SOA(ely,3, direct_stride_OP2CONSTANT))
           !distpp(elx(1),ely(1),elx(2),ely(2),elx(3),ely(3))
         ELSE
-          res(1)= 0.5_rlk*(ely(3)-ely(4))* &
-    &             (elx(1)+elx(2))+0.5_rlk* &
-    &             (ely(1)+ely(2))*(elx(4)-elx(3))+ &
-    &              ely(4)*elx(3)-ely(3)*elx(4)
+          res(1)= 0.5_rlk*(OP2_SOA(ely,3, direct_stride_OP2CONSTANT)-OP2_SOA(ely,4, direct_stride_OP2CONSTANT))* &
+    &             (OP2_SOA(elx,1, direct_stride_OP2CONSTANT)+OP2_SOA(elx,2, direct_stride_OP2CONSTANT))+0.5_rlk* &
+    &             (OP2_SOA(ely,1, direct_stride_OP2CONSTANT)+OP2_SOA(ely,2, direct_stride_OP2CONSTANT))*(OP2_SOA(elx,4, direct_stride_OP2CONSTANT)-OP2_SOA(elx,3, direct_stride_OP2CONSTANT))+ &
+    &              OP2_SOA(ely,4, direct_stride_OP2CONSTANT)*OP2_SOA(elx,3, direct_stride_OP2CONSTANT)-OP2_SOA(ely,3, direct_stride_OP2CONSTANT)*OP2_SOA(elx,4, direct_stride_OP2CONSTANT)
           res(1) = res(1)*res(1)/w3
     !      distpl(elx(1),ely(1),elx(2),ely(2),elx(3),ely(3),elx(4),   &
     !&                   ely(4))/w3
         ENDIF
-        w3=(ely(4)-ely(1))* &
-    &      (ely(4)-ely(1))+ &
-    &      (elx(4)-elx(1))* &
-    &      (elx(4)-elx(1))
+        w3=(OP2_SOA(ely,4, direct_stride_OP2CONSTANT)-OP2_SOA(ely,1, direct_stride_OP2CONSTANT))* &
+    &      (OP2_SOA(ely,4, direct_stride_OP2CONSTANT)-OP2_SOA(ely,1, direct_stride_OP2CONSTANT))+ &
+    &      (OP2_SOA(elx,4, direct_stride_OP2CONSTANT)-OP2_SOA(elx,1, direct_stride_OP2CONSTANT))* &
+    &      (OP2_SOA(elx,4, direct_stride_OP2CONSTANT)-OP2_SOA(elx,1, direct_stride_OP2CONSTANT))
         !denom(elx(4),ely(4),elx(1),ely(1))
         IF (w3.LT.zcut) THEN
-          res(2)=(0.5_rlk*(elx(2)+elx(3)) &
-    &           -elx(4))*(0.5_rlk*(elx(2)+elx(3))-elx(4))+ &
-    &         (0.5_rlk*(ely(2)+ely(3))-ely(4))* &
-    &         (0.5_rlk*(ely(2)+ely(3))-ely(4))
+          res(2)=(0.5_rlk*(OP2_SOA(elx,2, direct_stride_OP2CONSTANT)+OP2_SOA(elx,3, direct_stride_OP2CONSTANT)) &
+    &           -OP2_SOA(elx,4, direct_stride_OP2CONSTANT))*(0.5_rlk*(OP2_SOA(elx,2, direct_stride_OP2CONSTANT)+OP2_SOA(elx,3, direct_stride_OP2CONSTANT))-OP2_SOA(elx,4, direct_stride_OP2CONSTANT))+ &
+    &         (0.5_rlk*(OP2_SOA(ely,2, direct_stride_OP2CONSTANT)+OP2_SOA(ely,3, direct_stride_OP2CONSTANT))-OP2_SOA(ely,4, direct_stride_OP2CONSTANT))* &
+    &         (0.5_rlk*(OP2_SOA(ely,2, direct_stride_OP2CONSTANT)+OP2_SOA(ely,3, direct_stride_OP2CONSTANT))-OP2_SOA(ely,4, direct_stride_OP2CONSTANT))
           !distpp(elx(2),ely(2),elx(3),ely(3),elx(4),ely(4))
         ELSE
-          res(2)= 0.5_rlk*(ely(4)-ely(1))* &
-    &             (elx(2)+elx(3))+0.5_rlk* &
-    &             (ely(2)+ely(3))*(elx(1)-elx(4))+ &
-    &              ely(1)*elx(4)-ely(4)*elx(1)
+          res(2)= 0.5_rlk*(OP2_SOA(ely,4, direct_stride_OP2CONSTANT)-OP2_SOA(ely,1, direct_stride_OP2CONSTANT))* &
+    &             (OP2_SOA(elx,2, direct_stride_OP2CONSTANT)+OP2_SOA(elx,3, direct_stride_OP2CONSTANT))+0.5_rlk* &
+    &             (OP2_SOA(ely,2, direct_stride_OP2CONSTANT)+OP2_SOA(ely,3, direct_stride_OP2CONSTANT))*(OP2_SOA(elx,1, direct_stride_OP2CONSTANT)-OP2_SOA(elx,4, direct_stride_OP2CONSTANT))+ &
+    &              OP2_SOA(ely,1, direct_stride_OP2CONSTANT)*OP2_SOA(elx,4, direct_stride_OP2CONSTANT)-OP2_SOA(ely,4, direct_stride_OP2CONSTANT)*OP2_SOA(elx,1, direct_stride_OP2CONSTANT)
           res(2) = res(2)*res(2)/w3
     !      distpl(elx(2),ely(2),elx(3),ely(3),elx(4),ely(4),elx(1),   &
     !&                   ely(1))/w3
         ENDIF
-        w3=(ely(1)-ely(2))* &
-    &      (ely(1)-ely(2))+ &
-    &      (elx(1)-elx(2))* &
-    &      (elx(1)-elx(2))
+        w3=(OP2_SOA(ely,1, direct_stride_OP2CONSTANT)-OP2_SOA(ely,2, direct_stride_OP2CONSTANT))* &
+    &      (OP2_SOA(ely,1, direct_stride_OP2CONSTANT)-OP2_SOA(ely,2, direct_stride_OP2CONSTANT))+ &
+    &      (OP2_SOA(elx,1, direct_stride_OP2CONSTANT)-OP2_SOA(elx,2, direct_stride_OP2CONSTANT))* &
+    &      (OP2_SOA(elx,1, direct_stride_OP2CONSTANT)-OP2_SOA(elx,2, direct_stride_OP2CONSTANT))
         !denom(elx(1),ely(1),elx(2),ely(2))
         IF (w3.LT.zcut) THEN
-          res(3)=(0.5_rlk*(elx(3)+elx(4)) &
-    &           -elx(1))*(0.5_rlk*(elx(3)+elx(4))-elx(1))+ &
-    &         (0.5_rlk*(ely(3)+ely(4))-ely(1))* &
-    &         (0.5_rlk*(ely(3)+ely(4))-ely(1))
+          res(3)=(0.5_rlk*(OP2_SOA(elx,3, direct_stride_OP2CONSTANT)+OP2_SOA(elx,4, direct_stride_OP2CONSTANT)) &
+    &           -OP2_SOA(elx,1, direct_stride_OP2CONSTANT))*(0.5_rlk*(OP2_SOA(elx,3, direct_stride_OP2CONSTANT)+OP2_SOA(elx,4, direct_stride_OP2CONSTANT))-OP2_SOA(elx,1, direct_stride_OP2CONSTANT))+ &
+    &         (0.5_rlk*(OP2_SOA(ely,3, direct_stride_OP2CONSTANT)+OP2_SOA(ely,4, direct_stride_OP2CONSTANT))-OP2_SOA(ely,1, direct_stride_OP2CONSTANT))* &
+    &         (0.5_rlk*(OP2_SOA(ely,3, direct_stride_OP2CONSTANT)+OP2_SOA(ely,4, direct_stride_OP2CONSTANT))-OP2_SOA(ely,1, direct_stride_OP2CONSTANT))
           !distpp(elx(3),ely(3),elx(4),ely(4),elx(1),ely(1))
         ELSE
-          res(3)= 0.5_rlk*(ely(1)-ely(2))* &
-    &             (elx(3)+elx(4))+0.5_rlk* &
-    &             (ely(3)+ely(4))*(elx(2)-elx(1))+ &
-    &              ely(2)*elx(1)-ely(1)*elx(2)
+          res(3)= 0.5_rlk*(OP2_SOA(ely,1, direct_stride_OP2CONSTANT)-OP2_SOA(ely,2, direct_stride_OP2CONSTANT))* &
+    &             (OP2_SOA(elx,3, direct_stride_OP2CONSTANT)+OP2_SOA(elx,4, direct_stride_OP2CONSTANT))+0.5_rlk* &
+    &             (OP2_SOA(ely,3, direct_stride_OP2CONSTANT)+OP2_SOA(ely,4, direct_stride_OP2CONSTANT))*(OP2_SOA(elx,2, direct_stride_OP2CONSTANT)-OP2_SOA(elx,1, direct_stride_OP2CONSTANT))+ &
+    &              OP2_SOA(ely,2, direct_stride_OP2CONSTANT)*OP2_SOA(elx,1, direct_stride_OP2CONSTANT)-OP2_SOA(ely,1, direct_stride_OP2CONSTANT)*OP2_SOA(elx,2, direct_stride_OP2CONSTANT)
           res(3) = res(3)*res(3)/w3
     !      distpl(elx(3),ely(3),elx(4),ely(4),elx(1),ely(1),elx(2),   &
     !&                   ely(2))/w3
         ENDIF
-        w3=(ely(2)-ely(3))* &
-    &      (ely(2)-ely(3))+ &
-    &      (elx(2)-elx(3))* &
-    &      (elx(2)-elx(3))
+        w3=(OP2_SOA(ely,2, direct_stride_OP2CONSTANT)-OP2_SOA(ely,3, direct_stride_OP2CONSTANT))* &
+    &      (OP2_SOA(ely,2, direct_stride_OP2CONSTANT)-OP2_SOA(ely,3, direct_stride_OP2CONSTANT))+ &
+    &      (OP2_SOA(elx,2, direct_stride_OP2CONSTANT)-OP2_SOA(elx,3, direct_stride_OP2CONSTANT))* &
+    &      (OP2_SOA(elx,2, direct_stride_OP2CONSTANT)-OP2_SOA(elx,3, direct_stride_OP2CONSTANT))
         !denom(elx(2),ely(2),elx(3),ely(3))
         IF (w3.LT.zcut) THEN
-          res(4)=(0.5_rlk*(elx(4)+elx(1)) &
-    &           -elx(2))*(0.5_rlk*(elx(4)+elx(1))-elx(2))+ &
-    &         (0.5_rlk*(ely(4)+ely(1))-ely(2))* &
-    &         (0.5_rlk*(ely(4)+ely(1))-ely(2))
+          res(4)=(0.5_rlk*(OP2_SOA(elx,4, direct_stride_OP2CONSTANT)+OP2_SOA(elx,1, direct_stride_OP2CONSTANT)) &
+    &           -OP2_SOA(elx,2, direct_stride_OP2CONSTANT))*(0.5_rlk*(OP2_SOA(elx,4, direct_stride_OP2CONSTANT)+OP2_SOA(elx,1, direct_stride_OP2CONSTANT))-OP2_SOA(elx,2, direct_stride_OP2CONSTANT))+ &
+    &         (0.5_rlk*(OP2_SOA(ely,4, direct_stride_OP2CONSTANT)+OP2_SOA(ely,1, direct_stride_OP2CONSTANT))-OP2_SOA(ely,2, direct_stride_OP2CONSTANT))* &
+    &         (0.5_rlk*(OP2_SOA(ely,4, direct_stride_OP2CONSTANT)+OP2_SOA(ely,1, direct_stride_OP2CONSTANT))-OP2_SOA(ely,2, direct_stride_OP2CONSTANT))
           !distpp(elx(4),ely(4),elx(1),ely(1),elx(2),ely(2))
         ELSE
-          res(4)=0.5_rlk*(ely(2)-ely(3))*( &
-    &             elx(4)+elx(1))+0.5_rlk*( &
-    &             ely(4)+ely(1))*(elx(3)-elx(2))+ &
-    &             ely(3)*elx(2)-ely(2)*elx(3)
+          res(4)=0.5_rlk*(OP2_SOA(ely,2, direct_stride_OP2CONSTANT)-OP2_SOA(ely,3, direct_stride_OP2CONSTANT))*( &
+    &             OP2_SOA(elx,4, direct_stride_OP2CONSTANT)+OP2_SOA(elx,1, direct_stride_OP2CONSTANT))+0.5_rlk*( &
+    &             OP2_SOA(ely,4, direct_stride_OP2CONSTANT)+OP2_SOA(ely,1, direct_stride_OP2CONSTANT))*(OP2_SOA(elx,3, direct_stride_OP2CONSTANT)-OP2_SOA(elx,2, direct_stride_OP2CONSTANT))+ &
+    &             OP2_SOA(ely,3, direct_stride_OP2CONSTANT)*OP2_SOA(elx,2, direct_stride_OP2CONSTANT)-OP2_SOA(ely,2, direct_stride_OP2CONSTANT)*OP2_SOA(elx,3, direct_stride_OP2CONSTANT)
           res(4) = res(4)*res(4)/w3
     !      distpl(elx(4),ely(4),elx(1),ely(1),elx(2),ely(2),elx(3),   &
     !&                   ely(3))/w3

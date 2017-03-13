@@ -35,10 +35,10 @@ SUBROUTINE ale_advectors_totflux_gpu(rFlux,rTotFlux1,rTotFlux2,rTotFlux3,rTotFlu
     REAL(KIND=rlk), DIMENSION(N_SHAPE), INTENT(IN) :: rFlux
     REAL(KIND=rlk), INTENT(INOUT) :: rTotFlux1,rTotFlux2,rTotFlux3,rTotFlux4
 
-    rTotFlux1 = rTotFlux1 + rFlux(1)
-    rTotFlux2 = rTotFlux2 + rFlux(2)
-    rTotFlux3 = rTotFlux3 + rFlux(3)
-    rTotFlux4 = rTotFlux4 + rFlux(4)
+    rTotFlux1 = rTotFlux1 + OP2_SOA(rFlux,1, direct_stride_OP2CONSTANT)
+    rTotFlux2 = rTotFlux2 + OP2_SOA(rFlux,2, direct_stride_OP2CONSTANT)
+    rTotFlux3 = rTotFlux3 + OP2_SOA(rFlux,3, direct_stride_OP2CONSTANT)
+    rTotFlux4 = rTotFlux4 + OP2_SOA(rFlux,4, direct_stride_OP2CONSTANT)
 
   END SUBROUTINE ale_advectors_totflux_gpu
 

@@ -38,10 +38,10 @@ SUBROUTINE getein_update_gpu(elfx,elfy,elu,elv,elmass,ein,ein_out,dt)
 
     REAL(KIND=rlk) :: w1
 
-    w1=elfx(1)*elu(1)+elfy(1)*elv(1)+                 &
-&   elfx(2)*elu(2)+elfy(2)*elv(2)+                 &
-&   elfx(3)*elu(3)+elfy(3)*elv(3)+                 &
-&   elfx(4)*elu(4)+elfy(4)*elv(4)
+    w1=OP2_SOA(elfx,1, direct_stride_OP2CONSTANT)*OP2_SOA(elu,1, direct_stride_OP2CONSTANT)+OP2_SOA(elfy,1, direct_stride_OP2CONSTANT)*OP2_SOA(elv,1, direct_stride_OP2CONSTANT)+                 &
+&   OP2_SOA(elfx,2, direct_stride_OP2CONSTANT)*OP2_SOA(elu,2, direct_stride_OP2CONSTANT)+OP2_SOA(elfy,2, direct_stride_OP2CONSTANT)*OP2_SOA(elv,2, direct_stride_OP2CONSTANT)+                 &
+&   OP2_SOA(elfx,3, direct_stride_OP2CONSTANT)*OP2_SOA(elu,3, direct_stride_OP2CONSTANT)+OP2_SOA(elfy,3, direct_stride_OP2CONSTANT)*OP2_SOA(elv,3, direct_stride_OP2CONSTANT)+                 &
+&   OP2_SOA(elfx,4, direct_stride_OP2CONSTANT)*OP2_SOA(elu,4, direct_stride_OP2CONSTANT)+OP2_SOA(elfy,4, direct_stride_OP2CONSTANT)*OP2_SOA(elv,4, direct_stride_OP2CONSTANT)
       !# Missing code here that can't be merged
     w1=-w1/MAX(elmass,zerocut)
     ein_out=ein+w1*dt

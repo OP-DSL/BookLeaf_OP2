@@ -48,26 +48,26 @@ SUBROUTINE ale_advectors_flux_gpu(rCorner,rCorner1,rCorner2,rCorner3,rCorner4, &
 !    iE2=iElEl(i2)
     j2=iElSd(i2)
     j1=MOD(i2,N_SHAPE)+1_ink
-    r3=rCorner(i2)+rCorner(j1)
+    r3=OP2_SOA(rCorner,i2, direct_stride_OP2CONSTANT)+OP2_SOA(rCorner,j1, direct_stride_OP2CONSTANT)
     j1=MOD(j2,N_SHAPE)+1_ink
     IF (i2.EQ.3) THEN
-      w5=r3+rCorner3(j2)+rCorner3(j1)
+      w5=r3+OP2_SOA(rCorner3,j2, opDat2_stride_OP2CONSTANT)+OP2_SOA(rCorner3,j1, opDat2_stride_OP2CONSTANT)
     ELSEIF (i2.EQ.4) THEN
-      w5=r3+rCorner4(j2)+rCorner4(j1)
+      w5=r3+OP2_SOA(rCorner4,j2, opDat2_stride_OP2CONSTANT)+OP2_SOA(rCorner4,j1, opDat2_stride_OP2CONSTANT)
     ENDIF
 !    iE1=iElEl(i1)
     j2=iElSd(i1)
     j1=i1+1_ink
-    r4=rCorner(i1)+rCorner(j1)
+    r4=OP2_SOA(rCorner,i1, direct_stride_OP2CONSTANT)+OP2_SOA(rCorner,j1, direct_stride_OP2CONSTANT)
     j1=MOD(j2,N_SHAPE)+1_ink
     IF (i1.EQ.1) THEN
-      w6=r4+rCorner1(j2)+rCorner1(j1)
+      w6=r4+OP2_SOA(rCorner1,j2, opDat2_stride_OP2CONSTANT)+OP2_SOA(rCorner1,j1, opDat2_stride_OP2CONSTANT)
     ELSEIF (i1.EQ.2) THEN
-      w6=r4+rCorner2(j2)+rCorner2(j1)
+      w6=r4+OP2_SOA(rCorner2,j2, opDat2_stride_OP2CONSTANT)+OP2_SOA(rCorner2,j1, opDat2_stride_OP2CONSTANT)
     ENDIF
     rV=rVar
-    r1=rDel(i1)
-    r2=rDel(i2)
+    r1=OP2_SOA(rDel,i1, direct_stride_OP2CONSTANT)
+    r2=OP2_SOA(rDel,i2, direct_stride_OP2CONSTANT)
     IF (i2.EQ.3) THEN
       w1=rV-rVar3
     ELSEIF (i2.EQ.4) THEN
@@ -86,8 +86,8 @@ SUBROUTINE ale_advectors_flux_gpu(rCorner,rCorner1,rCorner2,rCorner3,rCorner4, &
     IF (w1*w2.LE.0.0_rlk) rGrad=0.0_rlk
     r1=r1*(rV+rGrad*(r3-0.5_rlk*r1))
     r2=r2*(rV-rGrad*(r4-0.5_rlk*r2))
-    rFlux(i1)=r1
-    rFlux(i2)=r2
+    OP2_SOA(rFlux,i1, direct_stride_OP2CONSTANT)=r1
+    OP2_SOA(rFlux,i2, direct_stride_OP2CONSTANT)=r2
 
   END SUBROUTINE ale_advectors_flux_gpu
 

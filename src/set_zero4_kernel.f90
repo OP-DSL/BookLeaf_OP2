@@ -23,6 +23,8 @@ SUBROUTINE set_zero4(a)
 
     REAL(KIND=rlk), DIMENSION(4), INTENT(OUT) :: a
 
+!asdf
+
     a(1) = 0.0_rlk
     a(2) = 0.0_rlk
     a(3) = 0.0_rlk

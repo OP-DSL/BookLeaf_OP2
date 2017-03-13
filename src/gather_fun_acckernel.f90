@@ -22,7 +22,6 @@ INTEGER(kind=4) :: direct_stride_OP2CONSTANT
 
 #define OP2_SOA(var,dim,stride) var((dim-1)*stride+1)
 
-
 CONTAINS
 
 !DEC$ ATTRIBUTES FORCEINLINE :: gather_fun
@@ -36,10 +35,10 @@ SUBROUTINE gather_fun_gpu(a1,a2,a3,a4,b)
     REAL(KIND=rlk), INTENT(IN) :: a1,a2,a3,a4
     REAL(KIND=rlk), DIMENSION(4), INTENT(OUT) :: b
 
-    b(1) = a1
-    b(2) = a2
-    b(3) = a3
-    b(4) = a4
+    OP2_SOA(b,1, direct_stride_OP2CONSTANT) = a1
+    OP2_SOA(b,2, direct_stride_OP2CONSTANT) = a2
+    OP2_SOA(b,3, direct_stride_OP2CONSTANT) = a3
+    OP2_SOA(b,4, direct_stride_OP2CONSTANT) = a4
 
   END SUBROUTINE gather_fun_gpu
 

@@ -42,26 +42,26 @@ SUBROUTINE getq_christiensen_limiter_gpu(du,dv,qx,qy,csqrd,rho,scratch,cq1,cq2,i
     is2=iside+1_ink
 
     w1=cq1*SQRT(csqrd)
-    w2=scratch(1)
-    w3=scratch(2)
+    w2=OP2_SOA(scratch,1, direct_stride_OP2CONSTANT)
+    w3=OP2_SOA(scratch,2, direct_stride_OP2CONSTANT)
     w2=MIN(0.5_rlk*(w2+w3),2.0_rlk*w2,2.0_rlk*w3,1.0_rlk)
     w2=MAX(0.0_rlk,w2)
-    w3=du(is1)
-    w4=dv(is1)
+    w3=OP2_SOA(du,is1, direct_stride_OP2CONSTANT)
+    w4=OP2_SOA(dv,is1, direct_stride_OP2CONSTANT)
     w3=SQRT(w3*w3+w4*w4)
     w3=(1.0_rlk-w2)*rho*(w1+cq2*w3)
-    qx(is1)=w3
-    qy(is1)=w3
-    w2=scratch(3)
-    w3=scratch(4)
+    OP2_SOA(qx,is1, direct_stride_OP2CONSTANT)=w3
+    OP2_SOA(qy,is1, direct_stride_OP2CONSTANT)=w3
+    w2=OP2_SOA(scratch,3, direct_stride_OP2CONSTANT)
+    w3=OP2_SOA(scratch,4, direct_stride_OP2CONSTANT)
     w2=MIN(0.5_rlk*(w2+w3),2.0_rlk*w2,2.0_rlk*w3,1.0_rlk)
     w2=MAX(0.0_rlk,w2)
-    w3=du(is2)
-    w4=dv(is2)
+    w3=OP2_SOA(du,is2, direct_stride_OP2CONSTANT)
+    w4=OP2_SOA(dv,is2, direct_stride_OP2CONSTANT)
     w3=SQRT(w3*w3+w4*w4)
     w3=(1.0_rlk-w2)*rho*(w1+cq2*w3)
-    qx(is2)=w3
-    qy(is2)=w3
+    OP2_SOA(qx,is2, direct_stride_OP2CONSTANT)=w3
+    OP2_SOA(qy,is2, direct_stride_OP2CONSTANT)=w3
 
   END SUBROUTINE getq_christiensen_limiter_gpu
 

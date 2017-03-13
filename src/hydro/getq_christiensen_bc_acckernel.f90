@@ -48,18 +48,18 @@ SUBROUTINE getq_christiensen_bc_gpu(ielel,scratch,iel,indtype1,indtype2, &
     indtype(4) = indtype4
 
     ins=iside+2_ink
-    in1=ielel(iside)
-    in2=ielel(ins)
+    in1=OP2_SOA(ielel,iside, direct_stride_OP2CONSTANT)
+    in2=OP2_SOA(ielel,ins, direct_stride_OP2CONSTANT)
     IF (in1.EQ.iel) THEN
       ic1=iside
       ic2=MOD(iside,N_SHAPE)+1_ink
       IF (((indtype(ic1).LT.0_ink).AND.(indtype(ic2).LT.0_ink)).AND.&
 &          (in2.NE.iel)) THEN
-        scratch(1)=1.0_rlk
-        scratch(3)=1.0_rlk
+        OP2_SOA(scratch,1, direct_stride_OP2CONSTANT)=1.0_rlk
+        OP2_SOA(scratch,3, direct_stride_OP2CONSTANT)=1.0_rlk
       ELSE
-        scratch(1)=0.0_rlk
-        scratch(3)=0.0_rlk
+        OP2_SOA(scratch,1, direct_stride_OP2CONSTANT)=0.0_rlk
+        OP2_SOA(scratch,3, direct_stride_OP2CONSTANT)=0.0_rlk
       ENDIF
     ENDIF
     IF (in2.EQ.iel) THEN
@@ -67,11 +67,11 @@ SUBROUTINE getq_christiensen_bc_gpu(ielel,scratch,iel,indtype1,indtype2, &
       ic2=MOD(ins,N_SHAPE)+1_ink
       IF (((indtype(ic1).LT.0_ink).AND.(indtype(ic2).LT.0_ink)).AND.&
 &          (in1.NE.iel)) THEN
-        scratch(2)=1.0_rlk
-        scratch(4)=1.0_rlk
+        OP2_SOA(scratch,2, direct_stride_OP2CONSTANT)=1.0_rlk
+        OP2_SOA(scratch,4, direct_stride_OP2CONSTANT)=1.0_rlk
       ELSE
-        scratch(2)=0.0_rlk
-        scratch(4)=0.0_rlk
+        OP2_SOA(scratch,2, direct_stride_OP2CONSTANT)=0.0_rlk
+        OP2_SOA(scratch,4, direct_stride_OP2CONSTANT)=0.0_rlk
       ENDIF
     ENDIF
 

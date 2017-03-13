@@ -46,68 +46,68 @@ SUBROUTINE getacc_scatter_gpu(cnmass,rho,cnwt,cnfx,cnfy, &
     INTEGER(KIND=ink) :: jj,ii
 
     jj=1_ink
-    IF (cnmass(jj).GT.zerocut) THEN
-      ndmass1=ndmass1+cnmass(jj)
+    IF (OP2_SOA(cnmass,jj, direct_stride_OP2CONSTANT).GT.zerocut) THEN
+      ndmass1=ndmass1+OP2_SOA(cnmass,jj, direct_stride_OP2CONSTANT)
     ELSE
       ii=jj-1_ink
       IF (ii.EQ.0_ink) ii=4_ink
-      IF (cnmass(ii).GT.zerocut) THEN
-        ndmass1=ndmass1+cnmass(ii)
+      IF (OP2_SOA(cnmass,ii, direct_stride_OP2CONSTANT).GT.zerocut) THEN
+        ndmass1=ndmass1+OP2_SOA(cnmass,ii, direct_stride_OP2CONSTANT)
       ELSE
-        ndmass1=ndmass1+rho*cnwt(jj)
+        ndmass1=ndmass1+rho*OP2_SOA(cnwt,jj, direct_stride_OP2CONSTANT)
       ENDIF
     ENDIF
-    ndarea1=ndarea1+cnwt(jj)
-    ndub1=ndub1+cnfx(jj)
-    ndvb1=ndvb1+cnfy(jj)
+    ndarea1=ndarea1+OP2_SOA(cnwt,jj, direct_stride_OP2CONSTANT)
+    ndub1=ndub1+OP2_SOA(cnfx,jj, direct_stride_OP2CONSTANT)
+    ndvb1=ndvb1+OP2_SOA(cnfy,jj, direct_stride_OP2CONSTANT)
 
     jj=2_ink
-    IF (cnmass(jj).GT.zerocut) THEN
-      ndmass2=ndmass2+cnmass(jj)
+    IF (OP2_SOA(cnmass,jj, direct_stride_OP2CONSTANT).GT.zerocut) THEN
+      ndmass2=ndmass2+OP2_SOA(cnmass,jj, direct_stride_OP2CONSTANT)
     ELSE
       ii=jj-1_ink
       IF (ii.EQ.0_ink) ii=4_ink
-      IF (cnmass(ii).GT.zerocut) THEN
-        ndmass2=ndmass2+cnmass(ii)
+      IF (OP2_SOA(cnmass,ii, direct_stride_OP2CONSTANT).GT.zerocut) THEN
+        ndmass2=ndmass2+OP2_SOA(cnmass,ii, direct_stride_OP2CONSTANT)
       ELSE
-        ndmass2=ndmass2+rho*cnwt(jj)
+        ndmass2=ndmass2+rho*OP2_SOA(cnwt,jj, direct_stride_OP2CONSTANT)
       ENDIF
     ENDIF
-    ndarea2=ndarea2+cnwt(jj)
-    ndub2=ndub2+cnfx(jj)
-    ndvb2=ndvb2+cnfy(jj)
+    ndarea2=ndarea2+OP2_SOA(cnwt,jj, direct_stride_OP2CONSTANT)
+    ndub2=ndub2+OP2_SOA(cnfx,jj, direct_stride_OP2CONSTANT)
+    ndvb2=ndvb2+OP2_SOA(cnfy,jj, direct_stride_OP2CONSTANT)
 
     jj=3_ink
-    IF (cnmass(jj).GT.zerocut) THEN
-      ndmass3=ndmass3+cnmass(jj)
+    IF (OP2_SOA(cnmass,jj, direct_stride_OP2CONSTANT).GT.zerocut) THEN
+      ndmass3=ndmass3+OP2_SOA(cnmass,jj, direct_stride_OP2CONSTANT)
     ELSE
       ii=jj-1_ink
       IF (ii.EQ.0_ink) ii=4_ink
-      IF (cnmass(ii).GT.zerocut) THEN
-        ndmass3=ndmass3+cnmass(ii)
+      IF (OP2_SOA(cnmass,ii, direct_stride_OP2CONSTANT).GT.zerocut) THEN
+        ndmass3=ndmass3+OP2_SOA(cnmass,ii, direct_stride_OP2CONSTANT)
       ELSE
-        ndmass3=ndmass3+rho*cnwt(jj)
+        ndmass3=ndmass3+rho*OP2_SOA(cnwt,jj, direct_stride_OP2CONSTANT)
       ENDIF
     ENDIF
-    ndarea3=ndarea3+cnwt(jj)
-    ndub3=ndub3+cnfx(jj)
-    ndvb3=ndvb3+cnfy(jj)
+    ndarea3=ndarea3+OP2_SOA(cnwt,jj, direct_stride_OP2CONSTANT)
+    ndub3=ndub3+OP2_SOA(cnfx,jj, direct_stride_OP2CONSTANT)
+    ndvb3=ndvb3+OP2_SOA(cnfy,jj, direct_stride_OP2CONSTANT)
 
     jj=4_ink
-    IF (cnmass(jj).GT.zerocut) THEN
-      ndmass4=ndmass4+cnmass(jj)
+    IF (OP2_SOA(cnmass,jj, direct_stride_OP2CONSTANT).GT.zerocut) THEN
+      ndmass4=ndmass4+OP2_SOA(cnmass,jj, direct_stride_OP2CONSTANT)
     ELSE
       ii=jj-1_ink
       IF (ii.EQ.0_ink) ii=4_ink
-      IF (cnmass(ii).GT.zerocut) THEN
-        ndmass4=ndmass4+cnmass(ii)
+      IF (OP2_SOA(cnmass,ii, direct_stride_OP2CONSTANT).GT.zerocut) THEN
+        ndmass4=ndmass4+OP2_SOA(cnmass,ii, direct_stride_OP2CONSTANT)
       ELSE
-        ndmass4=ndmass4+rho*cnwt(jj)
+        ndmass4=ndmass4+rho*OP2_SOA(cnwt,jj, direct_stride_OP2CONSTANT)
       ENDIF
     ENDIF
-    ndarea4=ndarea4+cnwt(jj)
-    ndub4=ndub4+cnfx(jj)
-    ndvb4=ndvb4+cnfy(jj)
+    ndarea4=ndarea4+OP2_SOA(cnwt,jj, direct_stride_OP2CONSTANT)
+    ndub4=ndub4+OP2_SOA(cnfx,jj, direct_stride_OP2CONSTANT)
+    ndvb4=ndvb4+OP2_SOA(cnfy,jj, direct_stride_OP2CONSTANT)
 
   END SUBROUTINE getacc_scatter_gpu
 

@@ -36,14 +36,14 @@ SUBROUTINE getforce_pres_gpu(pre,elfx,elfy,a1,a3,b1,b3)
     REAL(KIND=rlk) :: w1
 
     w1=pre
-    elfx(1)=w1*(-b3+b1)
-    elfx(2)=w1*( b3+b1)
-    elfx(3)=w1*( b3-b1)
-    elfx(4)=w1*(-b3-b1)
-    elfy(1)=w1*( a3-a1)
-    elfy(2)=w1*(-a3-a1)
-    elfy(3)=w1*(-a3+a1)
-    elfy(4)=w1*( a3+a1)
+    OP2_SOA(elfx,1, direct_stride_OP2CONSTANT)=w1*(-b3+b1)
+    OP2_SOA(elfx,2, direct_stride_OP2CONSTANT)=w1*( b3+b1)
+    OP2_SOA(elfx,3, direct_stride_OP2CONSTANT)=w1*( b3-b1)
+    OP2_SOA(elfx,4, direct_stride_OP2CONSTANT)=w1*(-b3-b1)
+    OP2_SOA(elfy,1, direct_stride_OP2CONSTANT)=w1*( a3-a1)
+    OP2_SOA(elfy,2, direct_stride_OP2CONSTANT)=w1*(-a3-a1)
+    OP2_SOA(elfy,3, direct_stride_OP2CONSTANT)=w1*(-a3+a1)
+    OP2_SOA(elfy,4, direct_stride_OP2CONSTANT)=w1*( a3+a1)
 
   END SUBROUTINE getforce_pres_gpu
 

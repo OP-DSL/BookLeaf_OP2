@@ -54,10 +54,10 @@ SUBROUTINE sod_reset_gpu(ndx1,ndx2,ndx3,ndx4,xmid,ielmat,rho, &
     ENDIF
     ein=pre/(rho*(eos_param(1,ielmat)-1.0_rlk))
     elmass=rho*elvol
-    cnmass(1)=rho*cnwt(1)
-    cnmass(2)=rho*cnwt(2)
-    cnmass(3)=rho*cnwt(3)
-    cnmass(4)=rho*cnwt(4)
+    OP2_SOA(cnmass,1, direct_stride_OP2CONSTANT)=rho*OP2_SOA(cnwt,1, direct_stride_OP2CONSTANT)
+    OP2_SOA(cnmass,2, direct_stride_OP2CONSTANT)=rho*OP2_SOA(cnwt,2, direct_stride_OP2CONSTANT)
+    OP2_SOA(cnmass,3, direct_stride_OP2CONSTANT)=rho*OP2_SOA(cnwt,3, direct_stride_OP2CONSTANT)
+    OP2_SOA(cnmass,4, direct_stride_OP2CONSTANT)=rho*OP2_SOA(cnwt,4, direct_stride_OP2CONSTANT)
 
   END SUBROUTINE sod_reset_gpu
 

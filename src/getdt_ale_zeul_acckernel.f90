@@ -40,10 +40,10 @@ SUBROUTINE getdt_ale_zeul_gpu(elu,elv,rscratch12,w2_s,w2)
 
     REAL(KIND=rlk) :: w1
 
-          w1=MAX(elu(1)*elu(1)+elv(1)*elv(1),           &
-&                elu(2)*elu(2)+elv(2)*elv(2),           &
-&                elu(3)*elu(3)+elv(3)*elv(3),           &
-&                elu(4)*elu(4)+elv(4)*elv(4))
+          w1=MAX(OP2_SOA(elu,1, direct_stride_OP2CONSTANT)*OP2_SOA(elu,1, direct_stride_OP2CONSTANT)+OP2_SOA(elv,1, direct_stride_OP2CONSTANT)*OP2_SOA(elv,1, direct_stride_OP2CONSTANT),           &
+&                OP2_SOA(elu,2, direct_stride_OP2CONSTANT)*OP2_SOA(elu,2, direct_stride_OP2CONSTANT)+OP2_SOA(elv,2, direct_stride_OP2CONSTANT)*OP2_SOA(elv,2, direct_stride_OP2CONSTANT),           &
+&                OP2_SOA(elu,3, direct_stride_OP2CONSTANT)*OP2_SOA(elu,3, direct_stride_OP2CONSTANT)+OP2_SOA(elv,3, direct_stride_OP2CONSTANT)*OP2_SOA(elv,3, direct_stride_OP2CONSTANT),           &
+&                OP2_SOA(elu,4, direct_stride_OP2CONSTANT)*OP2_SOA(elu,4, direct_stride_OP2CONSTANT)+OP2_SOA(elv,4, direct_stride_OP2CONSTANT)*OP2_SOA(elv,4, direct_stride_OP2CONSTANT))
     w1=rscratch12/MAX(w1,zerocut)
     w2_s=w1
     IF (w1.LT.w2) THEN

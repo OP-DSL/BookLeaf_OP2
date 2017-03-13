@@ -57,7 +57,7 @@ SUBROUTINE ale_getfvol_vol_gpu(ndx01,ndx02,ndx03,ndx04, &
     b1=0.25_rlk*(-y1+y2+y3-y4)
     b3=0.25_rlk*(-y1-y2+y3+y4)
     rdelv(jj)=4.0_rlk*(a1*b3-a3*b1)
-    IF (rdelv(jj).LT.cut) rdelv(jj)=0.0_rlk
+    IF (OP2_SOA(rdelv,jj, direct_stride_OP2CONSTANT).LT.cut) OP2_SOA(rdelv,jj, direct_stride_OP2CONSTANT)=0.0_rlk
     !2.
     jj=2_ink
     x1=ndx02
@@ -72,8 +72,8 @@ SUBROUTINE ale_getfvol_vol_gpu(ndx01,ndx02,ndx03,ndx04, &
     a3=0.25_rlk*(-x1-x2+x3+x4)
     b1=0.25_rlk*(-y1+y2+y3-y4)
     b3=0.25_rlk*(-y1-y2+y3+y4)
-    rdelv(jj)=4.0_rlk*(a1*b3-a3*b1)
-    IF (rdelv(jj).LT.cut) rdelv(jj)=0.0_rlk
+    OP2_SOA(rdelv,jj, direct_stride_OP2CONSTANT)=4.0_rlk*(a1*b3-a3*b1)
+    IF (OP2_SOA(rdelv,jj, direct_stride_OP2CONSTANT).LT.cut) OP2_SOA(rdelv,jj, direct_stride_OP2CONSTANT)=0.0_rlk
     !3.
     jj=3_ink
     x1=ndx03
@@ -88,8 +88,8 @@ SUBROUTINE ale_getfvol_vol_gpu(ndx01,ndx02,ndx03,ndx04, &
     a3=0.25_rlk*(-x1-x2+x3+x4)
     b1=0.25_rlk*(-y1+y2+y3-y4)
     b3=0.25_rlk*(-y1-y2+y3+y4)
-    rdelv(jj)=4.0_rlk*(a1*b3-a3*b1)
-    IF (rdelv(jj).LT.cut) rdelv(jj)=0.0_rlk
+    OP2_SOA(rdelv,jj, direct_stride_OP2CONSTANT)=4.0_rlk*(a1*b3-a3*b1)
+    IF (OP2_SOA(rdelv,jj, direct_stride_OP2CONSTANT).LT.cut) OP2_SOA(rdelv,jj, direct_stride_OP2CONSTANT)=0.0_rlk
     !4.
     jj=4_ink
     x1=ndx04
@@ -104,8 +104,8 @@ SUBROUTINE ale_getfvol_vol_gpu(ndx01,ndx02,ndx03,ndx04, &
     a3=0.25_rlk*(-x1-x2+x3+x4)
     b1=0.25_rlk*(-y1+y2+y3-y4)
     b3=0.25_rlk*(-y1-y2+y3+y4)
-    rdelv(jj)=4.0_rlk*(a1*b3-a3*b1)
-    IF (rdelv(jj).LT.cut) rdelv(jj)=0.0_rlk
+    OP2_SOA(rdelv,jj, direct_stride_OP2CONSTANT)=4.0_rlk*(a1*b3-a3*b1)
+    IF (OP2_SOA(rdelv,jj, direct_stride_OP2CONSTANT).LT.cut) OP2_SOA(rdelv,jj, direct_stride_OP2CONSTANT)=0.0_rlk
 
   END SUBROUTINE ale_getfvol_vol_gpu
 

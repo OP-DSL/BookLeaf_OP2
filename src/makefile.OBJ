@@ -52,7 +52,7 @@ OBJ = getacc_op.o       \
       getforce_op.o     \
       hydro.o        \
       lagstep_op.o      \
-      main.o
+      main_op.o
 ifeq ($(OPTARGET),genseq)
 OBJ += $(shell find . -maxdepth 1 -name "*_seqkernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
 OP2_LIB = -lop2_for_seq -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5 -lz
@@ -82,12 +82,12 @@ endif
 ifeq ($(OPTARGET),openacc)
 OBJ += data.o
 OBJ += $(shell find . -maxdepth 1 -name "*_acckernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
-OP2_LIB = -lop2_for_cuda -acc -ta=nvidia,cc35 -lcuda -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5 -lz
+OP2_LIB = -lop2_for_cuda -acc -ta=nvidia,cc35 -L$(CUDA_INSTALL_PATH)/lib64 -lcuda -lcudart -lop2_hdf5 -L$(HDF5_INSTALL_PATH)/lib -lhdf5 -lz
 endif
 ifeq ($(OPTARGET),mpi_openacc)
 OBJ += data.o
 OBJ += $(shell find . -maxdepth 1 -name "*_acckernel.f90" | sed s/\\.f90/\\.o/g | sed s/\\.\\///g | tr "\n" ' ')
-OP2_LIB = -lop2_for_mpi_cuda -acc -ta=nvidia,cc35 -lcuda -L$(HDF5_INSTALL_PATH)/lib -lhdf5 -lz -lstdc++ $(PARMETIS_LINK) $(PTSCOTCH_LINK) -lz
+OP2_LIB = -lop2_for_mpi_cuda -acc -ta=nvidia,cc35 -L$(CUDA_INSTALL_PATH)/lib64 -lcuda -lcudart -L$(HDF5_INSTALL_PATH)/lib -lhdf5 -lz -lstdc++ $(PARMETIS_LINK) $(PTSCOTCH_LINK) -lz
 endif
 endif
 endif

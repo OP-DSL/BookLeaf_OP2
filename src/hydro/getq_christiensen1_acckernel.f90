@@ -49,10 +49,10 @@ SUBROUTINE getq_christiensen1_gpu(du,dv,dx,dy, &
     is2=iside+1_ink
 
     ! edge 1
-    w1=du(is1)
-    w2=dv(is1)
-    w3=dx(is1)
-    w4=dy(is1)
+    w1=OP2_SOA(du,is1, direct_stride_OP2CONSTANT)
+    w2=OP2_SOA(dv,is1, direct_stride_OP2CONSTANT)
+    w3=OP2_SOA(dx,is1, direct_stride_OP2CONSTANT)
+    w4=OP2_SOA(dy,is1, direct_stride_OP2CONSTANT)
     den=SQRT(w1*w1+w2*w2)
     den=1.0_rlk/MAX(den,zerocut)
     uhat=w1*den
@@ -64,35 +64,35 @@ SUBROUTINE getq_christiensen1_gpu(du,dv,dx,dy, &
     den=w3*xhat+w4*yhat
     w1=(w1*uhat+w2*vhat)/SIGN(MAX(ABS(den),zerocut),den)
     w1=1.0_rlk/SIGN(MAX(ABS(w1),zerocut),w1)
-    ins=ielsd(iside)
+    ins=OP2_SOA(ielsd,iside, direct_stride_OP2CONSTANT)
     ins=MOD(ins,N_SHAPE)+1_ink
     IF (iside.eq.1_ink) THEN
-      den=dx1(ins)*xhat+dy1(ins)*yhat
-      w2=(du1(ins)*uhat+dv1(ins)*vhat)/                        &
+      den=OP2_SOA(dx1,ins, opDat5_stride_OP2CONSTANT)*xhat+OP2_SOA(dy1,ins, opDat5_stride_OP2CONSTANT)*yhat
+      w2=(OP2_SOA(du1,ins, opDat5_stride_OP2CONSTANT)*uhat+OP2_SOA(dv1,ins, opDat5_stride_OP2CONSTANT)*vhat)/                        &
   &        SIGN(MAX(ABS(den),zerocut),den)
     ELSE
-      den=dx2(ins)*xhat+dy2(ins)*yhat
-      w2=(du2(ins)*uhat+dv2(ins)*vhat)/                        &
+      den=OP2_SOA(dx2,ins, opDat5_stride_OP2CONSTANT)*xhat+OP2_SOA(dy2,ins, opDat5_stride_OP2CONSTANT)*yhat
+      w2=(OP2_SOA(du2,ins, opDat5_stride_OP2CONSTANT)*uhat+OP2_SOA(dv2,ins, opDat5_stride_OP2CONSTANT)*vhat)/                        &
   &        SIGN(MAX(ABS(den),zerocut),den)
     ENDIF
-    scratch(1)=w2*w1
-    ins=ielsd(iside+2_ink)
+    OP2_SOA(scratch,1, direct_stride_OP2CONSTANT)=w2*w1
+    ins=OP2_SOA(ielsd,iside+2_ink, direct_stride_OP2CONSTANT)
     ins=MOD(ins+2_ink,N_SHAPE)+1_ink
     IF (iside.eq.1_ink) THEN
-      den=dx3(ins)*xhat+dy3(ins)*yhat
-      w3=(du3(ins)*uhat+dv3(ins)*vhat)/                        &
+      den=OP2_SOA(dx3,ins, opDat5_stride_OP2CONSTANT)*xhat+OP2_SOA(dy3,ins, opDat5_stride_OP2CONSTANT)*yhat
+      w3=(OP2_SOA(du3,ins, opDat5_stride_OP2CONSTANT)*uhat+OP2_SOA(dv3,ins, opDat5_stride_OP2CONSTANT)*vhat)/                        &
   &        SIGN(MAX(ABS(den),zerocut),den)
     ELSE
-      den=dx4(ins)*xhat+dy4(ins)*yhat
-      w3=(du4(ins)*uhat+dv4(ins)*vhat)/                        &
+      den=OP2_SOA(dx4,ins, opDat5_stride_OP2CONSTANT)*xhat+OP2_SOA(dy4,ins, opDat5_stride_OP2CONSTANT)*yhat
+      w3=(OP2_SOA(du4,ins, opDat5_stride_OP2CONSTANT)*uhat+OP2_SOA(dv4,ins, opDat5_stride_OP2CONSTANT)*vhat)/                        &
 &          SIGN(MAX(ABS(den),zerocut),den)
     ENDIF
-    scratch(2)=w3*w1
+    OP2_SOA(scratch,2, direct_stride_OP2CONSTANT)=w3*w1
     ! edge 2
-    w1=du(is2)
-    w2=dv(is2)
-    w3=dx(is2)
-    w4=dy(is2)
+    w1=OP2_SOA(du,is2, direct_stride_OP2CONSTANT)
+    w2=OP2_SOA(dv,is2, direct_stride_OP2CONSTANT)
+    w3=OP2_SOA(dx,is2, direct_stride_OP2CONSTANT)
+    w4=OP2_SOA(dy,is2, direct_stride_OP2CONSTANT)
     den=SQRT(w1*w1+w2*w2)
     den=1.0_rlk/MAX(den,zerocut)
     uhat=w1*den
@@ -104,30 +104,30 @@ SUBROUTINE getq_christiensen1_gpu(du,dv,dx,dy, &
     den=w3*xhat+w4*yhat
     w1=(w1*uhat+w2*vhat)/SIGN(MAX(ABS(den),zerocut),den)
     w1=1.0_rlk/SIGN(MAX(ABS(w1),zerocut),w1)
-    ins=ielsd(iside)
+    ins=OP2_SOA(ielsd,iside, direct_stride_OP2CONSTANT)
     ins=MOD(ins+2_ink,N_SHAPE)+1_ink
     IF (iside.eq.1_ink) THEN
-      den=dx1(ins)*xhat+dy1(ins)*yhat
-      w2=(du1(ins)*uhat+dv1(ins)*vhat)/                         &
+      den=OP2_SOA(dx1,ins, opDat5_stride_OP2CONSTANT)*xhat+OP2_SOA(dy1,ins, opDat5_stride_OP2CONSTANT)*yhat
+      w2=(OP2_SOA(du1,ins, opDat5_stride_OP2CONSTANT)*uhat+OP2_SOA(dv1,ins, opDat5_stride_OP2CONSTANT)*vhat)/                         &
   &        SIGN(MAX(ABS(den),zerocut),den)
     ELSE
-      den=dx2(ins)*xhat+dy2(ins)*yhat
-      w2=(du2(ins)*uhat+dv2(ins)*vhat)/                         &
+      den=OP2_SOA(dx2,ins, opDat5_stride_OP2CONSTANT)*xhat+OP2_SOA(dy2,ins, opDat5_stride_OP2CONSTANT)*yhat
+      w2=(OP2_SOA(du2,ins, opDat5_stride_OP2CONSTANT)*uhat+OP2_SOA(dv2,ins, opDat5_stride_OP2CONSTANT)*vhat)/                         &
   &        SIGN(MAX(ABS(den),zerocut),den)
     ENDIF
-    scratch(3)=w2*w1
-    ins=ielsd(iside+2_ink)
+    OP2_SOA(scratch,3, direct_stride_OP2CONSTANT)=w2*w1
+    ins=OP2_SOA(ielsd,iside+2_ink, direct_stride_OP2CONSTANT)
     ins=MOD(ins,N_SHAPE)+1_ink
     IF (iside.eq.1_ink) THEN
-      den=dx3(ins)*xhat+dy3(ins)*yhat
-      w3=(du3(ins)*uhat+dv3(ins)*vhat)/                         &
+      den=OP2_SOA(dx3,ins, opDat5_stride_OP2CONSTANT)*xhat+OP2_SOA(dy3,ins, opDat5_stride_OP2CONSTANT)*yhat
+      w3=(OP2_SOA(du3,ins, opDat5_stride_OP2CONSTANT)*uhat+OP2_SOA(dv3,ins, opDat5_stride_OP2CONSTANT)*vhat)/                         &
   &        SIGN(MAX(ABS(den),zerocut),den)
     ELSE
-      den=dx4(ins)*xhat+dy4(ins)*yhat
-      w3=(du4(ins)*uhat+dv4(ins)*vhat)/                         &
+      den=OP2_SOA(dx4,ins, opDat5_stride_OP2CONSTANT)*xhat+OP2_SOA(dy4,ins, opDat5_stride_OP2CONSTANT)*yhat
+      w3=(OP2_SOA(du4,ins, opDat5_stride_OP2CONSTANT)*uhat+OP2_SOA(dv4,ins, opDat5_stride_OP2CONSTANT)*vhat)/                         &
   &        SIGN(MAX(ABS(den),zerocut),den)
     ENDIF
-    scratch(4)=w3*w1
+    OP2_SOA(scratch,4, direct_stride_OP2CONSTANT)=w3*w1
 
   END SUBROUTINE getq_christiensen1_gpu
 

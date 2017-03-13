@@ -42,21 +42,21 @@ SUBROUTINE ale_advectors_sumflux_gpu(rFlux,rFlux1,rFlux2,rFlux3,rFlux4,rTotFlux,
     REAL(KIND=rlk) :: w1,w2
 
     i2 = i1+2_ink
-    iE1=iElEl(i1)
-    iE2=iElEl(i2)
-    j1=iElSd(i1)
-    j2=iElSd(i2)
+    iE1=OP2_SOA(iElEl,i1, direct_stride_OP2CONSTANT)
+    iE2=OP2_SOA(iElEl,i2, direct_stride_OP2CONSTANT)
+    j1=OP2_SOA(iElSd,i1, direct_stride_OP2CONSTANT)
+    j2=OP2_SOA(iElSd,i2, direct_stride_OP2CONSTANT)
     IF (i1.EQ.1_ink) THEN
-      w1=rFlux1(j1)
-      w2=rFlux3(j2)
+      w1=OP2_SOA(rFlux1,j1, opDat2_stride_OP2CONSTANT)
+      w2=OP2_SOA(rFlux3,j2, opDat2_stride_OP2CONSTANT)
     ELSEIF (i1.EQ.2_ink) THEN
-      w1=rFlux2(j1)
-      w2=rFlux4(j2)
+      w1=OP2_SOA(rFlux2,j1, opDat2_stride_OP2CONSTANT)
+      w2=OP2_SOA(rFlux4,j2, opDat2_stride_OP2CONSTANT)
     ENDIF
 
     IF (iE1.EQ.iEl) w1=0.0_rlk
     IF (iE2.EQ.iEl) w2=0.0_rlk
-    rTotFlux=rTotFlux-rFlux(i1)-rFlux(i2)+w1+w2
+    rTotFlux=rTotFlux-OP2_SOA(rFlux,i1, direct_stride_OP2CONSTANT)-OP2_SOA(rFlux,i2, direct_stride_OP2CONSTANT)+w1+w2
   END SUBROUTINE ale_advectors_sumflux_gpu
 
 

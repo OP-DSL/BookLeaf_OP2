@@ -40,16 +40,16 @@ SUBROUTINE getq_christiensen_q_gpu(elx,ely,elu,elv,qx,qy,qq)
     DO iside=1,N_SHAPE
       ins=MOD(iside,N_SHAPE)+1_ink
 
-      w1=elx(iside)
-      w2=elx(ins)
+      w1=OP2_SOA(elx,iside, direct_stride_OP2CONSTANT)
+      w2=OP2_SOA(elx,ins, direct_stride_OP2CONSTANT)
       w3=0.5_rlk*(w1+w2)
       w1=w2-w1
-      w2=0.25_rlk*(elx(1)+elx(2)+elx(3)+elx(4))
-      w4=ely(iside)
-      w5=ely(ins)
+      w2=0.25_rlk*(OP2_SOA(elx,1, direct_stride_OP2CONSTANT)+OP2_SOA(elx,2, direct_stride_OP2CONSTANT)+OP2_SOA(elx,3, direct_stride_OP2CONSTANT)+OP2_SOA(elx,4, direct_stride_OP2CONSTANT))
+      w4=OP2_SOA(ely,iside, direct_stride_OP2CONSTANT)
+      w5=OP2_SOA(ely,ins, direct_stride_OP2CONSTANT)
       w6=0.5_rlk*(w4+w5)
       w4=w5-w4
-      w5=0.25_rlk*(ely(1)+ely(2)+ely(3)+ely(4))
+      w5=0.25_rlk*(OP2_SOA(ely,1, direct_stride_OP2CONSTANT)+OP2_SOA(ely,2, direct_stride_OP2CONSTANT)+OP2_SOA(ely,3, direct_stride_OP2CONSTANT)+OP2_SOA(ely,4, direct_stride_OP2CONSTANT))
       w7=SQRT((w2-w3)*(w2-w3)+(w5-w6)*(w5-w6))
       w8=SQRT(w1*w1+w4*w4)
       den=1.0_rlk/w7
@@ -62,20 +62,20 @@ SUBROUTINE getq_christiensen_q_gpu(elx,ely,elu,elv,qx,qy,qq)
       den=-SIGN(1.0_rlk,w3)*w7
       xhat=xhat*den
       yhat=yhat*den
-      uhat=elu(ins)-elu(iside)
-      vhat=elv(ins)-elv(iside)
+      uhat=OP2_SOA(elu,ins, direct_stride_OP2CONSTANT)-OP2_SOA(elu,iside, direct_stride_OP2CONSTANT)
+      vhat=OP2_SOA(elv,ins, direct_stride_OP2CONSTANT)-OP2_SOA(elv,iside, direct_stride_OP2CONSTANT)
       w5=SQRT((uhat*uhat)+(vhat*vhat))
       w6=uhat*xhat+vhat*yhat
       den=w6/MAX(w5,zerocut)
-      qx(iside)=qx(iside)*uhat*den
-      qy(iside)=qy(iside)*vhat*den
+      OP2_SOA(qx,iside, direct_stride_OP2CONSTANT)=OP2_SOA(qx,iside, direct_stride_OP2CONSTANT)*uhat*den
+      OP2_SOA(qy,iside, direct_stride_OP2CONSTANT)=OP2_SOA(qy,iside, direct_stride_OP2CONSTANT)*vhat*den
       IF ((w5.LE.zerocut).OR.(w6.LE.zerocut).OR.(w7.LE.zerocut).OR.   &
 &           (w8.LE.zerocut)) THEN
-        qx(iside)=0.0_rlk
-        qy(iside)=0.0_rlk
+        OP2_SOA(qx,iside, direct_stride_OP2CONSTANT)=0.0_rlk
+        OP2_SOA(qy,iside, direct_stride_OP2CONSTANT)=0.0_rlk
       ENDIF
-      qq=qq+0.25_rlk*SQRT(qx(iside)*qx(iside)+      &
-&               qy(iside)*qy(iside))
+      qq=qq+0.25_rlk*SQRT(OP2_SOA(qx,iside, direct_stride_OP2CONSTANT)*OP2_SOA(qx,iside, direct_stride_OP2CONSTANT)+      &
+&               OP2_SOA(qy,iside, direct_stride_OP2CONSTANT)*OP2_SOA(qy,iside, direct_stride_OP2CONSTANT))
 
     ENDDO
 

@@ -64,7 +64,7 @@ SUBROUTINE sod_subz_gpu(ndx1,ndx2,ndx3,ndx4,ndy1,ndy2,ndy3,ndy4,rho,spmass)
       w2=-x1-x2+x3+x4
       w3=-y1+y2+y3-y4
       w4=-y1-y2+y3+y4
-      spmass(inod)=rho*(w1*w4-w2*w3)
+      OP2_SOA(spmass,inod, direct_stride_OP2CONSTANT)=rho*(w1*w4-w2*w3)
     ENDDO
 
   END SUBROUTINE sod_subz_gpu

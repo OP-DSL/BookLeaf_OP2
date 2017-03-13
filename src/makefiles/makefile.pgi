@@ -75,10 +75,10 @@ ifeq ($(OPTARGET),mpi_cuda)
   PREPRO  += -DOP2_ENABLE_CUDA
 endif
 ifeq ($(OPTARGET),openacc)
-  CUDAF     = -O3 -acc -ta=nvidia,cc35 -fast
+  CUDAF     = -acc -ta=nvidia,cc35 -Mpreprocess -Minline
 endif
 ifeq ($(OPTARGET),mpi_openacc)
-  CUDAF     = -O3 -acc -ta=nvidia,cc35 -fast
+  CUDAF     = -acc -ta=nvidia,cc35 -Mpreprocess -Minline
 endif
 
 FFLAGS = -c $(REALSIZE) $(INTSIZE) $(FORM) $(BIG_ENDIAN) $(AUTO_ARRAYS) \

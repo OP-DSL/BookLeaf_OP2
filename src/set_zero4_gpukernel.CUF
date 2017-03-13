@@ -36,6 +36,8 @@ attributes (host) subroutine set_zero4(a)
 
     REAL(KIND=rlk), DIMENSION(4), INTENT(OUT) :: a
 
+!asdf
+
     a(1) = 0.0_rlk
     a(2) = 0.0_rlk
     a(3) = 0.0_rlk
@@ -50,6 +52,8 @@ attributes (device) subroutine set_zero4_gpu(a)
     implicit none
 
     REAL(KIND=rlk), DIMENSION(4), INTENT(OUT) :: a
+
+!asdf
 
     OP2_SOA(a,1, elements_stride_OP2) = 0.0_rlk
     OP2_SOA(a,2, elements_stride_OP2) = 0.0_rlk

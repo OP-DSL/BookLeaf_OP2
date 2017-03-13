@@ -46,20 +46,20 @@ SUBROUTINE ale_advect_volmass_gpu(delv,delv1,delv2,delv3, delv4, &
 
     i2 = i1+2_ink
 
-    ie1=ielel(i1)
-    ie2=ielel(i2)
-    is1=ielsd(i1)
-    is2=ielsd(i2)
+    ie1=OP2_SOA(ielel,i1, direct_stride_OP2CONSTANT)
+    ie2=OP2_SOA(ielel,i2, direct_stride_OP2CONSTANT)
+    is1=OP2_SOA(ielsd,i1, direct_stride_OP2CONSTANT)
+    is2=OP2_SOA(ielsd,i2, direct_stride_OP2CONSTANT)
     IF (i1.EQ.1) THEN !i1 may only be 1 or 2, so that i2<=4
-      w1=delv1(is1)
-      w2=delv3(is2)
-      w3=delm1(is1)
-      w4=delm3(is2)
+      w1=OP2_SOA(delv1,is1, opDat2_stride_OP2CONSTANT)
+      w2=OP2_SOA(delv3,is2, opDat2_stride_OP2CONSTANT)
+      w3=OP2_SOA(delm1,is1, opDat2_stride_OP2CONSTANT)
+      w4=OP2_SOA(delm3,is2, opDat2_stride_OP2CONSTANT)
     ELSEIF (i1.EQ.2) THEN
-      w1=delv2(is1)
-      w2=delv4(is2)
-      w3=delm2(is1)
-      w4=delm4(is2)
+      w1=OP2_SOA(delv2,is1, opDat2_stride_OP2CONSTANT)
+      w2=OP2_SOA(delv4,is2, opDat2_stride_OP2CONSTANT)
+      w3=OP2_SOA(delm2,is1, opDat2_stride_OP2CONSTANT)
+      w4=OP2_SOA(delm4,is2, opDat2_stride_OP2CONSTANT)
     ENDIF
 
     IF (ie1.EQ.iel) THEN !i.e. boundary
@@ -70,21 +70,21 @@ SUBROUTINE ale_advect_volmass_gpu(delv,delv1,delv2,delv3, delv4, &
       w2=0.0_rlk
       w4=0.0_rlk
     ENDIF
-    w1=w1-delv(i1)
-    w2=w2-delv(i2)
+    w1=w1-OP2_SOA(delv,i1, direct_stride_OP2CONSTANT)
+    w2=w2-OP2_SOA(delv,i2, direct_stride_OP2CONSTANT)
     w1=0.25_rlk*(w1-w2)
-    dndv(i1)=w1
-    dndv(i2)=w1
-    w1=w3-delm(i1)
-    w2=w4-delm(i2)
+    OP2_SOA(dndv,i1, direct_stride_OP2CONSTANT)=w1
+    OP2_SOA(dndv,i2, direct_stride_OP2CONSTANT)=w1
+    w1=w3-OP2_SOA(delm,i1, direct_stride_OP2CONSTANT)
+    w2=w4-OP2_SOA(delm,i2, direct_stride_OP2CONSTANT)
     w3=0.25_rlk*(w1-w2)
-    dndm(i1)=w3
-    dndm(i2)=w3
+    OP2_SOA(dndm,i1, direct_stride_OP2CONSTANT)=w3
+    OP2_SOA(dndm,i2, direct_stride_OP2CONSTANT)=w3
     w3=0.25_rlk*(w1+w2)
-    flux(1)=flux(1)+w3
-    flux(2)=flux(2)+w3
-    flux(3)=flux(3)+w3
-    flux(4)=flux(4)+w3
+    OP2_SOA(flux,1, direct_stride_OP2CONSTANT)=OP2_SOA(flux,1, direct_stride_OP2CONSTANT)+w3
+    OP2_SOA(flux,2, direct_stride_OP2CONSTANT)=OP2_SOA(flux,2, direct_stride_OP2CONSTANT)+w3
+    OP2_SOA(flux,3, direct_stride_OP2CONSTANT)=OP2_SOA(flux,3, direct_stride_OP2CONSTANT)+w3
+    OP2_SOA(flux,4, direct_stride_OP2CONSTANT)=OP2_SOA(flux,4, direct_stride_OP2CONSTANT)+w3
   END SUBROUTINE ale_advect_volmass_gpu
 
 

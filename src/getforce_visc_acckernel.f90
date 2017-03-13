@@ -39,10 +39,10 @@ SUBROUTINE getforce_visc_gpu(elfx,elfy,qx,qy)
     DO jj=1,N_SHAPE
       jp=jj+1_ink
       IF (jp.GT.4_ink) jp=1_ink
-      elfx(jj)=elfx(jj)+qx(jj)
-      elfx(jp)=elfx(jp)-qx(jj)
-      elfy(jj)=elfy(jj)+qy(jj)
-      elfy(jp)=elfy(jp)-qy(jj)
+      OP2_SOA(elfx,jj, direct_stride_OP2CONSTANT)=OP2_SOA(elfx,jj, direct_stride_OP2CONSTANT)+OP2_SOA(qx,jj, direct_stride_OP2CONSTANT)
+      OP2_SOA(elfx,jp, direct_stride_OP2CONSTANT)=OP2_SOA(elfx,jp, direct_stride_OP2CONSTANT)-OP2_SOA(qx,jj, direct_stride_OP2CONSTANT)
+      OP2_SOA(elfy,jj, direct_stride_OP2CONSTANT)=OP2_SOA(elfy,jj, direct_stride_OP2CONSTANT)+OP2_SOA(qy,jj, direct_stride_OP2CONSTANT)
+      OP2_SOA(elfy,jp, direct_stride_OP2CONSTANT)=OP2_SOA(elfy,jp, direct_stride_OP2CONSTANT)-OP2_SOA(qy,jj, direct_stride_OP2CONSTANT)
     ENDDO
 
   END SUBROUTINE getforce_visc_gpu

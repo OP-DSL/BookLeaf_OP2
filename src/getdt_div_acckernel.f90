@@ -39,10 +39,10 @@ SUBROUTINE getdt_div_gpu(elu,elv,a1,a3,b1,b3,elvol,w2_s,w2)
 
     REAL(KIND=rlk) :: w1
 
-    w1=elu(1)*(-b3+b1)+elv(1)*( a3-a1)+   &
-&        elu(2)*( b3+b1)+elv(2)*(-a3-a1)+   &
-&        elu(3)*( b3-b1)+elv(3)*(-a3+a1)+   &
-&        elu(4)*(-b3-b1)+elv(4)*( a3+a1)
+    w1=OP2_SOA(elu,1, direct_stride_OP2CONSTANT)*(-b3+b1)+OP2_SOA(elv,1, direct_stride_OP2CONSTANT)*( a3-a1)+   &
+&        OP2_SOA(elu,2, direct_stride_OP2CONSTANT)*( b3+b1)+OP2_SOA(elv,2, direct_stride_OP2CONSTANT)*(-a3-a1)+   &
+&        OP2_SOA(elu,3, direct_stride_OP2CONSTANT)*( b3-b1)+OP2_SOA(elv,3, direct_stride_OP2CONSTANT)*(-a3+a1)+   &
+&        OP2_SOA(elu,4, direct_stride_OP2CONSTANT)*(-b3-b1)+OP2_SOA(elv,4, direct_stride_OP2CONSTANT)*( a3+a1)
     w1=ABS(w1)/elvol
     w2_s=w1
     IF (w1.GT.w2) THEN
