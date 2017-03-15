@@ -289,6 +289,7 @@ indirectionDescriptorArray(14) = -1
 
 exec_size = opSetCore%size + opSetCore%exec_size
 numberOfIndirectOpDats = 1
+partitionSize = 0
 
 planRet_sod_reset = FortranPlanCaller( &
 & userSubroutine//C_NULL_CHAR, &

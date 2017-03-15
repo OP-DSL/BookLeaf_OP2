@@ -117,6 +117,8 @@ attributes (global) SUBROUTINE op_cuda_sod_reset( &
   & opDat14Devicesod_reset, &
   & opGblDat5Devicesod_reset,   &
   & opDat12Dim, &
+  & ind_sizes, &
+  & ind_offs, &
   & pblkMap, &
   & poffset, &
   & pnelems, &
@@ -143,6 +145,10 @@ attributes (global) SUBROUTINE op_cuda_sod_reset( &
   INTEGER(kind=4), VALUE :: opDat12Dim
   INTEGER(kind=4) map1idx, map2idx, map3idx, map4idx
 
+
+
+  INTEGER(kind=4), DIMENSION(0:*), DEVICE :: ind_sizes
+  INTEGER(kind=4), DIMENSION(0:*), DEVICE :: ind_offs
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pblkMap
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: poffset
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pnelems
@@ -151,6 +157,8 @@ attributes (global) SUBROUTINE op_cuda_sod_reset( &
   INTEGER(kind=4), VALUE :: blockOffset
   INTEGER(kind=4), VALUE :: setSize
 
+
+  REAL(kind=8), DIMENSION(0:*), SHARED :: sharedFloat8
 
   INTEGER(kind=4), SHARED :: numOfColours
   INTEGER(kind=4), SHARED :: numberOfActiveThreadsCeiling
@@ -176,6 +184,9 @@ attributes (global) SUBROUTINE op_cuda_sod_reset( &
 
   CALL syncthreads()
 
+
+
+  CALL syncthreads()
 
   i1 = threadIdx%x - 1
 
@@ -354,6 +365,13 @@ attributes (host) SUBROUTINE sod_reset_host_gpu( userSubroutine, set, &
 
   INTEGER(kind=4) :: numberOfIndirectOpDats
   INTEGER(kind=4) :: blockOffset
+
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: ind_offs
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: ind_sizes
+  INTEGER(kind=4), POINTER, DIMENSION(:) :: pnindirect
+  INTEGER(kind=4), POINTER, DIMENSION(:) :: nsharedCol
+  TYPE ( c_ptr ), POINTER, DIMENSION(:) :: mappingArray
+  TYPE ( c_ptr ), POINTER, DIMENSION(:) :: ind_maps
   INTEGER(kind=4) :: pblkMapSize
   INTEGER(kind=4) :: poffsetSize
   INTEGER(kind=4) :: pnelemsSize
@@ -433,7 +451,7 @@ attributes (host) SUBROUTINE sod_reset_host_gpu( userSubroutine, set, &
   & numberOfOpDats, &
   & opArgArray, &
   & numberOfIndirectOpDats, &
-  & indirectionDescriptorArray,2)
+  & indirectionDescriptorArray,1)
 
   opDat1Cardinality = opArg1%dim * getSetSizeFromOpArg(opArg1)
   opMap1Cardinality = set%setPtr%size * getMapDimFromOpArg(opArg1)
@@ -474,6 +492,14 @@ attributes (host) SUBROUTINE sod_reset_host_gpu( userSubroutine, set, &
   CALL c_f_pointer(actualPlan_sod_reset%nthrcol,pnthrcol,(/pnthrcolSize/))
   pthrcolSize = set%setPtr%size
   CALL c_f_pointer(actualPlan_sod_reset%thrcol,pthrcol,(/pthrcolSize/))
+  CALL c_f_pointer(actualPlan_sod_reset%nsharedCol,nsharedCol,(/actualPlan_sod_reset%ncolors_core/))
+  CALL c_f_pointer(actualPlan_sod_reset%nindirect,pnindirect,(/actualPlan_sod_reset%ninds_staged/))
+  CALL c_f_pointer(actualPlan_sod_reset%ind_maps,ind_maps,(/actualPlan_sod_reset%ninds_staged/))
+  CALL c_f_pointer(actualPlan_sod_reset%maps,mappingArray,(/numberOfOpDats/))
+  CALL c_f_pointer(actualPlan_sod_reset%ind_sizes,ind_sizes,(/actualPlan_sod_reset%nblocks * actualPlan_sod_reset%ninds_staged/))
+  CALL c_f_pointer(actualPlan_sod_reset%ind_offs,ind_offs,(/actualPlan_sod_reset%nblocks * actualPlan_sod_reset%ninds_staged/))
+
+
 
   IF (.not. allocated(opGblDat12Devicesod_reset)) THEN
     allocate(opGblDat12Devicesod_reset(opArg12%dim))
@@ -489,7 +515,7 @@ attributes (host) SUBROUTINE sod_reset_host_gpu( userSubroutine, set, &
     END IF
 
     blocksPerGrid = ncolblk(i2 + 1)
-    dynamicSharedMemorySize = reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock
+    dynamicSharedMemorySize = MAX(reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock, nsharedCol(1+i2))
 
     CALL op_cuda_sod_reset <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>> (&
     & opDat1Devicesod_reset, &
@@ -504,6 +530,8 @@ attributes (host) SUBROUTINE sod_reset_host_gpu( userSubroutine, set, &
     & opDat14Devicesod_reset, &
     & opDat5Host, &
     & opArg12%dim, &
+    & ind_sizes, &
+    & ind_offs, &
     & pblkMap, &
     & poffset,pnelems,pnthrcol,pthrcol, &
     & set%setPtr%size+set%setPtr%exec_size, blockOffset)

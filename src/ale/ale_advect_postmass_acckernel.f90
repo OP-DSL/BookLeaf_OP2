@@ -192,6 +192,7 @@ indirectionDescriptorArray(6) = 0
 
 exec_size = opSetCore%size + opSetCore%exec_size
 numberOfIndirectOpDats = 1
+partitionSize = 0
 
 planRet_ale_advect_postmass = FortranPlanCaller( &
 & userSubroutine//C_NULL_CHAR, &

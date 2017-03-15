@@ -449,6 +449,7 @@ indirectionDescriptorArray(28) = -1
 
 exec_size = opSetCore%size + opSetCore%exec_size
 numberOfIndirectOpDats = 2
+partitionSize = 0
 
 planRet_write_regvalues = FortranPlanCaller( &
 & userSubroutine//C_NULL_CHAR, &

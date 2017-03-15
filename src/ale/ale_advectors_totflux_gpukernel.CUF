@@ -69,6 +69,13 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_totflux( &
   & opDat2Deviceale_advectors_totflux, &
   & opDat2Map, &
   & opDat1Deviceale_advectors_totflux, &
+  & ind_maps2, &
+  & mappingArray2, &
+  & mappingArray3, &
+  & mappingArray4, &
+  & mappingArray5, &
+  & ind_sizes, &
+  & ind_offs, &
   & pblkMap, &
   & poffset, &
   & pnelems, &
@@ -86,6 +93,15 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_totflux( &
 
   INTEGER(kind=4) map2idx, map3idx, map4idx, map5idx
 
+  INTEGER(kind=4), DIMENSION(0:*), DEVICE :: ind_maps2
+
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray2
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray3
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray4
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray5
+
+  INTEGER(kind=4), DIMENSION(0:*), DEVICE :: ind_sizes
+  INTEGER(kind=4), DIMENSION(0:*), DEVICE :: ind_offs
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pblkMap
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: poffset
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pnelems
@@ -94,11 +110,19 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_totflux( &
   INTEGER(kind=4), VALUE :: blockOffset
   INTEGER(kind=4), VALUE :: setSize
 
+  INTEGER(kind=4) :: opDat2SharedMap
   real(8) :: opDat2Local
+  INTEGER(kind=4) :: opDat3SharedMap
   real(8) :: opDat3Local
+  INTEGER(kind=4) :: opDat4SharedMap
   real(8) :: opDat4Local
+  INTEGER(kind=4) :: opDat5SharedMap
   real(8) :: opDat5Local
 
+  REAL(kind=8), DIMENSION(0:*), SHARED :: sharedFloat8
+
+  INTEGER(kind=4), SHARED :: ind_maps2offset
+  INTEGER(kind=4), SHARED :: ind_maps2size
   INTEGER(kind=4), SHARED :: numOfColours
   INTEGER(kind=4), SHARED :: numberOfActiveThreadsCeiling
   INTEGER(kind=4), SHARED :: blockID
@@ -108,6 +132,9 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_totflux( &
   INTEGER(kind=4) :: colour2
   INTEGER(kind=4) :: n1
   INTEGER(kind=4) :: i3
+  INTEGER(kind=4) :: opDat2nBytes
+  INTEGER(kind=4), SHARED :: opDat2RoundUp
+  INTEGER(kind=4) moduloResult
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
 
@@ -118,11 +145,28 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_totflux( &
     numberOfActiveThreadsCeiling = blockDim%x * (1 + (numberOfActiveThreads - 1) / blockDim%x)
     numOfColours = pnthrcol(blockID)
     threadBlockOffset = poffset(blockID)
+    ind_maps2offset = ind_offs (0 + blockID * 1)
+    ind_maps2size   = ind_sizes(0 + blockID * 1)
+    opDat2RoundUp = ind_maps2size * (1)
+    opDat2RoundUp = opDat2RoundUp + MOD(opDat2RoundUp,2)
 
   END IF
 
   CALL syncthreads()
 
+  opDat2nBytes = 0
+
+
+  i1 = threadIdx%x - 1
+  DO WHILE (i1 < ind_maps2size )
+    DO i2 = 0, 1 - 1, 1
+      sharedFloat8(opDat2nBytes + i2 + i1 * (1)) = 0
+    END DO
+    i1 = i1 + blockDim%x
+  END DO
+
+
+  CALL syncthreads()
 
   i1 = threadIdx%x - 1
 
@@ -150,28 +194,44 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_totflux( &
 
       colour2 = pthrcol(i1 + threadBlockOffset)
     END IF
+
+    IF (colour2 .GE. 0) THEN
+      opDat2SharedMap = mappingArray2(i1 + threadBlockOffset)
+      opDat3SharedMap = mappingArray3(i1 + threadBlockOffset)
+      opDat4SharedMap = mappingArray4(i1 + threadBlockOffset)
+      opDat5SharedMap = mappingArray5(i1 + threadBlockOffset)
+    END IF
+
     DO colour1 = 0, numOfColours - 1, 1
       IF (colour2 .EQ. colour1) THEN
-        opDat2Deviceale_advectors_totflux(1 + map2idx * (1)) = &
-        & opDat2Deviceale_advectors_totflux(1 + map2idx * (1)) + opDat2Local
+        sharedFloat8(opDat2nBytes + (0 + opDat2SharedMap * (1))) = &
+        & sharedFloat8(opDat2nBytes + (0 + opDat2SharedMap * (1))) + opDat2Local
 
-        opDat2Deviceale_advectors_totflux(1 + map3idx * (1)) = &
-        & opDat2Deviceale_advectors_totflux(1 + map3idx * (1)) + opDat3Local
+        sharedFloat8(opDat2nBytes + (0 + opDat3SharedMap * (1))) = &
+        & sharedFloat8(opDat2nBytes + (0 + opDat3SharedMap * (1))) + opDat3Local
 
-        opDat2Deviceale_advectors_totflux(1 + map4idx * (1)) = &
-        & opDat2Deviceale_advectors_totflux(1 + map4idx * (1)) + opDat4Local
+        sharedFloat8(opDat2nBytes + (0 + opDat4SharedMap * (1))) = &
+        & sharedFloat8(opDat2nBytes + (0 + opDat4SharedMap * (1))) + opDat4Local
 
-        opDat2Deviceale_advectors_totflux(1 + map5idx * (1)) = &
-        & opDat2Deviceale_advectors_totflux(1 + map5idx * (1)) + opDat5Local
+        sharedFloat8(opDat2nBytes + (0 + opDat5SharedMap * (1))) = &
+        & sharedFloat8(opDat2nBytes + (0 + opDat5SharedMap * (1))) + opDat5Local
 
       END IF
-      IF (colour1 .NE. numOfColours-1) THEN
-        CALL syncthreads()
-      END IF
+      CALL syncthreads()
     END DO
     i1 = i1 + blockDim%x
   END DO
 
+  i1 = threadIdx%x - 1
+  DO WHILE (i1 < ind_maps2size * (1) )
+    moduloResult = mod(i1,1)
+    opDat2Deviceale_advectors_totflux(moduloResult + ind_maps2 &
+    & (ind_maps2offset + i1 / (1)) * (1) + 1) = &
+    & opDat2Deviceale_advectors_totflux(moduloResult + ind_maps2 &
+    & (ind_maps2offset + i1 / (1)) * (1) + 1) + &
+    & sharedFloat8(opDat2nBytes + i1)
+    i1 = i1 + blockDim%x
+  END DO
 
 
 END SUBROUTINE
@@ -256,6 +316,18 @@ attributes (host) SUBROUTINE ale_advectors_totflux_host_gpu( userSubroutine, set
 
   INTEGER(kind=4) :: numberOfIndirectOpDats
   INTEGER(kind=4) :: blockOffset
+  INTEGER(kind=4), DEVICE, POINTER, DIMENSION(:) :: ind_maps2
+
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray2
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray3
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray4
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray5
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: ind_offs
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: ind_sizes
+  INTEGER(kind=4), POINTER, DIMENSION(:) :: pnindirect
+  INTEGER(kind=4), POINTER, DIMENSION(:) :: nsharedCol
+  TYPE ( c_ptr ), POINTER, DIMENSION(:) :: mappingArray
+  TYPE ( c_ptr ), POINTER, DIMENSION(:) :: ind_maps
   INTEGER(kind=4) :: pblkMapSize
   INTEGER(kind=4) :: poffsetSize
   INTEGER(kind=4) :: pnelemsSize
@@ -315,7 +387,7 @@ attributes (host) SUBROUTINE ale_advectors_totflux_host_gpu( userSubroutine, set
   & numberOfOpDats, &
   & opArgArray, &
   & numberOfIndirectOpDats, &
-  & indirectionDescriptorArray,2)
+  & indirectionDescriptorArray,1)
 
   opDat2Cardinality = opArg2%dim * getSetSizeFromOpArg(opArg2)
   opMap2Cardinality = set%setPtr%size * getMapDimFromOpArg(opArg2)
@@ -338,6 +410,19 @@ attributes (host) SUBROUTINE ale_advectors_totflux_host_gpu( userSubroutine, set
   CALL c_f_pointer(actualPlan_ale_advectors_totflux%nthrcol,pnthrcol,(/pnthrcolSize/))
   pthrcolSize = set%setPtr%size
   CALL c_f_pointer(actualPlan_ale_advectors_totflux%thrcol,pthrcol,(/pthrcolSize/))
+  CALL c_f_pointer(actualPlan_ale_advectors_totflux%nsharedCol,nsharedCol,(/actualPlan_ale_advectors_totflux%ncolors_core/))
+  CALL c_f_pointer(actualPlan_ale_advectors_totflux%nindirect,pnindirect,(/actualPlan_ale_advectors_totflux%ninds_staged/))
+  CALL c_f_pointer(actualPlan_ale_advectors_totflux%ind_maps,ind_maps,(/actualPlan_ale_advectors_totflux%ninds_staged/))
+  CALL c_f_pointer(actualPlan_ale_advectors_totflux%maps,mappingArray,(/numberOfOpDats/))
+  CALL c_f_pointer(actualPlan_ale_advectors_totflux%ind_sizes,ind_sizes,(/actualPlan_ale_advectors_totflux%nblocks * actualPlan_ale_advectors_totflux%ninds_staged/))
+  CALL c_f_pointer(actualPlan_ale_advectors_totflux%ind_offs,ind_offs,(/actualPlan_ale_advectors_totflux%nblocks * actualPlan_ale_advectors_totflux%ninds_staged/))
+
+  CALL c_f_pointer(ind_maps(1),ind_maps2,(/pnindirect(1)/))
+  CALL c_f_pointer(mappingArray(2),mappingArray2,(/set%setPtr%size/))
+  CALL c_f_pointer(mappingArray(3),mappingArray3,(/set%setPtr%size/))
+  CALL c_f_pointer(mappingArray(4),mappingArray4,(/set%setPtr%size/))
+  CALL c_f_pointer(mappingArray(5),mappingArray5,(/set%setPtr%size/))
+
 
 
   blockOffset = 0
@@ -349,12 +434,19 @@ attributes (host) SUBROUTINE ale_advectors_totflux_host_gpu( userSubroutine, set
     END IF
 
     blocksPerGrid = ncolblk(i2 + 1)
-    dynamicSharedMemorySize = reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock
+    dynamicSharedMemorySize = MAX(reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock, nsharedCol(1+i2))
 
     CALL op_cuda_ale_advectors_totflux <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>> (&
     & opDat2Deviceale_advectors_totflux, &
     & opMap2Deviceale_advectors_totflux, &
     & opDat1Deviceale_advectors_totflux, &
+    & ind_maps2, &
+    & mappingArray2, &
+    & mappingArray3, &
+    & mappingArray4, &
+    & mappingArray5, &
+    & ind_sizes, &
+    & ind_offs, &
     & pblkMap, &
     & poffset,pnelems,pnthrcol,pthrcol, &
     & set%setPtr%size+set%setPtr%exec_size, blockOffset)

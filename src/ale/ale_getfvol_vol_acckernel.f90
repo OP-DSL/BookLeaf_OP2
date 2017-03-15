@@ -334,6 +334,7 @@ indirectionDescriptorArray(18) = -1
 
 exec_size = opSetCore%size + opSetCore%exec_size
 numberOfIndirectOpDats = 4
+partitionSize = 0
 
 planRet_ale_getfvol_vol = FortranPlanCaller( &
 & userSubroutine//C_NULL_CHAR, &

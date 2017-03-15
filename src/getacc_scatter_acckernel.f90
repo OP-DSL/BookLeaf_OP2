@@ -372,6 +372,7 @@ indirectionDescriptorArray(21) = 3
 
 exec_size = opSetCore%size + opSetCore%exec_size
 numberOfIndirectOpDats = 4
+partitionSize = 0
 
 planRet_getacc_scatter = FortranPlanCaller( &
 & userSubroutine//C_NULL_CHAR, &

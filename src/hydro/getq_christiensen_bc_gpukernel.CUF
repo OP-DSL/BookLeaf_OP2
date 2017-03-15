@@ -142,6 +142,8 @@ attributes (global) SUBROUTINE op_cuda_getq_christiensen_bc( &
   & opDat2Devicegetq_christiensen_bc, &
   & opDat3Devicegetq_christiensen_bc, &
   & opGblDat8Devicegetq_christiensen_bc,   &
+  & ind_sizes, &
+  & ind_offs, &
   & pblkMap, &
   & poffset, &
   & pnelems, &
@@ -162,6 +164,10 @@ attributes (global) SUBROUTINE op_cuda_getq_christiensen_bc( &
   integer(4), VALUE :: opGblDat8Devicegetq_christiensen_bc
   INTEGER(kind=4) map4idx, map5idx, map6idx, map7idx
 
+
+
+  INTEGER(kind=4), DIMENSION(0:*), DEVICE :: ind_sizes
+  INTEGER(kind=4), DIMENSION(0:*), DEVICE :: ind_offs
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pblkMap
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: poffset
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pnelems
@@ -170,6 +176,8 @@ attributes (global) SUBROUTINE op_cuda_getq_christiensen_bc( &
   INTEGER(kind=4), VALUE :: blockOffset
   INTEGER(kind=4), VALUE :: setSize
 
+
+  INTEGER(kind=4), DIMENSION(0:*), SHARED :: sharedInt8
 
   INTEGER(kind=4), SHARED :: numOfColours
   INTEGER(kind=4), SHARED :: numberOfActiveThreadsCeiling
@@ -195,6 +203,9 @@ attributes (global) SUBROUTINE op_cuda_getq_christiensen_bc( &
 
   CALL syncthreads()
 
+
+
+  CALL syncthreads()
 
   i1 = threadIdx%x - 1
 
@@ -326,6 +337,13 @@ attributes (host) SUBROUTINE getq_christiensen_bc_host_gpu( userSubroutine, set,
 
   INTEGER(kind=4) :: numberOfIndirectOpDats
   INTEGER(kind=4) :: blockOffset
+
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: ind_offs
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: ind_sizes
+  INTEGER(kind=4), POINTER, DIMENSION(:) :: pnindirect
+  INTEGER(kind=4), POINTER, DIMENSION(:) :: nsharedCol
+  TYPE ( c_ptr ), POINTER, DIMENSION(:) :: mappingArray
+  TYPE ( c_ptr ), POINTER, DIMENSION(:) :: ind_maps
   INTEGER(kind=4) :: pblkMapSize
   INTEGER(kind=4) :: poffsetSize
   INTEGER(kind=4) :: pnelemsSize
@@ -392,7 +410,7 @@ attributes (host) SUBROUTINE getq_christiensen_bc_host_gpu( userSubroutine, set,
   & numberOfOpDats, &
   & opArgArray, &
   & numberOfIndirectOpDats, &
-  & indirectionDescriptorArray,2)
+  & indirectionDescriptorArray,1)
 
   opDat4Cardinality = opArg4%dim * getSetSizeFromOpArg(opArg4)
   opMap4Cardinality = set%setPtr%size * getMapDimFromOpArg(opArg4)
@@ -421,6 +439,14 @@ attributes (host) SUBROUTINE getq_christiensen_bc_host_gpu( userSubroutine, set,
   CALL c_f_pointer(actualPlan_getq_christiensen_bc%nthrcol,pnthrcol,(/pnthrcolSize/))
   pthrcolSize = set%setPtr%size
   CALL c_f_pointer(actualPlan_getq_christiensen_bc%thrcol,pthrcol,(/pthrcolSize/))
+  CALL c_f_pointer(actualPlan_getq_christiensen_bc%nsharedCol,nsharedCol,(/actualPlan_getq_christiensen_bc%ncolors_core/))
+  CALL c_f_pointer(actualPlan_getq_christiensen_bc%nindirect,pnindirect,(/actualPlan_getq_christiensen_bc%ninds_staged/))
+  CALL c_f_pointer(actualPlan_getq_christiensen_bc%ind_maps,ind_maps,(/actualPlan_getq_christiensen_bc%ninds_staged/))
+  CALL c_f_pointer(actualPlan_getq_christiensen_bc%maps,mappingArray,(/numberOfOpDats/))
+  CALL c_f_pointer(actualPlan_getq_christiensen_bc%ind_sizes,ind_sizes,(/actualPlan_getq_christiensen_bc%nblocks * actualPlan_getq_christiensen_bc%ninds_staged/))
+  CALL c_f_pointer(actualPlan_getq_christiensen_bc%ind_offs,ind_offs,(/actualPlan_getq_christiensen_bc%nblocks * actualPlan_getq_christiensen_bc%ninds_staged/))
+
+
 
 
   blockOffset = 0
@@ -432,7 +458,7 @@ attributes (host) SUBROUTINE getq_christiensen_bc_host_gpu( userSubroutine, set,
     END IF
 
     blocksPerGrid = ncolblk(i2 + 1)
-    dynamicSharedMemorySize = reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock
+    dynamicSharedMemorySize = MAX(reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock, nsharedCol(1+i2))
 
     CALL op_cuda_getq_christiensen_bc <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>> (&
     & opDat4Devicegetq_christiensen_bc, &
@@ -441,6 +467,8 @@ attributes (host) SUBROUTINE getq_christiensen_bc_host_gpu( userSubroutine, set,
     & opDat2Devicegetq_christiensen_bc, &
     & opDat3Devicegetq_christiensen_bc, &
     & opDat8Host, &
+    & ind_sizes, &
+    & ind_offs, &
     & pblkMap, &
     & poffset,pnelems,pnthrcol,pthrcol, &
     & set%setPtr%size+set%setPtr%exec_size, blockOffset)

@@ -214,6 +214,28 @@ attributes (global) SUBROUTINE op_cuda_getacc_scatter( &
   & opDat3Devicegetacc_scatter, &
   & opDat4Devicegetacc_scatter, &
   & opDat5Devicegetacc_scatter, &
+  & ind_maps6, &
+  & ind_maps10, &
+  & ind_maps14, &
+  & ind_maps18, &
+  & mappingArray6, &
+  & mappingArray7, &
+  & mappingArray8, &
+  & mappingArray9, &
+  & mappingArray10, &
+  & mappingArray11, &
+  & mappingArray12, &
+  & mappingArray13, &
+  & mappingArray14, &
+  & mappingArray15, &
+  & mappingArray16, &
+  & mappingArray17, &
+  & mappingArray18, &
+  & mappingArray19, &
+  & mappingArray20, &
+  & mappingArray21, &
+  & ind_sizes, &
+  & ind_offs, &
   & pblkMap, &
   & poffset, &
   & pnelems, &
@@ -238,6 +260,30 @@ attributes (global) SUBROUTINE op_cuda_getacc_scatter( &
 
   INTEGER(kind=4) map6idx, map7idx, map8idx, map9idx
 
+  INTEGER(kind=4), DIMENSION(0:*), DEVICE :: ind_maps6
+  INTEGER(kind=4), DIMENSION(0:*), DEVICE :: ind_maps10
+  INTEGER(kind=4), DIMENSION(0:*), DEVICE :: ind_maps14
+  INTEGER(kind=4), DIMENSION(0:*), DEVICE :: ind_maps18
+
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray6
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray7
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray8
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray9
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray10
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray11
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray12
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray13
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray14
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray15
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray16
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray17
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray18
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray19
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray20
+  INTEGER(kind=2), DIMENSION(0:*), DEVICE :: mappingArray21
+
+  INTEGER(kind=4), DIMENSION(0:*), DEVICE :: ind_sizes
+  INTEGER(kind=4), DIMENSION(0:*), DEVICE :: ind_offs
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pblkMap
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: poffset
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pnelems
@@ -246,23 +292,49 @@ attributes (global) SUBROUTINE op_cuda_getacc_scatter( &
   INTEGER(kind=4), VALUE :: blockOffset
   INTEGER(kind=4), VALUE :: setSize
 
+  INTEGER(kind=4) :: opDat6SharedMap
   real(8) :: opDat6Local
+  INTEGER(kind=4) :: opDat7SharedMap
   real(8) :: opDat7Local
+  INTEGER(kind=4) :: opDat8SharedMap
   real(8) :: opDat8Local
+  INTEGER(kind=4) :: opDat9SharedMap
   real(8) :: opDat9Local
+  INTEGER(kind=4) :: opDat10SharedMap
   real(8) :: opDat10Local
+  INTEGER(kind=4) :: opDat11SharedMap
   real(8) :: opDat11Local
+  INTEGER(kind=4) :: opDat12SharedMap
   real(8) :: opDat12Local
+  INTEGER(kind=4) :: opDat13SharedMap
   real(8) :: opDat13Local
+  INTEGER(kind=4) :: opDat14SharedMap
   real(8) :: opDat14Local
+  INTEGER(kind=4) :: opDat15SharedMap
   real(8) :: opDat15Local
+  INTEGER(kind=4) :: opDat16SharedMap
   real(8) :: opDat16Local
+  INTEGER(kind=4) :: opDat17SharedMap
   real(8) :: opDat17Local
+  INTEGER(kind=4) :: opDat18SharedMap
   real(8) :: opDat18Local
+  INTEGER(kind=4) :: opDat19SharedMap
   real(8) :: opDat19Local
+  INTEGER(kind=4) :: opDat20SharedMap
   real(8) :: opDat20Local
+  INTEGER(kind=4) :: opDat21SharedMap
   real(8) :: opDat21Local
 
+  REAL(kind=8), DIMENSION(0:*), SHARED :: sharedFloat8
+
+  INTEGER(kind=4), SHARED :: ind_maps6offset
+  INTEGER(kind=4), SHARED :: ind_maps6size
+  INTEGER(kind=4), SHARED :: ind_maps10offset
+  INTEGER(kind=4), SHARED :: ind_maps10size
+  INTEGER(kind=4), SHARED :: ind_maps14offset
+  INTEGER(kind=4), SHARED :: ind_maps14size
+  INTEGER(kind=4), SHARED :: ind_maps18offset
+  INTEGER(kind=4), SHARED :: ind_maps18size
   INTEGER(kind=4), SHARED :: numOfColours
   INTEGER(kind=4), SHARED :: numberOfActiveThreadsCeiling
   INTEGER(kind=4), SHARED :: blockID
@@ -272,6 +344,15 @@ attributes (global) SUBROUTINE op_cuda_getacc_scatter( &
   INTEGER(kind=4) :: colour2
   INTEGER(kind=4) :: n1
   INTEGER(kind=4) :: i3
+  INTEGER(kind=4) :: opDat6nBytes
+  INTEGER(kind=4) :: opDat10nBytes
+  INTEGER(kind=4) :: opDat14nBytes
+  INTEGER(kind=4) :: opDat18nBytes
+  INTEGER(kind=4), SHARED :: opDat6RoundUp
+  INTEGER(kind=4), SHARED :: opDat10RoundUp
+  INTEGER(kind=4), SHARED :: opDat14RoundUp
+  INTEGER(kind=4), SHARED :: opDat18RoundUp
+  INTEGER(kind=4) moduloResult
   INTEGER(kind=4) :: i1
   INTEGER(kind=4) :: i2
 
@@ -282,11 +363,70 @@ attributes (global) SUBROUTINE op_cuda_getacc_scatter( &
     numberOfActiveThreadsCeiling = blockDim%x * (1 + (numberOfActiveThreads - 1) / blockDim%x)
     numOfColours = pnthrcol(blockID)
     threadBlockOffset = poffset(blockID)
+    ind_maps6offset = ind_offs (0 + blockID * 4)
+    ind_maps6size   = ind_sizes(0 + blockID * 4)
+    ind_maps10offset = ind_offs (1 + blockID * 4)
+    ind_maps10size   = ind_sizes(1 + blockID * 4)
+    ind_maps14offset = ind_offs (2 + blockID * 4)
+    ind_maps14size   = ind_sizes(2 + blockID * 4)
+    ind_maps18offset = ind_offs (3 + blockID * 4)
+    ind_maps18size   = ind_sizes(3 + blockID * 4)
+    opDat6RoundUp = ind_maps6size * (1)
+    opDat6RoundUp = opDat6RoundUp + MOD(opDat6RoundUp,2)
+    opDat10RoundUp = ind_maps10size * (1)
+    opDat10RoundUp = opDat10RoundUp + MOD(opDat10RoundUp,2)
+    opDat14RoundUp = ind_maps14size * (1)
+    opDat14RoundUp = opDat14RoundUp + MOD(opDat14RoundUp,2)
+    opDat18RoundUp = ind_maps18size * (1)
+    opDat18RoundUp = opDat18RoundUp + MOD(opDat18RoundUp,2)
 
   END IF
 
   CALL syncthreads()
 
+  opDat6nBytes = 0
+  opDat10nBytes = opDat6nBytes * 8 / 8 + opDat6RoundUp * 8 / 8
+  opDat14nBytes = opDat10nBytes * 8 / 8 + opDat10RoundUp * 8 / 8
+  opDat18nBytes = opDat14nBytes * 8 / 8 + opDat14RoundUp * 8 / 8
+
+
+  i1 = threadIdx%x - 1
+  DO WHILE (i1 < ind_maps6size )
+    DO i2 = 0, 1 - 1, 1
+      sharedFloat8(opDat6nBytes + i2 + i1 * (1)) = 0
+    END DO
+    i1 = i1 + blockDim%x
+  END DO
+
+
+  i1 = threadIdx%x - 1
+  DO WHILE (i1 < ind_maps10size )
+    DO i2 = 0, 1 - 1, 1
+      sharedFloat8(opDat10nBytes + i2 + i1 * (1)) = 0
+    END DO
+    i1 = i1 + blockDim%x
+  END DO
+
+
+  i1 = threadIdx%x - 1
+  DO WHILE (i1 < ind_maps14size )
+    DO i2 = 0, 1 - 1, 1
+      sharedFloat8(opDat14nBytes + i2 + i1 * (1)) = 0
+    END DO
+    i1 = i1 + blockDim%x
+  END DO
+
+
+  i1 = threadIdx%x - 1
+  DO WHILE (i1 < ind_maps18size )
+    DO i2 = 0, 1 - 1, 1
+      sharedFloat8(opDat18nBytes + i2 + i1 * (1)) = 0
+    END DO
+    i1 = i1 + blockDim%x
+  END DO
+
+
+  CALL syncthreads()
 
   i1 = threadIdx%x - 1
 
@@ -342,64 +482,122 @@ attributes (global) SUBROUTINE op_cuda_getacc_scatter( &
 
       colour2 = pthrcol(i1 + threadBlockOffset)
     END IF
+
+    IF (colour2 .GE. 0) THEN
+      opDat6SharedMap = mappingArray6(i1 + threadBlockOffset)
+      opDat7SharedMap = mappingArray7(i1 + threadBlockOffset)
+      opDat8SharedMap = mappingArray8(i1 + threadBlockOffset)
+      opDat9SharedMap = mappingArray9(i1 + threadBlockOffset)
+      opDat10SharedMap = mappingArray10(i1 + threadBlockOffset)
+      opDat11SharedMap = mappingArray11(i1 + threadBlockOffset)
+      opDat12SharedMap = mappingArray12(i1 + threadBlockOffset)
+      opDat13SharedMap = mappingArray13(i1 + threadBlockOffset)
+      opDat14SharedMap = mappingArray14(i1 + threadBlockOffset)
+      opDat15SharedMap = mappingArray15(i1 + threadBlockOffset)
+      opDat16SharedMap = mappingArray16(i1 + threadBlockOffset)
+      opDat17SharedMap = mappingArray17(i1 + threadBlockOffset)
+      opDat18SharedMap = mappingArray18(i1 + threadBlockOffset)
+      opDat19SharedMap = mappingArray19(i1 + threadBlockOffset)
+      opDat20SharedMap = mappingArray20(i1 + threadBlockOffset)
+      opDat21SharedMap = mappingArray21(i1 + threadBlockOffset)
+    END IF
+
     DO colour1 = 0, numOfColours - 1, 1
       IF (colour2 .EQ. colour1) THEN
-        opDat6Devicegetacc_scatter(1 + map6idx * (1)) = &
-        & opDat6Devicegetacc_scatter(1 + map6idx * (1)) + opDat6Local
+        sharedFloat8(opDat6nBytes + (0 + opDat6SharedMap * (1))) = &
+        & sharedFloat8(opDat6nBytes + (0 + opDat6SharedMap * (1))) + opDat6Local
 
-        opDat6Devicegetacc_scatter(1 + map7idx * (1)) = &
-        & opDat6Devicegetacc_scatter(1 + map7idx * (1)) + opDat7Local
+        sharedFloat8(opDat6nBytes + (0 + opDat7SharedMap * (1))) = &
+        & sharedFloat8(opDat6nBytes + (0 + opDat7SharedMap * (1))) + opDat7Local
 
-        opDat6Devicegetacc_scatter(1 + map8idx * (1)) = &
-        & opDat6Devicegetacc_scatter(1 + map8idx * (1)) + opDat8Local
+        sharedFloat8(opDat6nBytes + (0 + opDat8SharedMap * (1))) = &
+        & sharedFloat8(opDat6nBytes + (0 + opDat8SharedMap * (1))) + opDat8Local
 
-        opDat6Devicegetacc_scatter(1 + map9idx * (1)) = &
-        & opDat6Devicegetacc_scatter(1 + map9idx * (1)) + opDat9Local
+        sharedFloat8(opDat6nBytes + (0 + opDat9SharedMap * (1))) = &
+        & sharedFloat8(opDat6nBytes + (0 + opDat9SharedMap * (1))) + opDat9Local
 
-        opDat10Devicegetacc_scatter(1 + map6idx * (1)) = &
-        & opDat10Devicegetacc_scatter(1 + map6idx * (1)) + opDat10Local
+        sharedFloat8(opDat10nBytes + (0 + opDat10SharedMap * (1))) = &
+        & sharedFloat8(opDat10nBytes + (0 + opDat10SharedMap * (1))) + opDat10Local
 
-        opDat10Devicegetacc_scatter(1 + map7idx * (1)) = &
-        & opDat10Devicegetacc_scatter(1 + map7idx * (1)) + opDat11Local
+        sharedFloat8(opDat10nBytes + (0 + opDat11SharedMap * (1))) = &
+        & sharedFloat8(opDat10nBytes + (0 + opDat11SharedMap * (1))) + opDat11Local
 
-        opDat10Devicegetacc_scatter(1 + map8idx * (1)) = &
-        & opDat10Devicegetacc_scatter(1 + map8idx * (1)) + opDat12Local
+        sharedFloat8(opDat10nBytes + (0 + opDat12SharedMap * (1))) = &
+        & sharedFloat8(opDat10nBytes + (0 + opDat12SharedMap * (1))) + opDat12Local
 
-        opDat10Devicegetacc_scatter(1 + map9idx * (1)) = &
-        & opDat10Devicegetacc_scatter(1 + map9idx * (1)) + opDat13Local
+        sharedFloat8(opDat10nBytes + (0 + opDat13SharedMap * (1))) = &
+        & sharedFloat8(opDat10nBytes + (0 + opDat13SharedMap * (1))) + opDat13Local
 
-        opDat14Devicegetacc_scatter(1 + map6idx * (1)) = &
-        & opDat14Devicegetacc_scatter(1 + map6idx * (1)) + opDat14Local
+        sharedFloat8(opDat14nBytes + (0 + opDat14SharedMap * (1))) = &
+        & sharedFloat8(opDat14nBytes + (0 + opDat14SharedMap * (1))) + opDat14Local
 
-        opDat14Devicegetacc_scatter(1 + map7idx * (1)) = &
-        & opDat14Devicegetacc_scatter(1 + map7idx * (1)) + opDat15Local
+        sharedFloat8(opDat14nBytes + (0 + opDat15SharedMap * (1))) = &
+        & sharedFloat8(opDat14nBytes + (0 + opDat15SharedMap * (1))) + opDat15Local
 
-        opDat14Devicegetacc_scatter(1 + map8idx * (1)) = &
-        & opDat14Devicegetacc_scatter(1 + map8idx * (1)) + opDat16Local
+        sharedFloat8(opDat14nBytes + (0 + opDat16SharedMap * (1))) = &
+        & sharedFloat8(opDat14nBytes + (0 + opDat16SharedMap * (1))) + opDat16Local
 
-        opDat14Devicegetacc_scatter(1 + map9idx * (1)) = &
-        & opDat14Devicegetacc_scatter(1 + map9idx * (1)) + opDat17Local
+        sharedFloat8(opDat14nBytes + (0 + opDat17SharedMap * (1))) = &
+        & sharedFloat8(opDat14nBytes + (0 + opDat17SharedMap * (1))) + opDat17Local
 
-        opDat18Devicegetacc_scatter(1 + map6idx * (1)) = &
-        & opDat18Devicegetacc_scatter(1 + map6idx * (1)) + opDat18Local
+        sharedFloat8(opDat18nBytes + (0 + opDat18SharedMap * (1))) = &
+        & sharedFloat8(opDat18nBytes + (0 + opDat18SharedMap * (1))) + opDat18Local
 
-        opDat18Devicegetacc_scatter(1 + map7idx * (1)) = &
-        & opDat18Devicegetacc_scatter(1 + map7idx * (1)) + opDat19Local
+        sharedFloat8(opDat18nBytes + (0 + opDat19SharedMap * (1))) = &
+        & sharedFloat8(opDat18nBytes + (0 + opDat19SharedMap * (1))) + opDat19Local
 
-        opDat18Devicegetacc_scatter(1 + map8idx * (1)) = &
-        & opDat18Devicegetacc_scatter(1 + map8idx * (1)) + opDat20Local
+        sharedFloat8(opDat18nBytes + (0 + opDat20SharedMap * (1))) = &
+        & sharedFloat8(opDat18nBytes + (0 + opDat20SharedMap * (1))) + opDat20Local
 
-        opDat18Devicegetacc_scatter(1 + map9idx * (1)) = &
-        & opDat18Devicegetacc_scatter(1 + map9idx * (1)) + opDat21Local
+        sharedFloat8(opDat18nBytes + (0 + opDat21SharedMap * (1))) = &
+        & sharedFloat8(opDat18nBytes + (0 + opDat21SharedMap * (1))) + opDat21Local
 
       END IF
-      IF (colour1 .NE. numOfColours-1) THEN
-        CALL syncthreads()
-      END IF
+      CALL syncthreads()
     END DO
     i1 = i1 + blockDim%x
   END DO
 
+  i1 = threadIdx%x - 1
+  DO WHILE (i1 < ind_maps6size * (1) )
+    moduloResult = mod(i1,1)
+    opDat6Devicegetacc_scatter(moduloResult + ind_maps6 &
+    & (ind_maps6offset + i1 / (1)) * (1) + 1) = &
+    & opDat6Devicegetacc_scatter(moduloResult + ind_maps6 &
+    & (ind_maps6offset + i1 / (1)) * (1) + 1) + &
+    & sharedFloat8(opDat6nBytes + i1)
+    i1 = i1 + blockDim%x
+  END DO
+  i1 = threadIdx%x - 1
+  DO WHILE (i1 < ind_maps10size * (1) )
+    moduloResult = mod(i1,1)
+    opDat10Devicegetacc_scatter(moduloResult + ind_maps10 &
+    & (ind_maps10offset + i1 / (1)) * (1) + 1) = &
+    & opDat10Devicegetacc_scatter(moduloResult + ind_maps10 &
+    & (ind_maps10offset + i1 / (1)) * (1) + 1) + &
+    & sharedFloat8(opDat10nBytes + i1)
+    i1 = i1 + blockDim%x
+  END DO
+  i1 = threadIdx%x - 1
+  DO WHILE (i1 < ind_maps14size * (1) )
+    moduloResult = mod(i1,1)
+    opDat14Devicegetacc_scatter(moduloResult + ind_maps14 &
+    & (ind_maps14offset + i1 / (1)) * (1) + 1) = &
+    & opDat14Devicegetacc_scatter(moduloResult + ind_maps14 &
+    & (ind_maps14offset + i1 / (1)) * (1) + 1) + &
+    & sharedFloat8(opDat14nBytes + i1)
+    i1 = i1 + blockDim%x
+  END DO
+  i1 = threadIdx%x - 1
+  DO WHILE (i1 < ind_maps18size * (1) )
+    moduloResult = mod(i1,1)
+    opDat18Devicegetacc_scatter(moduloResult + ind_maps18 &
+    & (ind_maps18offset + i1 / (1)) * (1) + 1) = &
+    & opDat18Devicegetacc_scatter(moduloResult + ind_maps18 &
+    & (ind_maps18offset + i1 / (1)) * (1) + 1) + &
+    & sharedFloat8(opDat18nBytes + i1)
+    i1 = i1 + blockDim%x
+  END DO
 
 
 END SUBROUTINE
@@ -587,6 +785,33 @@ attributes (host) SUBROUTINE getacc_scatter_host_gpu( userSubroutine, set, &
 
   INTEGER(kind=4) :: numberOfIndirectOpDats
   INTEGER(kind=4) :: blockOffset
+  INTEGER(kind=4), DEVICE, POINTER, DIMENSION(:) :: ind_maps6
+  INTEGER(kind=4), DEVICE, POINTER, DIMENSION(:) :: ind_maps10
+  INTEGER(kind=4), DEVICE, POINTER, DIMENSION(:) :: ind_maps14
+  INTEGER(kind=4), DEVICE, POINTER, DIMENSION(:) :: ind_maps18
+
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray6
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray7
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray8
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray9
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray10
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray11
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray12
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray13
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray14
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray15
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray16
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray17
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray18
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray19
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray20
+  INTEGER(kind=2), DEVICE, POINTER, DIMENSION(:) :: mappingArray21
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: ind_offs
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: ind_sizes
+  INTEGER(kind=4), POINTER, DIMENSION(:) :: pnindirect
+  INTEGER(kind=4), POINTER, DIMENSION(:) :: nsharedCol
+  TYPE ( c_ptr ), POINTER, DIMENSION(:) :: mappingArray
+  TYPE ( c_ptr ), POINTER, DIMENSION(:) :: ind_maps
   INTEGER(kind=4) :: pblkMapSize
   INTEGER(kind=4) :: poffsetSize
   INTEGER(kind=4) :: pnelemsSize
@@ -678,7 +903,7 @@ attributes (host) SUBROUTINE getacc_scatter_host_gpu( userSubroutine, set, &
   & numberOfOpDats, &
   & opArgArray, &
   & numberOfIndirectOpDats, &
-  & indirectionDescriptorArray,2)
+  & indirectionDescriptorArray,1)
 
   opDat6Cardinality = opArg6%dim * getSetSizeFromOpArg(opArg6)
   opMap6Cardinality = set%setPtr%size * getMapDimFromOpArg(opArg6)
@@ -721,6 +946,34 @@ attributes (host) SUBROUTINE getacc_scatter_host_gpu( userSubroutine, set, &
   CALL c_f_pointer(actualPlan_getacc_scatter%nthrcol,pnthrcol,(/pnthrcolSize/))
   pthrcolSize = set%setPtr%size
   CALL c_f_pointer(actualPlan_getacc_scatter%thrcol,pthrcol,(/pthrcolSize/))
+  CALL c_f_pointer(actualPlan_getacc_scatter%nsharedCol,nsharedCol,(/actualPlan_getacc_scatter%ncolors_core/))
+  CALL c_f_pointer(actualPlan_getacc_scatter%nindirect,pnindirect,(/actualPlan_getacc_scatter%ninds_staged/))
+  CALL c_f_pointer(actualPlan_getacc_scatter%ind_maps,ind_maps,(/actualPlan_getacc_scatter%ninds_staged/))
+  CALL c_f_pointer(actualPlan_getacc_scatter%maps,mappingArray,(/numberOfOpDats/))
+  CALL c_f_pointer(actualPlan_getacc_scatter%ind_sizes,ind_sizes,(/actualPlan_getacc_scatter%nblocks * actualPlan_getacc_scatter%ninds_staged/))
+  CALL c_f_pointer(actualPlan_getacc_scatter%ind_offs,ind_offs,(/actualPlan_getacc_scatter%nblocks * actualPlan_getacc_scatter%ninds_staged/))
+
+  CALL c_f_pointer(ind_maps(1),ind_maps6,(/pnindirect(1)/))
+  CALL c_f_pointer(ind_maps(2),ind_maps10,(/pnindirect(2)/))
+  CALL c_f_pointer(ind_maps(3),ind_maps14,(/pnindirect(3)/))
+  CALL c_f_pointer(ind_maps(4),ind_maps18,(/pnindirect(4)/))
+  CALL c_f_pointer(mappingArray(6),mappingArray6,(/set%setPtr%size/))
+  CALL c_f_pointer(mappingArray(7),mappingArray7,(/set%setPtr%size/))
+  CALL c_f_pointer(mappingArray(8),mappingArray8,(/set%setPtr%size/))
+  CALL c_f_pointer(mappingArray(9),mappingArray9,(/set%setPtr%size/))
+  CALL c_f_pointer(mappingArray(10),mappingArray10,(/set%setPtr%size/))
+  CALL c_f_pointer(mappingArray(11),mappingArray11,(/set%setPtr%size/))
+  CALL c_f_pointer(mappingArray(12),mappingArray12,(/set%setPtr%size/))
+  CALL c_f_pointer(mappingArray(13),mappingArray13,(/set%setPtr%size/))
+  CALL c_f_pointer(mappingArray(14),mappingArray14,(/set%setPtr%size/))
+  CALL c_f_pointer(mappingArray(15),mappingArray15,(/set%setPtr%size/))
+  CALL c_f_pointer(mappingArray(16),mappingArray16,(/set%setPtr%size/))
+  CALL c_f_pointer(mappingArray(17),mappingArray17,(/set%setPtr%size/))
+  CALL c_f_pointer(mappingArray(18),mappingArray18,(/set%setPtr%size/))
+  CALL c_f_pointer(mappingArray(19),mappingArray19,(/set%setPtr%size/))
+  CALL c_f_pointer(mappingArray(20),mappingArray20,(/set%setPtr%size/))
+  CALL c_f_pointer(mappingArray(21),mappingArray21,(/set%setPtr%size/))
+
 
 
   blockOffset = 0
@@ -732,7 +985,7 @@ attributes (host) SUBROUTINE getacc_scatter_host_gpu( userSubroutine, set, &
     END IF
 
     blocksPerGrid = ncolblk(i2 + 1)
-    dynamicSharedMemorySize = reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock
+    dynamicSharedMemorySize = MAX(reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock, nsharedCol(1+i2))
 
     CALL op_cuda_getacc_scatter <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>> (&
     & opDat6Devicegetacc_scatter, &
@@ -745,6 +998,28 @@ attributes (host) SUBROUTINE getacc_scatter_host_gpu( userSubroutine, set, &
     & opDat3Devicegetacc_scatter, &
     & opDat4Devicegetacc_scatter, &
     & opDat5Devicegetacc_scatter, &
+    & ind_maps6, &
+    & ind_maps10, &
+    & ind_maps14, &
+    & ind_maps18, &
+    & mappingArray6, &
+    & mappingArray7, &
+    & mappingArray8, &
+    & mappingArray9, &
+    & mappingArray10, &
+    & mappingArray11, &
+    & mappingArray12, &
+    & mappingArray13, &
+    & mappingArray14, &
+    & mappingArray15, &
+    & mappingArray16, &
+    & mappingArray17, &
+    & mappingArray18, &
+    & mappingArray19, &
+    & mappingArray20, &
+    & mappingArray21, &
+    & ind_sizes, &
+    & ind_offs, &
     & pblkMap, &
     & poffset,pnelems,pnthrcol,pthrcol, &
     & set%setPtr%size+set%setPtr%exec_size, blockOffset)

@@ -297,6 +297,8 @@ attributes (device) subroutine write_regvalues_gpu(elvol,elmass,ein,pre, &    !4
     & reductionArrayDevice25,   &
     & reductionArrayDevice26,   &
     & opGblDat27Devicewrite_regvalues,   &
+    & ind_sizes, &
+    & ind_offs, &
     & pblkMap, &
     & poffset, &
     & pnelems, &
@@ -345,6 +347,10 @@ attributes (device) subroutine write_regvalues_gpu(elvol,elmass,ein,pre, &    !4
     integer(4), VALUE :: opGblDat27Devicewrite_regvalues
     INTEGER(kind=4) map8idx, map9idx, map10idx, map11idx
 
+
+
+    INTEGER(kind=4), DIMENSION(0:*), DEVICE :: ind_sizes
+    INTEGER(kind=4), DIMENSION(0:*), DEVICE :: ind_offs
     INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pblkMap
     INTEGER(kind=4), DIMENSION(0:*), DEVICE :: poffset
     INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pnelems
@@ -353,6 +359,8 @@ attributes (device) subroutine write_regvalues_gpu(elvol,elmass,ein,pre, &    !4
     INTEGER(kind=4), VALUE :: blockOffset
     INTEGER(kind=4), VALUE :: setSize
 
+
+    REAL(kind=8), DIMENSION(0:*), SHARED :: sharedFloat8
 
     INTEGER(kind=4), SHARED :: numOfColours
     INTEGER(kind=4), SHARED :: numberOfActiveThreadsCeiling
@@ -389,6 +397,9 @@ attributes (device) subroutine write_regvalues_gpu(elvol,elmass,ein,pre, &    !4
 
     CALL syncthreads()
 
+
+
+    CALL syncthreads()
 
     i1 = threadIdx%x - 1
 
@@ -677,6 +688,13 @@ attributes (device) subroutine write_regvalues_gpu(elvol,elmass,ein,pre, &    !4
 
     INTEGER(kind=4) :: numberOfIndirectOpDats
     INTEGER(kind=4) :: blockOffset
+
+    INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: ind_offs
+    INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: ind_sizes
+    INTEGER(kind=4), POINTER, DIMENSION(:) :: pnindirect
+    INTEGER(kind=4), POINTER, DIMENSION(:) :: nsharedCol
+    TYPE ( c_ptr ), POINTER, DIMENSION(:) :: mappingArray
+    TYPE ( c_ptr ), POINTER, DIMENSION(:) :: ind_maps
     INTEGER(kind=4) :: pblkMapSize
     INTEGER(kind=4) :: poffsetSize
     INTEGER(kind=4) :: pnelemsSize
@@ -816,7 +834,7 @@ attributes (device) subroutine write_regvalues_gpu(elvol,elmass,ein,pre, &    !4
     & numberOfOpDats, &
     & opArgArray, &
     & numberOfIndirectOpDats, &
-    & indirectionDescriptorArray,2)
+    & indirectionDescriptorArray,1)
 
     opDat8Cardinality = opArg8%dim * getSetSizeFromOpArg(opArg8)
     opMap8Cardinality = set%setPtr%size * getMapDimFromOpArg(opArg8)
@@ -881,6 +899,14 @@ attributes (device) subroutine write_regvalues_gpu(elvol,elmass,ein,pre, &    !4
     CALL c_f_pointer(actualPlan_write_regvalues%nthrcol,pnthrcol,(/pnthrcolSize/))
     pthrcolSize = set%setPtr%size
     CALL c_f_pointer(actualPlan_write_regvalues%thrcol,pthrcol,(/pthrcolSize/))
+    CALL c_f_pointer(actualPlan_write_regvalues%nsharedCol,nsharedCol,(/actualPlan_write_regvalues%ncolors_core/))
+    CALL c_f_pointer(actualPlan_write_regvalues%nindirect,pnindirect,(/actualPlan_write_regvalues%ninds_staged/))
+    CALL c_f_pointer(actualPlan_write_regvalues%ind_maps,ind_maps,(/actualPlan_write_regvalues%ninds_staged/))
+    CALL c_f_pointer(actualPlan_write_regvalues%maps,mappingArray,(/numberOfOpDats/))
+    CALL c_f_pointer(actualPlan_write_regvalues%ind_sizes,ind_sizes,(/actualPlan_write_regvalues%nblocks * actualPlan_write_regvalues%ninds_staged/))
+    CALL c_f_pointer(actualPlan_write_regvalues%ind_offs,ind_offs,(/actualPlan_write_regvalues%nblocks * actualPlan_write_regvalues%ninds_staged/))
+
+
 
     blocksPerGrid=0
     DO i2 = 0, actualPlan_write_regvalues%ncolors - 1, 1
@@ -1017,7 +1043,7 @@ attributes (device) subroutine write_regvalues_gpu(elvol,elmass,ein,pre, &    !4
       END IF
 
       blocksPerGrid = ncolblk(i2 + 1)
-      dynamicSharedMemorySize = reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock
+      dynamicSharedMemorySize = MAX(reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock, nsharedCol(1+i2))
 
       CALL op_cuda_write_regvalues <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>> (&
       & opDat8Devicewrite_regvalues, &
@@ -1043,6 +1069,8 @@ attributes (device) subroutine write_regvalues_gpu(elvol,elmass,ein,pre, &    !4
       & reductionArrayDevice25write_regvalues, &
       & reductionArrayDevice26write_regvalues, &
       & opDat27Host, &
+      & ind_sizes, &
+      & ind_offs, &
       & pblkMap, &
       & poffset,pnelems,pnthrcol,pthrcol, &
       & set%setPtr%size+set%setPtr%exec_size, blockOffset)

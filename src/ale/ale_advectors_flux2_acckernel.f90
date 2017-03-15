@@ -324,6 +324,7 @@ indirectionDescriptorArray(15) = -1
 
 exec_size = opSetCore%size + opSetCore%exec_size
 numberOfIndirectOpDats = 2
+partitionSize = 0
 
 planRet_ale_advectors_flux2 = FortranPlanCaller( &
 & userSubroutine//C_NULL_CHAR, &

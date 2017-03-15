@@ -240,6 +240,7 @@ indirectionDescriptorArray(8) = -1
 
 exec_size = opSetCore%size + opSetCore%exec_size
 numberOfIndirectOpDats = 1
+partitionSize = 0
 
 planRet_getq_christiensen_bc = FortranPlanCaller( &
 & userSubroutine//C_NULL_CHAR, &

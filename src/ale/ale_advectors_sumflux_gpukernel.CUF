@@ -108,6 +108,8 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_sumflux( &
   & opDat8Deviceale_advectors_sumflux, &
   & opDat9Deviceale_advectors_sumflux, &
   & opGblDat10Deviceale_advectors_sumflux,   &
+  & ind_sizes, &
+  & ind_offs, &
   & pblkMap, &
   & poffset, &
   & pnelems, &
@@ -130,6 +132,10 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_sumflux( &
   integer(4), VALUE :: opGblDat10Deviceale_advectors_sumflux
   INTEGER(kind=4) map2idx, map3idx, map4idx, map5idx
 
+
+
+  INTEGER(kind=4), DIMENSION(0:*), DEVICE :: ind_sizes
+  INTEGER(kind=4), DIMENSION(0:*), DEVICE :: ind_offs
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pblkMap
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: poffset
   INTEGER(kind=4), DIMENSION(0:*), DEVICE :: pnelems
@@ -138,6 +144,8 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_sumflux( &
   INTEGER(kind=4), VALUE :: blockOffset
   INTEGER(kind=4), VALUE :: setSize
 
+
+  REAL(kind=8), DIMENSION(0:*), SHARED :: sharedFloat8
 
   INTEGER(kind=4), SHARED :: numOfColours
   INTEGER(kind=4), SHARED :: numberOfActiveThreadsCeiling
@@ -163,6 +171,9 @@ attributes (global) SUBROUTINE op_cuda_ale_advectors_sumflux( &
 
   CALL syncthreads()
 
+
+
+  CALL syncthreads()
 
   i1 = threadIdx%x - 1
 
@@ -310,6 +321,13 @@ attributes (host) SUBROUTINE ale_advectors_sumflux_host_gpu( userSubroutine, set
 
   INTEGER(kind=4) :: numberOfIndirectOpDats
   INTEGER(kind=4) :: blockOffset
+
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: ind_offs
+  INTEGER(kind=4), DIMENSION(:), DEVICE, POINTER :: ind_sizes
+  INTEGER(kind=4), POINTER, DIMENSION(:) :: pnindirect
+  INTEGER(kind=4), POINTER, DIMENSION(:) :: nsharedCol
+  TYPE ( c_ptr ), POINTER, DIMENSION(:) :: mappingArray
+  TYPE ( c_ptr ), POINTER, DIMENSION(:) :: ind_maps
   INTEGER(kind=4) :: pblkMapSize
   INTEGER(kind=4) :: poffsetSize
   INTEGER(kind=4) :: pnelemsSize
@@ -380,7 +398,7 @@ attributes (host) SUBROUTINE ale_advectors_sumflux_host_gpu( userSubroutine, set
   & numberOfOpDats, &
   & opArgArray, &
   & numberOfIndirectOpDats, &
-  & indirectionDescriptorArray,2)
+  & indirectionDescriptorArray,1)
 
   opDat2Cardinality = opArg2%dim * getSetSizeFromOpArg(opArg2)
   opMap2Cardinality = set%setPtr%size * getMapDimFromOpArg(opArg2)
@@ -413,6 +431,14 @@ attributes (host) SUBROUTINE ale_advectors_sumflux_host_gpu( userSubroutine, set
   CALL c_f_pointer(actualPlan_ale_advectors_sumflux%nthrcol,pnthrcol,(/pnthrcolSize/))
   pthrcolSize = set%setPtr%size
   CALL c_f_pointer(actualPlan_ale_advectors_sumflux%thrcol,pthrcol,(/pthrcolSize/))
+  CALL c_f_pointer(actualPlan_ale_advectors_sumflux%nsharedCol,nsharedCol,(/actualPlan_ale_advectors_sumflux%ncolors_core/))
+  CALL c_f_pointer(actualPlan_ale_advectors_sumflux%nindirect,pnindirect,(/actualPlan_ale_advectors_sumflux%ninds_staged/))
+  CALL c_f_pointer(actualPlan_ale_advectors_sumflux%ind_maps,ind_maps,(/actualPlan_ale_advectors_sumflux%ninds_staged/))
+  CALL c_f_pointer(actualPlan_ale_advectors_sumflux%maps,mappingArray,(/numberOfOpDats/))
+  CALL c_f_pointer(actualPlan_ale_advectors_sumflux%ind_sizes,ind_sizes,(/actualPlan_ale_advectors_sumflux%nblocks * actualPlan_ale_advectors_sumflux%ninds_staged/))
+  CALL c_f_pointer(actualPlan_ale_advectors_sumflux%ind_offs,ind_offs,(/actualPlan_ale_advectors_sumflux%nblocks * actualPlan_ale_advectors_sumflux%ninds_staged/))
+
+
 
 
   blockOffset = 0
@@ -424,7 +450,7 @@ attributes (host) SUBROUTINE ale_advectors_sumflux_host_gpu( userSubroutine, set
     END IF
 
     blocksPerGrid = ncolblk(i2 + 1)
-    dynamicSharedMemorySize = reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock
+    dynamicSharedMemorySize = MAX(reductionSize(opArgArray,numberOfOpDats) * threadsPerBlock, nsharedCol(1+i2))
 
     CALL op_cuda_ale_advectors_sumflux <<<blocksPerGrid,threadsPerBlock,dynamicSharedMemorySize>>> (&
     & opDat2Deviceale_advectors_sumflux, &
@@ -435,6 +461,8 @@ attributes (host) SUBROUTINE ale_advectors_sumflux_host_gpu( userSubroutine, set
     & opDat8Deviceale_advectors_sumflux, &
     & opDat9Deviceale_advectors_sumflux, &
     & opDat10Host, &
+    & ind_sizes, &
+    & ind_offs, &
     & pblkMap, &
     & poffset,pnelems,pnthrcol,pthrcol, &
     & set%setPtr%size+set%setPtr%exec_size, blockOffset)
