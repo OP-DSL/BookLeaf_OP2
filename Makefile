@@ -10,6 +10,7 @@ APP_NAME := bookleaf
 APP_SRC_PRE_KERNEL := \
   src/utils/op2_bookleaf_api.F90 \
   src/utils/data.F90 \
+  src/utils/bookleaf_consts.F90 \
   src/common_kernels.F90 \
   src/utils/error.F90 \
   src/utils/timers.F90 \
@@ -59,7 +60,7 @@ APP_SRC_POST_KERNEL := \
   src/hydro.F90 \
   src/main.F90
 
-APP_EXTRA_TRANSLATOR_FLAGS := -t seq -t openmp -t c_cuda -t c_hip --consts-module src/utils/data.F90
+APP_EXTRA_TRANSLATOR_FLAGS := -D OP2_TRANSLATOR -t seq -t openmp -t c_cuda -t c_hip --consts-module src/utils/data.F90
 
 OP2_LIBS_WITH_HDF5 := true
 

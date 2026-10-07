@@ -24,7 +24,7 @@ MODULE getq_kernels
   SUBROUTINE getq_gradcon(du,dv,dx,dy,elu,elv,elx,ely)
 
     USE kinds_mod,ONLY: ink,rlk
-    USE reals_mod,    ONLY: zerocut
+    USE bookleaf_consts
 
     implicit none
 
@@ -56,7 +56,7 @@ MODULE getq_kernels
 &             dx1,dx2,dx3,dx4,dy1,dy2,dy3,dy4,&
 &            ielsd,scratch,iside)
     USE kinds_mod,ONLY: ink,rlk
-    USE reals_mod,    ONLY: zerocut
+    USE bookleaf_consts
 
     implicit none
 
@@ -247,7 +247,7 @@ MODULE getq_kernels
 
   SUBROUTINE getq_christiensen_q(elx,ely,elu,elv,qx,qy,qq)
     USE kinds_mod,ONLY: ink,rlk
-    USE reals_mod,    ONLY: zerocut
+    USE bookleaf_consts
 
     implicit none
 

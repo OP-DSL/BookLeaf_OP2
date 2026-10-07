@@ -25,7 +25,7 @@ MODULE getein_kernels
   SUBROUTINE getein_update(elfx,elfy,elu,elv,elmass,ein,ein_out,dt)
 
     USE kinds_mod,ONLY: ink,rlk
-    USE reals_mod,    ONLY: zerocut
+    USE bookleaf_consts
 
     implicit none
 

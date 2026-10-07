@@ -26,7 +26,7 @@ MODULE getdt_kernels
 
     USE kinds_mod,ONLY: ink,rlk,ink
 !    USE geometry_mod,    ONLY: dlm,dln
-    USE reals_mod,       ONLY: ccut,zcut,dt_max
+    USE bookleaf_consts
 
     implicit none
 
@@ -227,7 +227,7 @@ MODULE getdt_kernels
   SUBROUTINE getdt_ale_zeul(elu,elv,rscratch12,w2_s,w2)
 
     USE kinds_mod,ONLY: ink,rlk,ink
-    USE reals_mod,ONLY: zerocut
+    USE bookleaf_consts
 
     implicit none
 

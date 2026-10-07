@@ -25,7 +25,7 @@ MODULE getpc_kernels
   SUBROUTINE getpc_update(im,eos_type,eos_param,rho,ein,pre,csqrd)
 
     USE kinds_mod,ONLY: ink,rlk
-    USE reals_mod,ONLY: pcut
+    USE bookleaf_consts
 
     implicit none
 

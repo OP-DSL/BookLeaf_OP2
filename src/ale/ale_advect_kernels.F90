@@ -25,7 +25,7 @@ MODULE ale_advect_kernels
 &                              cutm,totv,totm)
 
     USE kinds_mod,ONLY: ink,rlk
-    USE reals_mod,    ONLY: zerocut, dencut
+    USE bookleaf_consts
 
     implicit none
 
@@ -176,7 +176,7 @@ MODULE ale_advect_kernels
 
   SUBROUTINE ale_advect_cutoff(cutv,cutm,ndv0,cut)
     USE kinds_mod,ONLY: ink,rlk
-    USE reals_mod,    ONLY: dencut
+    USE bookleaf_consts
 
     implicit none
 
@@ -223,7 +223,7 @@ MODULE ale_advect_kernels
 
   SUBROUTINE getq_christiensen_q(elx,ely,elu,elv,qx,qy,qq)
     USE kinds_mod,ONLY: ink,rlk
-    USE reals_mod,    ONLY: zerocut
+    USE bookleaf_consts
 
     implicit none
 

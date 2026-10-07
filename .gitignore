@@ -10,7 +10,7 @@ generated/
 build-meshgen/
 mod/
 run/
-bookleaf_*
+/bookleaf_*
 src/**/*_op.f90
 src/**/*_op.F90
 src/**/*_kernel.f90
