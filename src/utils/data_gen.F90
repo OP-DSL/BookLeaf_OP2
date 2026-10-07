@@ -222,8 +222,7 @@ END MODULE timing_mod
 
 MODULE op2_bookleaf
 
-  USE OP2_Fortran_Declarations
-  use OP2_Fortran_RT_Support
+  USE op2_bookleaf_api
   use, intrinsic :: ISO_C_BINDING
   type(op_set) :: s_nodes, s_elements, s_mat, s_reg
   type(op_map) :: m_el2node,m_el2el, m_el2reg
@@ -397,64 +396,27 @@ MODULE op2_constants
   USE reals_mod
   USE integers_mod
 
-#ifdef OP2_ENABLE_CUDA
-  USE CUDAFOR
-
-  REAL(KIND=rlk),constant        :: dt_min_OP2, dt_initial_OP2,   &
-&                                   dt_max_OP2,cfl_sf_OP2,div_sf_OP2,dt_g_OP2
-  ! cut-off
-  REAL(KIND=rlk), constant       :: ccut_OP2,zcut_OP2,zerocut_OP2, &
- &                                  pcut_OP2,dencut_OP2,accut_OP2
-  INTEGER(KIND=ink), constant :: elements_stride_OP2, nodes_stride_OP2, &
-&                                 reg_stride_OP2
-
-
   CONTAINS
 
   SUBROUTINE bookleaf_op2_init_const
 
-    USE OP2_Fortran_Declarations
     USE op2_bookleaf
 
     implicit none
 
-    dt_min_OP2 = dt_min
-    dt_initial_OP2 = dt_initial
-    dt_max_OP2 = dt_max
-    cfl_sf_OP2 = cfl_sf
-    div_sf_OP2 = div_sf
-    dt_g_OP2 = dt_g
-    ccut_OP2 = ccut
-    zcut_OP2 = zcut
-    zerocut_OP2 = zerocut
-    pcut_OP2 = pcut
-    dencut_OP2 = dencut
-    accut_OP2 = accut
-    elements_stride_OP2 = s_elements%setPtr%size + &
-&    s_elements%setPtr%exec_size + s_elements%setPtr%nonexec_size
-    nodes_stride_OP2 = s_nodes%setPtr%size + &
-&    s_nodes%setPtr%exec_size + s_nodes%setPtr%nonexec_size
-    reg_stride_OP2 = s_reg%setPtr%size + &
-&    s_reg%setPtr%exec_size + s_reg%setPtr%nonexec_size
-    call op_decl_const(dt_min, 1, 'dt_min')
-    call op_decl_const(dt_initial, 1, 'dt_initial')
-    call op_decl_const(dt_max, 1, 'dt_max')
-    call op_decl_const(cfl_sf, 1, 'cfl_sf')
-    call op_decl_const(div_sf, 1, 'div_sf')
-    call op_decl_const(dt_g, 1, 'dt_g')
-    call op_decl_const(ccut, 1, 'ccut')
-    call op_decl_const(zcut, 1, 'zcut')
-    call op_decl_const(zerocut, 1, 'zerocut')
-    call op_decl_const(pcut, 1, 'pcut')
-    call op_decl_const(dencut, 1, 'dencut')
-    call op_decl_const(accut, 1, 'accut')
+    call op_decl_const(dt_min, 1, 'real(8)')
+    call op_decl_const(dt_initial, 1, 'real(8)')
+    call op_decl_const(dt_max, 1, 'real(8)')
+    call op_decl_const(cfl_sf, 1, 'real(8)')
+    call op_decl_const(div_sf, 1, 'real(8)')
+    call op_decl_const(dt_g, 1, 'real(8)')
+    call op_decl_const(ccut, 1, 'real(8)')
+    call op_decl_const(zcut, 1, 'real(8)')
+    call op_decl_const(zerocut, 1, 'real(8)')
+    call op_decl_const(pcut, 1, 'real(8)')
+    call op_decl_const(dencut, 1, 'real(8)')
+    call op_decl_const(accut, 1, 'real(8)')
 
   END SUBROUTINE bookleaf_op2_init_const
-#else
-
-  CONTAINS
-  SUBROUTINE bookleaf_op2_init_const
-  END SUBROUTINE bookleaf_op2_init_const
-#endif
 
 END MODULE op2_constants

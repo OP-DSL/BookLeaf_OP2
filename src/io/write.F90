@@ -264,16 +264,6 @@ call op_par_loop_28(write_regvalues, s_elements, &
 #else
       PRINT*,' No additional problem specific initialisation used'
 #endif
-#ifdef SILO
-      PRINT*,' SILO visualisation dumps written out'
-#else
-      PRINT*,' No SILO visualisation dumps available'
-#endif
-#ifdef TIO
-      PRINT*,' TyphonIO visualisation dumps written out'
-#else
-      PRINT*,' No TyphonIO visualisation dumps available'
-#endif
       WRITE(6,'(a132)')' #############################################' &
 &                //'##################################################' &
 &                //'####################################'

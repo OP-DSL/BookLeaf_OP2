@@ -3,3 +3,31 @@
 *.lst
 *.ipa
 *.mod
+
+# OP2 translator outputs are build products. Keep application sources and
+# kernels under version control; generate backend wrappers in the build tree.
+generated/
+build-meshgen/
+mod/
+run/
+bookleaf_*
+src/**/*_op.f90
+src/**/*_op.F90
+src/**/*_kernel.f90
+src/**/*_kernel.F90
+src/**/*_seqkernel.f90
+src/**/*_seqkernel.F90
+src/**/*_acckernel.f90
+src/**/*_acckernel.F90
+src/**/*_gpukernel.CUF
+
+# Also match generated files written directly under src/ by the retired build.
+src/*_op.f90
+src/*_op.F90
+src/*_kernel.f90
+src/*_kernel.F90
+src/*_seqkernel.f90
+src/*_seqkernel.F90
+src/*_acckernel.f90
+src/*_acckernel.F90
+src/*_gpukernel.CUF
