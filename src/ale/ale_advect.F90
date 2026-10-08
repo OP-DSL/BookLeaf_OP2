@@ -18,6 +18,10 @@
 
 MODULE ale_advect_mod
 
+#ifdef OP2_TRANSLATOR
+  USE op2_kernels
+#endif
+
   USE kinds_mod,    ONLY: ink,rlk,lok
   USE timing_mod,   ONLY: bookleaf_times,get_time
   use op2_bookleaf

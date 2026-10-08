@@ -29,7 +29,7 @@ MODULE getacc_kernels
 &                           ndvb1,ndvb2,ndvb3,ndvb4)
 
     USE kinds_mod,ONLY: ink,rlk
-    USE bookleaf_consts
+    USE op2_bookleaf_consts
 
     implicit none
 
@@ -114,7 +114,7 @@ MODULE getacc_kernels
 &                           ndvb1,jj)
 
     USE kinds_mod,ONLY: ink,rlk
-    USE bookleaf_consts
+    USE op2_bookleaf_consts
 
     implicit none
 
@@ -147,7 +147,7 @@ MODULE getacc_kernels
   SUBROUTINE getacc_accel(ndarea,ndmass,ndub,ndvb)
 
     USE kinds_mod,ONLY: ink,rlk
-    USE bookleaf_consts
+    USE op2_bookleaf_consts
 
     implicit none
 
@@ -171,7 +171,7 @@ MODULE getacc_kernels
   SUBROUTINE getacc_bc(ndub,ndvb,indtype)
 
     USE kinds_mod,ONLY: ink,rlk,ink
-    USE bookleaf_consts
+    USE op2_bookleaf_consts
 
     implicit none
 

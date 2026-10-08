@@ -18,6 +18,10 @@
 
 MODULE ale_getfvol_mod
 
+#ifdef OP2_TRANSLATOR
+  USE op2_kernels
+#endif
+
   USE kinds_mod,ONLY: ink,lok,rlk
   USE op2_bookleaf
   IMPLICIT NONE

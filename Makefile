@@ -60,7 +60,7 @@ APP_SRC_POST_KERNEL := \
   src/hydro.F90 \
   src/main.F90
 
-APP_EXTRA_TRANSLATOR_FLAGS := -D OP2_TRANSLATOR -t seq -t openmp -t c_cuda -t c_hip --consts-module src/utils/data.F90
+APP_EXTRA_TRANSLATOR_FLAGS := -D OP2_TRANSLATOR -t seq -t openmp -t c_cuda -t c_hip --consts-module src/utils/bookleaf_consts.F90
 
 OP2_LIBS_WITH_HDF5 := true
 
@@ -81,6 +81,7 @@ BOOKLEAF_MESHGEN_MOD_DIR := $(BOOKLEAF_MESHGEN_BUILD_DIR)/mod
 BOOKLEAF_MESHGEN_SRC := \
   src/utils/op2_bookleaf_api.F90 \
   src/utils/data_gen.F90 \
+  src/utils/bookleaf_consts.F90 \
   src/common_kernels.F90 \
   src/utils/error.F90 \
   src/utils/timers.F90 \
@@ -162,13 +163,13 @@ bookleaf_seq: $(BOOKLEAF_SRC) | mod/$(APP_NAME)/seq
 bookleaf_genseq: $(BOOKLEAF_GEN_STAMP) | mod/$(APP_NAME)/genseq
 	$(FC) $(FFLAGS) $(BOOKLEAF_CPU_FLAGS) $(APP_EXTRA_FLAGS) $(F_MOD_OUT_OPT)$| $(OP2_MOD) \
 		$(BOOKLEAF_GEN_DIR)/seq/op2_consts.F90 $(BOOKLEAF_GEN_PRE) \
-		$(BOOKLEAF_GEN_DIR)/seq/*_kernel.F90 $(BOOKLEAF_GEN_DIR)/seq/op2_kernels.F90 \
+		$(BOOKLEAF_GEN_DIR)/seq/op2_kernels.F90 \
 		$(BOOKLEAF_GEN_POST) $(OP2_LIB_FOR_SEQ) $(CXXLINK) -o $@
 
 bookleaf_openmp: $(BOOKLEAF_GEN_STAMP) | mod/$(APP_NAME)/openmp
 	$(FC) $(FFLAGS) $(BOOKLEAF_CPU_FLAGS) $(APP_EXTRA_FLAGS) $(F_MOD_OUT_OPT)$| $(OP2_MOD) \
 		$(BOOKLEAF_GEN_DIR)/openmp/op2_consts.F90 $(BOOKLEAF_GEN_PRE) \
-		$(BOOKLEAF_GEN_DIR)/openmp/*_kernel.F90 $(BOOKLEAF_GEN_DIR)/openmp/op2_kernels.F90 \
+		$(BOOKLEAF_GEN_DIR)/openmp/op2_kernels.F90 \
 		$(BOOKLEAF_GEN_POST) $(OP2_LIB_FOR_OPENMP) $(CXXLINK) -o $@
 
 bookleaf_mpi_seq: $(BOOKLEAF_SRC) | mod/$(APP_NAME)/mpi_seq
@@ -178,13 +179,13 @@ bookleaf_mpi_seq: $(BOOKLEAF_SRC) | mod/$(APP_NAME)/mpi_seq
 bookleaf_mpi_genseq: $(BOOKLEAF_GEN_STAMP) | mod/$(APP_NAME)/mpi_genseq
 	$(MPIFC) $(FFLAGS) $(BOOKLEAF_CPU_FLAGS) $(APP_EXTRA_FLAGS) $(F_MOD_OUT_OPT)$| $(OP2_MOD) \
 		$(BOOKLEAF_GEN_DIR)/seq/op2_consts.F90 $(BOOKLEAF_GEN_PRE) \
-		$(BOOKLEAF_GEN_DIR)/seq/*_kernel.F90 $(BOOKLEAF_GEN_DIR)/seq/op2_kernels.F90 \
+		$(BOOKLEAF_GEN_DIR)/seq/op2_kernels.F90 \
 		$(BOOKLEAF_GEN_POST) $(OP2_LIB_FOR_MPI) $(CXXLINK) -o $@
 
 bookleaf_mpi_openmp: $(BOOKLEAF_GEN_STAMP) | mod/$(APP_NAME)/mpi_openmp
 	$(MPIFC) $(FFLAGS) $(BOOKLEAF_CPU_FLAGS) $(APP_EXTRA_FLAGS) $(F_MOD_OUT_OPT)$| $(OP2_MOD) \
 		$(BOOKLEAF_GEN_DIR)/openmp/op2_consts.F90 $(BOOKLEAF_GEN_PRE) \
-		$(BOOKLEAF_GEN_DIR)/openmp/*_kernel.F90 $(BOOKLEAF_GEN_DIR)/openmp/op2_kernels.F90 \
+		$(BOOKLEAF_GEN_DIR)/openmp/op2_kernels.F90 \
 		$(BOOKLEAF_GEN_POST) $(OP2_LIB_FOR_MPI) $(CXXLINK) -o $@
 
 $(BOOKLEAF_GEN_DIR)/c_cuda/op2_kernels.o: $(BOOKLEAF_GEN_STAMP)
@@ -194,14 +195,14 @@ $(BOOKLEAF_GEN_DIR)/c_cuda/op2_kernels.o: $(BOOKLEAF_GEN_STAMP)
 bookleaf_c_cuda: $(BOOKLEAF_GEN_STAMP) $(BOOKLEAF_GEN_DIR)/c_cuda/op2_kernels.o | mod/$(APP_NAME)/c_cuda
 	$(FC) $(FFLAGS) $(BOOKLEAF_CPU_FLAGS) $(CUDA_FFLAGS) $(APP_EXTRA_FLAGS) $(F_MOD_OUT_OPT)$| $(OP2_MOD) \
 		$(BOOKLEAF_GEN_DIR)/c_cuda/op2_consts.F90 $(BOOKLEAF_GEN_PRE) \
-		$(BOOKLEAF_GEN_DIR)/c_cuda/*_kernel.F90 $(BOOKLEAF_GEN_DIR)/c_cuda/op2_kernels.F90 \
+		$(BOOKLEAF_GEN_DIR)/c_cuda/op2_kernels.F90 \
 		$(BOOKLEAF_GEN_POST) $(BOOKLEAF_GEN_DIR)/c_cuda/op2_kernels.o \
 		$(OP2_LIB_FOR_CUDA) $(CXXLINK) $(CUDA_LIB) -o $@
 
 bookleaf_mpi_c_cuda: $(BOOKLEAF_GEN_STAMP) $(BOOKLEAF_GEN_DIR)/c_cuda/op2_kernels.o | mod/$(APP_NAME)/mpi_c_cuda
 	$(MPIFC) $(FFLAGS) $(BOOKLEAF_CPU_FLAGS) $(CUDA_FFLAGS) $(APP_EXTRA_FLAGS) $(F_MOD_OUT_OPT)$| $(OP2_MOD) \
 		$(BOOKLEAF_GEN_DIR)/c_cuda/op2_consts.F90 $(BOOKLEAF_GEN_PRE) \
-		$(BOOKLEAF_GEN_DIR)/c_cuda/*_kernel.F90 $(BOOKLEAF_GEN_DIR)/c_cuda/op2_kernels.F90 \
+		$(BOOKLEAF_GEN_DIR)/c_cuda/op2_kernels.F90 \
 		$(BOOKLEAF_GEN_POST) $(BOOKLEAF_GEN_DIR)/c_cuda/op2_kernels.o \
 		$(OP2_LIB_FOR_MPI_CUDA) $(CXXLINK) $(CUDA_LIB) -o $@
 
@@ -212,14 +213,14 @@ $(BOOKLEAF_GEN_DIR)/c_hip/op2_kernels.o: $(BOOKLEAF_GEN_STAMP)
 bookleaf_c_hip: $(BOOKLEAF_GEN_STAMP) $(BOOKLEAF_GEN_DIR)/c_hip/op2_kernels.o | mod/$(APP_NAME)/c_hip
 	$(FC) $(FFLAGS) $(BOOKLEAF_CPU_FLAGS) $(HIP_FFLAGS) $(APP_EXTRA_FLAGS) $(F_MOD_OUT_OPT)$| $(OP2_MOD) \
 		$(BOOKLEAF_GEN_DIR)/c_hip/op2_consts.F90 $(BOOKLEAF_GEN_PRE) \
-		$(BOOKLEAF_GEN_DIR)/c_hip/*_kernel.F90 $(BOOKLEAF_GEN_DIR)/c_hip/op2_kernels.F90 \
+		$(BOOKLEAF_GEN_DIR)/c_hip/op2_kernels.F90 \
 		$(BOOKLEAF_GEN_POST) $(BOOKLEAF_GEN_DIR)/c_hip/op2_kernels.o \
 		$(OP2_LIB_FOR_HIP) $(CXXLINK) $(HIP_LIB) -o $@
 
 bookleaf_mpi_c_hip: $(BOOKLEAF_GEN_STAMP) $(BOOKLEAF_GEN_DIR)/c_hip/op2_kernels.o | mod/$(APP_NAME)/mpi_c_hip
 	$(MPIFC) $(FFLAGS) $(BOOKLEAF_CPU_FLAGS) $(HIP_FFLAGS) $(APP_EXTRA_FLAGS) $(F_MOD_OUT_OPT)$| $(OP2_MOD) \
 		$(BOOKLEAF_GEN_DIR)/c_hip/op2_consts.F90 $(BOOKLEAF_GEN_PRE) \
-		$(BOOKLEAF_GEN_DIR)/c_hip/*_kernel.F90 $(BOOKLEAF_GEN_DIR)/c_hip/op2_kernels.F90 \
+		$(BOOKLEAF_GEN_DIR)/c_hip/op2_kernels.F90 \
 		$(BOOKLEAF_GEN_POST) $(BOOKLEAF_GEN_DIR)/c_hip/op2_kernels.o \
 		$(OP2_LIB_FOR_MPI_HIP) $(CXXLINK) $(HIP_LIB) -o $@
 

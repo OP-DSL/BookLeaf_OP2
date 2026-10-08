@@ -51,7 +51,7 @@ MODULE write_kernels
 &       tot_mom_u,tot_mom_v,ireg,myreg) !4:tab
 
     USE kinds_mod,ONLY: ink,rlk,ink
-    USE bookleaf_consts
+    USE op2_bookleaf_consts
 
     implicit none
 

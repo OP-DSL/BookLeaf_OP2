@@ -18,6 +18,10 @@
 
 MODULE geometry_mod
 
+#ifdef OP2_TRANSLATOR
+  USE op2_kernels
+#endif
+
   IMPLICIT NONE
 
   PUBLIC  :: dlm,dln,getgeom,getgeom2

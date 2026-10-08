@@ -18,6 +18,10 @@
 
 MODULE write_mod
 
+#ifdef OP2_TRANSLATOR
+  USE op2_kernels
+#endif
+
   IMPLICIT NONE
 
   PUBLIC :: write_sprint,write_iprint,write_lprint

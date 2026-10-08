@@ -85,6 +85,10 @@ END SUBROUTINE init_memory
 
 SUBROUTINE init()
 
+#ifdef OP2_TRANSLATOR
+  USE op2_kernels
+#endif
+
   USE kinds_mod,    ONLY: ink,rlk
   USE integers_mod, ONLY: nshape,nel,nnod,nel2,nnod2
   USE logicals_mod, ONLY: zsp
@@ -99,7 +103,7 @@ SUBROUTINE init()
   USE init_kernels
   USE common_kernels,ONLY: set_zero1,set_zero4
   USE parameters_mod,ONLY: LI
-  USE op2_constants
+  USE op2_bookleaf_consts
   USE timing_mod,   ONLY: timer=>bookleaf_times, get_time
 
   IMPLICIT NONE

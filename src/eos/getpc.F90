@@ -18,6 +18,10 @@
 
 MODULE getpc_mod
 
+#ifdef OP2_TRANSLATOR
+  USE op2_kernels
+#endif
+
   IMPLICIT NONE
 
   PUBLIC :: getpc

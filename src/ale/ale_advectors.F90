@@ -18,6 +18,10 @@
 
 MODULE ale_advectors_mod
 
+#ifdef OP2_TRANSLATOR
+  USE op2_kernels
+#endif
+
   USE kinds_mod,ONLY: ink,rlk,lok
   use op2_bookleaf
 

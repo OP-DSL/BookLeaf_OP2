@@ -25,7 +25,7 @@ MODULE getpc_kernels
   SUBROUTINE getpc_update(im,eos_type,eos_param,rho,ein,pre,csqrd)
 
     USE kinds_mod,ONLY: ink,rlk
-    USE bookleaf_consts
+    USE op2_bookleaf_consts
 
     implicit none
 
