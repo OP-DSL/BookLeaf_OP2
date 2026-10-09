@@ -1,0 +1,455 @@
+
+!Crown Copyright 2014 AWE.
+!
+! This file is part of Bookleaf.
+!
+! Bookleaf is free software: you can redistribute it and/or modify it under
+! the terms of the GNU General Public License as published by the
+! Free Software Foundation, either version 3 of the License, or (at your option)
+! any later version.
+!
+! Bookleaf is distributed in the hope that it will be useful, but
+! WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+! FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+! details.
+!
+! You should have received a copy of the GNU General Public License along with
+! Bookleaf. If not, see http://www.gnu.org/licenses/.
+
+MODULE ale_advect_mod
+
+#ifdef OP2_TRANSLATOR
+  USE op2_kernels
+#endif
+
+  USE kinds_mod,    ONLY: ink,rlk,lok
+  USE timing_mod,   ONLY: bookleaf_times,get_time
+  use op2_bookleaf
+
+
+  IMPLICIT NONE
+
+  PRIVATE :: update_el_basis,update_el_var,aleadvect_el,                &
+&            update_nd_basis,update_nd_var,aleadvect_nd
+  PUBLIC  :: aleadvect
+
+CONTAINS
+
+  SUBROUTINE aleadvect(id1,id2,nshape,nel,nel1,nel2,nnod,nnod1,nnod2,   &
+&                      nsz,dencut,cut,d_ielel,d_ielsd,d_indstatus, &
+&                      d_indtype,d_cutv,d_cutm,d_elv0ndm1,d_elm0ndm0,  &
+&                      d_elr0ndv0,d_ndv1,d_elv1,d_elm1,d_elr1,d_cnv0,d_cnm1,d_dfv,d_dfm,  &
+&                      d_cnm0,d_eluv,d_elvv,d_flux,d_work1,d_work2,d_work11,d_work21,d_zactive)
+
+    USE logicals_mod, ONLY: zparallel
+    USE pointers_mod, ONLY: ndu,ndv
+    USE utilities_mod,ONLY: gather,gather2
+    use op2_bookleaf, ONLY:s_elements,s_nodes,m_el2node,m_el2el,d_elidx,d_ndu,d_ndv
+    USE ale_advect_kernels
+    ! Argument list
+    INTEGER(KIND=ink),                       INTENT(IN)   :: id1,id2,   &
+&                                                            nshape,nsz,&
+&                                                            nel,nel1,  &
+&                                                            nel2,nnod, &
+&                                                            nnod1,nnod2
+    REAL(KIND=rlk),                          INTENT(IN)   :: dencut,cut
+
+    type(op_dat) :: d_ielel,d_ielsd,d_indstatus, &
+&                      d_indtype,d_cutv,d_cutm,d_elv0ndm1,d_elm0ndm0,  &
+&                      d_elr0ndv0,d_ndv1,d_elv1,d_elm1,d_elr1,d_cnv0,d_cnm1,d_dfv,d_dfm,  &
+&                      d_cnm0,d_eluv,d_elvv,d_flux,d_work1,d_work2,d_work11,d_work21,d_zactive
+
+    ! Local
+    REAL(KIND=rlk)                                        :: t0,t1
+
+    ! Timer
+    t0=get_time()
+
+    ! Advect element quantities
+    CALL aleadvect_el(id1,id2,nshape,nel,nel1,nel2,d_elv0ndm1,         &
+&                     d_elm0ndm0,d_elr0ndv0,d_elv1,d_elm1,d_elr1,  &
+&                     d_cutv,d_cutm,d_cnv0,d_cnm1,d_dfv,     &
+&                     d_dfm,d_flux,d_ielel,d_ielsd,         &
+&                     d_work11,d_work21)
+
+
+    CALL gather2(s_elements,m_el2node,d_ndu,d_eluv)
+    CALL gather2(s_elements,m_el2node,d_ndv,d_elvv)
+
+    ! Advect nodal quantities
+    CALL aleadvect_nd(id1,id2,nshape,nel,nel1,nel2,nnod,nnod1,nnod2,nsz,&
+&                     dencut,cut,d_ielel,d_ielsd,d_indstatus,d_indtype,    &
+&                     d_cutv,d_cutm,d_elr0ndv0,d_ndv1,  &
+&                     d_elm0ndm0,d_elv0ndm1,d_elv1,d_cnv0,       &
+&                     d_cnm0,d_cnm1,d_dfv,d_dfm,d_eluv, &
+&                     d_elvv,d_work1,d_work2,d_flux,       &
+&                     d_zactive)
+
+    ! Timing data
+    t1=get_time()
+    t1=t1-t0
+    bookleaf_times%time_in_aleadvect=bookleaf_times%time_in_aleadvect+t1
+
+  END SUBROUTINE aleadvect
+
+  SUBROUTINE aleadvect_el(id1,id2,nshape,nel,nel1,nel2, d_elvpr,         &
+&                     d_elmpr,d_elrpr,d_elv,d_elm,d_elr,  &
+&                     d_cutv,d_cutm,d_cnv,d_cnm,d_delv,     &
+&                     d_delm,d_flux,d_ielel,d_ielsd,         &
+&                     d_work1,d_work2)
+
+    use op2_bookleaf, ONLY:s_elements,s_nodes,m_el2node,m_el2el,d_elidx
+    USE ale_advect_kernels
+
+    ! Argument list
+    INTEGER(KIND=ink),                       INTENT(IN)   :: id1,id2,   &
+&                                                            nel,nel1,  &
+&                                                            nel2,nshape
+    type(op_dat) ::      d_elvpr, d_elmpr,d_elrpr,d_elv,d_elm,d_elr,  &
+&                     d_cutv,d_cutm,d_cnv,d_cnm,d_delv,     &
+&                     d_delm,d_flux,d_ielel,d_ielsd,         &
+&                     d_work1,d_work2
+    ! Local
+    REAL(KIND=rlk)                                        :: t0,t1
+
+    ! Timer
+    t0=get_time()
+
+    ! update element basis variables
+    CALL update_el_basis(id1,id2,nshape,nel,nel1,nel2,d_elvpr,d_elmpr,&
+&                        d_elrpr,d_elv,d_elm,d_elr,d_cutv,d_cutm, &
+&                        d_cnv,d_cnm,d_delv,d_delm,         &
+&                        d_ielel,d_ielsd,d_work1,d_work2)
+
+    ! update element independent variables
+    CALL update_el_var(id1,id2,nshape,nel,nel1,nel2,d_ielel,         &
+&                      d_ielsd,d_elvpr,d_elmpr,d_elv,d_elm,      &
+&                      d_cutv,d_cutm,d_cnv,d_cnm,d_delv,     &
+&                      d_delm,d_flux,d_work1)
+
+    ! Timing data
+    t1=get_time()
+    t1=t1-t0
+    bookleaf_times%time_in_aleadvect_el=                                &
+&    bookleaf_times%time_in_aleadvect_el+t1
+
+  END SUBROUTINE aleadvect_el
+
+  SUBROUTINE aleadvect_nd(id1,id2,nshape,nel,nel1,nel2,nnod,nnod1,nnod2,&
+&                         nsz,dencut,cut,d_ielel,d_ielsd,d_indstatus,d_indtype,    &
+&                     d_cutv,d_cutm,d_ndv0,d_ndv1,  &
+&                     d_ndm0,d_elv0ndm1,d_elv1,d_cnv0,       &
+&                     d_cnm0,d_cnm1,d_dfv,d_dfm,d_eluv, &
+&                     d_elvv,d_dcv,d_dcm,d_flux,       &
+&                     d_zactive)
+
+    use op2_bookleaf, ONLY:s_elements,s_nodes,m_el2node,m_el2el,d_elidx
+    USE ale_advect_kernels
+
+    ! Argument list
+    INTEGER(KIND=ink),                       INTENT(IN)   :: nshape,nel,&
+&                                                            nel1,nel2, &
+&                                                            nnod,nnod1,&
+&                                                            nnod2,nsz, &
+&                                                            id1,id2
+    REAL(KIND=rlk),                          INTENT(IN)   :: dencut,cut
+    type(op_dat) ::      d_ielel,d_ielsd,d_indstatus,d_indtype,    &
+&                     d_cutv,d_cutm,d_ndv0,d_ndv1,  &
+&                     d_ndm0,d_elv0ndm1,d_elv1,d_cnv0,       &
+&                     d_cnm0,d_cnm1,d_dfv,d_dfm,d_eluv, &
+&                     d_elvv,d_dcv,d_dcm,d_flux,       &
+&                     d_zactive
+    ! Local
+    REAL(KIND=rlk)                                        :: t0,t1
+
+    ! Timer
+    t0=get_time()
+
+    ! update nodal basis variables
+    CALL update_nd_basis(id1,id2,nshape,nel2,nnod2,nsz,dencut,cut,      &
+&                        d_ielel,d_ielsd,  &
+&                        d_dfv,d_dfm,d_dcv,d_dcm, &
+&                        d_cnm0,d_cnm1,d_cutv,d_cutm,d_ndv0,  &
+&                        d_ndv1,d_ndm0,d_elv0ndm1,d_elv1,d_flux)
+
+    ! update nodal independent variables
+    CALL update_nd_var(nshape,nel,nel1,nel2,nnod,nnod2,d_ielel,d_ielsd,      &
+&                      d_indstatus,d_indtype,d_ndv0,d_ndm0,d_ndv1, &
+&                      d_elv0ndm1,d_cutv,d_cutm,d_cnv0,d_cnm0, &
+&                      d_dcv,d_dcm,d_flux,d_eluv,d_elvv, &
+&                      d_dfm,d_zactive)
+
+    ! Timing data
+    t1=get_time()
+    t1=t1-t0
+    bookleaf_times%time_in_aleadvect_nd=                                &
+&    bookleaf_times%time_in_aleadvect_nd+t1
+
+  END SUBROUTINE aleadvect_nd
+
+  SUBROUTINE update_el_basis(id1,id2,nshape,nel,nel1,nel2,d_elvpr,d_elmpr,&
+&                        d_elrpr,d_elv,d_elm,d_elr,d_cutv,d_cutm, &
+&                        d_cnv,d_cnm,d_delv,d_delm,         &
+&                        d_ielel,d_ielsd,d_totv,d_totm)
+
+    USE reals_mod,        ONLY: dencut,zerocut
+    USE ale_advectors_mod,ONLY: flux_c1_VL,sum_flux
+    use op2_bookleaf, ONLY:s_elements,s_nodes,m_el2node,m_el2el,d_elidx
+    USE ale_advect_kernels
+    ! Argument list
+    INTEGER(KIND=ink),                       INTENT(IN)   :: id1,id2,   &
+&                                                            nshape,nel,&
+&                                                            nel1,nel2
+    type(op_dat) ::         d_elvpr,d_elmpr,&
+&                        d_elrpr,d_elv,d_elm,d_elr,d_cutv,d_cutm, &
+&                        d_cnv,d_cnm,d_delv,d_delm,         &
+&                        d_ielel,d_ielsd,d_totv,d_totm
+    ! Local
+    INTEGER(KIND=ink) :: iel
+    REAL(KIND=rlk)    :: t0,t1
+
+    ! Timer
+    t0=get_time()
+
+    ! calculate total volume flux to nel
+    CALL sum_flux(id1,id2,nshape,nel,nel1,d_ielel,d_ielsd,   &
+&                 d_delv,d_totv)
+
+    ! construct mass flux top nel1
+    CALL flux_c1_VL(id1,id2,nshape,nel1,nel2,d_ielel,d_ielsd,     &
+&                   d_cnv,d_delv,d_elr,d_delm)
+
+    ! calculate total mass flux to nel
+    CALL sum_flux(id1,id2,nshape,nel,nel1,d_ielel,d_ielsd,d_delm,d_totm)
+
+    ! update
+    call op_par_loop_8(ale_advect_update,s_elements, &
+&        op_arg_dat(d_elv,-1,OP_ID,1,'real(8)',OP_RW), &
+&        op_arg_dat(d_elm,-1,OP_ID,1,'real(8)',OP_RW), &
+&        op_arg_dat(d_elr,-1,OP_ID,1,'real(8)',OP_RW), &
+&        op_arg_dat(d_elvpr,-1,OP_ID,1,'real(8)',OP_WRITE), &
+&        op_arg_dat(d_elmpr,-1,OP_ID,1,'real(8)',OP_WRITE), &
+&        op_arg_dat(d_cutm,-1,OP_ID,1,'real(8)',OP_WRITE), &
+&        op_arg_dat(d_totv,-1,OP_ID,1,'real(8)',OP_READ), &
+&        op_arg_dat(d_totm,-1,OP_ID,1,'real(8)',OP_READ))
+
+!is unused, on the correct set
+!&        op_arg_dat(d_elrpr,-1,OP_ID,1,'real(8)',OP_WRITE), &
+!is unused, on the wrong set
+!&        op_arg_dat(d_cutv,-1,OP_ID,1,'real(8)',OP_WRITE), &
+
+    ! Timing data
+    t1=get_time()
+    t1=t1-t0
+    bookleaf_times%time_in_update_el_basis=                             &
+&    bookleaf_times%time_in_update_el_basis+t1
+
+  END SUBROUTINE update_el_basis
+
+  SUBROUTINE update_el_var(id1,id2,nshape,nel,nel1,nel2,d_ielel,         &
+&                      d_ielsd,d_elvpr,d_elmpr,d_elv,d_elm,      &
+&                      d_cutv,d_cutm,d_cnv,d_cnm,d_delv,     &
+&                      d_delm,d_flux,d_tflux)
+
+    USE ale_advectors_mod,ONLY: flux_c1_VL,update_c1
+    USE pointers_mod,     ONLY: ein
+    use op2_bookleaf, ONLY:s_elements,s_nodes,m_el2node,m_el2el,d_elidx,d_ein
+    USE ale_advect_kernels
+
+    ! Argument list
+    INTEGER(KIND=ink),                       INTENT(IN) :: id1,id2,nel, &
+&                                                          nel1,nel2,   &
+&                                                          nshape
+    type(op_dat) ::                       d_ielel,         &
+&                      d_ielsd,d_elvpr,d_elmpr,d_elv,d_elm,      &
+&                      d_cutv,d_cutm,d_cnv,d_cnm,d_delv,     &
+&                      d_delm,d_flux,d_tflux
+    ! Local
+    REAL(KIND=rlk)                                      :: t0,t1
+
+    ! Timer
+    t0=get_time()
+
+    ! internal energy (mass weighted)
+    CALL flux_c1_VL(id1,id2,nshape,nel1,nel2,d_ielel,d_ielsd,     &
+&                   d_cnm,d_delm,d_ein,d_flux)
+    CALL update_c1(id1,id2,nshape,nel,nel2,d_ielel,d_ielsd,       &
+&                  d_elmpr,d_elm,d_cutm,d_flux,d_tflux,d_ein)
+
+    ! Timing data
+    t1=get_time()
+    t1=t1-t0
+    bookleaf_times%time_in_update_el_var=                               &
+&    bookleaf_times%time_in_update_el_var+t1
+
+  END SUBROUTINE update_el_var
+
+  SUBROUTINE update_nd_basis(id1,id2,nshape,nel2,nnod2,nsz,dencut,cut,  &
+&                        d_ielel,d_ielsd,  &
+&                        d_delv,d_delm,d_dndv,d_dndm, &
+&                        d_cnm0,d_cnm1,d_cutv,d_cutm_bad,d_ndv0_bad,  &
+&                        d_ndv1,d_ndm0_bad,d_elv0ndm1,d_elv1,d_flux)
+    use op2_bookleaf, ONLY:s_elements,s_nodes,m_el2node,m_el2el,d_elidx, &
+&           d_elv0ndm11=>d_rscratch111, d_ndm0=>d_rscratch112, d_ndv0=>d_rscratch113, &
+&           d_cutm=>d_rscratch114
+    USE common_kernels
+    USE ale_advect_kernels
+    ! Argument list
+    INTEGER(KIND=ink),                       INTENT(IN)   :: id1,id2,   &
+&                                                            nel2,nnod2,&
+&                                                            nsz,nshape
+    REAL(KIND=rlk),                          INTENT(IN)   :: dencut,cut
+    type(op_dat)         d_ielel,d_ielsd,  &
+&                        d_delv,d_delm,d_dndv,d_dndm, &
+&                        d_cnm0,d_cnm1,d_cutv,d_cutm_bad,d_ndv0_bad,  &
+&                        d_ndv1,d_ndm0_bad,d_elv0ndm1,d_elv1,d_flux
+
+    ! Local
+    INTEGER(KIND=ink) :: ind,iel,ii,i1,i2,ie1,ie2,is1,is2
+    REAL(KIND=rlk)    :: w1,w2,w3,w4,t0,t1
+
+    ! Timer
+    t0=get_time()
+
+    ! initialise
+    call op_par_loop_1(set_zero1,s_nodes, &
+&           op_arg_dat(d_ndv0,-1,OP_ID,1,'real(8)',OP_WRITE))
+    call op_par_loop_1(set_zero1,s_nodes, &
+&           op_arg_dat(d_ndv1,-1,OP_ID,1,'real(8)',OP_WRITE))
+    call op_par_loop_1(set_zero1,s_nodes, &
+&           op_arg_dat(d_ndm0,-1,OP_ID,1,'real(8)',OP_WRITE))
+
+
+    ! construct pre/post nodal volumes and pre nodal/corner mass
+    call op_par_loop_16(ale_advect_prevolmass,s_elements, &
+&           op_arg_dat(d_elv0ndm1,-1,OP_ID,1,'real(8)',OP_READ), &
+&           op_arg_dat(d_elv1,-1,OP_ID,1,'real(8)',OP_READ), &
+&           op_arg_dat(d_cnm0,-1,OP_ID,4,'real(8)',OP_WRITE), &
+&           op_arg_dat(d_cnm1,-1,OP_ID,4,'real(8)',OP_READ), &
+&           op_arg_dat(d_ndv0, 1,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndv1, 1,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndm0, 1,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndv0, 2,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndv1, 2,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndm0, 2,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndv0, 3,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndv1, 3,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndm0, 3,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndv0, 4,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndv1, 4,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_ndm0, 4,m_el2node,1,'real(8)',OP_INC))
+
+    ! construct volume and mass flux
+    call op_par_loop_1(set_zero4,s_elements, &
+&           op_arg_dat(d_flux,-1,OP_ID,4,'real(8)',OP_WRITE))
+    DO i1=id1,id2
+    call op_par_loop_17(ale_advect_volmass, s_elements, &
+&           op_arg_dat(d_delv,-1,OP_ID,4,'real(8)',OP_READ), &
+&           op_arg_dat(d_delv, 1,m_el2el,4,'real(8)',OP_READ), &
+&           op_arg_dat(d_delv, 2,m_el2el,4,'real(8)',OP_READ), &
+&           op_arg_dat(d_delv, 3,m_el2el,4,'real(8)',OP_READ), &
+&           op_arg_dat(d_delv, 4,m_el2el,4,'real(8)',OP_READ), &
+&           op_arg_dat(d_delm,-1,OP_ID,4,'real(8)',OP_READ), &
+&           op_arg_dat(d_delm, 1,m_el2el,4,'real(8)',OP_READ), &
+&           op_arg_dat(d_delm, 2,m_el2el,4,'real(8)',OP_READ), &
+&           op_arg_dat(d_delm, 3,m_el2el,4,'real(8)',OP_READ), &
+&           op_arg_dat(d_delm, 4,m_el2el,4,'real(8)',OP_READ), &
+&           op_arg_dat(d_dndv,-1,OP_ID,4,'real(8)',OP_WRITE), &
+&           op_arg_dat(d_dndm,-1,OP_ID,4,'real(8)',OP_WRITE), &
+&           op_arg_dat(d_flux,-1,OP_ID,4,'real(8)',OP_INC), &
+&           op_arg_dat(d_ielsd,-1,OP_ID,4,'integer(4)',OP_READ), &
+&           op_arg_dat(d_ielel,-1,OP_ID,4,'integer(4)',OP_READ), &
+&           op_arg_dat(d_elidx,-1,OP_ID,1,'integer(4)',OP_READ), &
+&           op_arg_gbl(i1,1,'integer(4)',OP_READ))
+    ENDDO
+
+    ! construct post nodal/corner mass
+
+    call op_par_loop_2(a_eq_b,s_nodes, &
+&           op_arg_dat(d_elv0ndm11,-1,OP_ID,1,'real(8)',OP_WRITE), &
+&           op_arg_dat(d_ndm0,    -1,OP_ID,1,'real(8)',OP_READ))
+    call op_par_loop_6(ale_advect_postmass, s_elements, &
+&           op_arg_dat(d_cnm1,   -1,OP_ID,4,'real(8)',OP_INC), &
+&           op_arg_dat(d_flux,   -1,OP_ID,4,'real(8)',OP_READ), &
+&           op_arg_dat(d_elv0ndm11,1,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_elv0ndm11,2,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_elv0ndm11,3,m_el2node,1,'real(8)',OP_INC), &
+&           op_arg_dat(d_elv0ndm11,4,m_el2node,1,'real(8)',OP_INC))
+
+    ! construct cut-offs
+    call op_par_loop_4(ale_advect_cutoff,s_nodes, &
+&           op_arg_dat(d_cutv,   -1,OP_ID,1,'real(8)',OP_WRITE), &
+&           op_arg_dat(d_cutm,   -1,OP_ID,1,'real(8)',OP_WRITE), &
+&           op_arg_dat(d_ndv0,   -1,OP_ID,1,'real(8)',OP_READ), &
+&           op_arg_gbl(cut,1,'real(8)',OP_READ))
+
+    ! Timing data
+    t1=get_time()
+    t1=t1-t0
+    bookleaf_times%time_in_update_nd_basis=                             &
+&    bookleaf_times%time_in_update_nd_basis+t1
+
+  END SUBROUTINE update_nd_basis
+
+  SUBROUTINE update_nd_var(nshape,nel,nel1,nel2,nnod,nnod2,d_ielel,d_ielsd,      &
+&                      d_indstatus,d_indtype,d_ndv0,d_ndm0,d_ndv1, &
+&                      d_ndm1,d_cutv,d_cutm,d_cnv,d_cnm, &
+&                      d_delv,d_delm,d_flux,d_eluv,d_elvv, &
+&                      d_tflux,d_zactive)
+
+    USE ale_advectors_mod,ONLY: flux_n1_VL,update_n1
+    USE pointers_mod,     ONLY: ndu,ndv
+    use op2_bookleaf, ONLY:s_elements,s_nodes,m_el2node,m_el2el,d_elidx,d_ndu,d_ndv
+    USE ale_advect_kernels
+
+    ! Argument list
+    INTEGER(KIND=ink),                       INTENT(IN) :: nshape,nel,  &
+&                                                          nel1,nel2,   &
+&                                                          nnod,nnod2
+    type(op_dat) ::    d_ielel,d_ielsd,      &
+&                      d_indstatus,d_indtype,d_ndv0,d_ndm0,d_ndv1, &
+&                      d_ndm1,d_cutv,d_cutm,d_cnv,d_cnm, &
+&                      d_delv,d_delm,d_flux,d_eluv,d_elvv, &
+&                      d_tflux,d_zactive
+    ! Local
+    INTEGER(KIND=ink) :: ind
+    REAL(KIND=rlk)    :: t0,t1
+
+    ! Timer
+    t0=get_time()
+
+    ! momentum (mass weighted)
+
+!! gather here must happen before comms and out to nel (needs nnod1) and comm eluv
+!    CALL gather(nshape,nel,nnod,ielnd,ndu,eluv)
+    call op_par_loop_3(ale_advect_markactive,s_nodes, &
+&           op_arg_dat(d_indstatus, -1, OP_ID, 1, 'integer(4)', OP_READ), &
+&           op_arg_dat(d_indtype,   -1, OP_ID, 1, 'integer(4)', OP_READ), &
+&           op_arg_dat(d_zactive,   -1, OP_ID, 1, 'integer(4)', OP_WRITE))
+
+    CALL flux_n1_VL(nshape,nel1,nel2,d_ielel,d_ielsd,d_cnm,    &
+&                   d_delm,d_eluv,d_flux)
+    CALL update_n1(nshape,nnod,nel1,nel1,nnod2,d_ndm0,d_ndm1,d_cutm,d_zactive,        &
+&                  d_flux,d_tflux,d_ndu)
+
+! gather here must happen before comms and can't reuse eluv
+!    CALL gather(nshape,nel,nnod,ielnd,ndv,eluv)
+    call op_par_loop_3(ale_advect_markactive2,s_nodes, &
+&           op_arg_dat(d_indstatus, -1, OP_ID, 1, 'integer(4)', OP_READ), &
+&           op_arg_dat(d_indtype,   -1, OP_ID, 1, 'integer(4)', OP_READ), &
+&           op_arg_dat(d_zactive,   -1, OP_ID, 1, 'integer(4)', OP_WRITE))
+
+    CALL flux_n1_VL(nshape,nel1,nel2,d_ielel,d_ielsd,d_cnm,    &
+&                   d_delm,d_elvv,d_flux)
+    CALL update_n1(nshape,nnod,nel1,nel1,nnod2,d_ndm0,d_ndm1,d_cutm,d_zactive,        &
+&                  d_flux,d_tflux,d_ndv)
+
+    ! Timing data
+    t1=get_time()
+    t1=t1-t0
+    bookleaf_times%time_in_update_nd_var=                               &
+&    bookleaf_times%time_in_update_nd_var+t1
+
+  END SUBROUTINE update_nd_var
+
+END MODULE ale_advect_mod

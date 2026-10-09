@@ -33,14 +33,10 @@ PROGRAM main
   USE write_mod,    ONLY: write_sprint,write_iprint
   USE mesh_mod,     ONLY: mesh_gen,mesh_transfer,regions
   use op2_bookleaf
-#ifdef SILO
-  USE silo_mod,     ONLY: write_silo_dump
-#endif
 ! External
 !#ifndef NOOMP
   USE omp_lib
 !#endif
-  USE OP2_Fortran_hdf5_Declarations
 
   IMPLICIT NONE
 

@@ -18,6 +18,10 @@
 
 MODULE write_mod
 
+#ifdef OP2_TRANSLATOR
+  USE op2_kernels
+#endif
+
   IMPLICIT NONE
 
   PUBLIC :: write_sprint,write_iprint,write_lprint
@@ -263,16 +267,6 @@ call op_par_loop_28(write_regvalues, s_elements, &
       PRINT*,' Additional problem specific initialisation used'
 #else
       PRINT*,' No additional problem specific initialisation used'
-#endif
-#ifdef SILO
-      PRINT*,' SILO visualisation dumps written out'
-#else
-      PRINT*,' No SILO visualisation dumps available'
-#endif
-#ifdef TIO
-      PRINT*,' TyphonIO visualisation dumps written out'
-#else
-      PRINT*,' No TyphonIO visualisation dumps available'
 #endif
       WRITE(6,'(a132)')' #############################################' &
 &                //'##################################################' &

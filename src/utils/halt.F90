@@ -23,12 +23,6 @@ SUBROUTINE halt(smessage,iout,zend)
   USE timers_mod,   ONLY: end_timers,print_timers
   USE timing_mod,   ONLY: bookleaf_times,get_time
   USE write_mod,    ONLY: write_sprint
-#ifdef SILO
-  USE silo_mod,     ONLY: write_silo_dump
-#endif
-#ifdef TIO
-  USE TyphonIO_mod, ONLY: write_tio_dump
-#endif
   use op2_bookleaf
 
   IMPLICIT NONE
@@ -62,17 +56,6 @@ SUBROUTINE halt(smessage,iout,zend)
   ! Timing data
   bookleaf_times%time_end_main=get_time()
 
-  IF (iout.EQ.1_ink) THEN
-#ifdef SILO
-    ! Dump Silo file
-    CALL write_silo_dump("final_dump")
-#endif
-#ifdef TIO
-    ! Dump TyphonIO file
-    CALL write_tio_dump("final_dump.h5",.NOT.zfin)
-#endif
-  ENDIF
-
   IF (zfin) THEN
     ! print final totals
     CALL write_sprint()
@@ -93,6 +76,8 @@ SUBROUTINE halt(smessage,iout,zend)
   ! end program
 
     ! end program
+  call op_profile_end()
+  call op_profile_output()
   call op_timing_output ()
   call op_exit()
 

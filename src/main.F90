@@ -29,9 +29,6 @@ PROGRAM main
   USE write_mod,    ONLY: write_sprint,write_iprint
   USE mesh_mod,     ONLY: mesh_gen,mesh_transfer,regions
   use op2_bookleaf
-#ifdef SILO
-  USE silo_mod,     ONLY: write_silo_dump
-#endif
 ! External
 !#ifndef NOOMP
   USE omp_lib
@@ -50,7 +47,7 @@ PROGRAM main
 ! MPI
 !  CALL init_parallel()
   call op_init_base(0,0)
-  !call op_init_base(0,0)
+  call op_profile_start("BookLeaf")
   IF (op_is_root().EQ.1_ink) THEN
     zmprocw = .TRUE._lok
   ENDIF
@@ -131,14 +128,6 @@ PROGRAM main
 
 ! print initial totals
   CALL write_sprint()
-
-! Dump initial graphics file
-#ifdef SILO
-  CALL write_silo_dump("initial_dump")
-#endif
-#ifdef TIO
-  CALL write_tio_dump("initial_dump.h5")
-#endif
 
 ! ###################
 ! SOLVER

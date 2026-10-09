@@ -18,67 +18,60 @@ Wiki: https://github.com/UK-MAC/BookLeaf/wiki
 
 ## BookLeaf Build Procedure
 
-Bookleaf can either be built in the src directory or in a user specified directory. 
-If a user specified directory is used then a copy of the `src/Makefile` must be placed
-in there. Additionally the make command line must include:
+BookLeaf uses OP2-Common's current Fortran runtime and translator-v2. The
+root `Makefile` is the only build file. Translator output is written to
+`generated/bookleaf/`; it is a build product.
 
-`SRCDIR=path/to/src`
+Initialise the configured OP2 environment before building:
 
-Bookleaf has a number of example makefiles for different compilers and architectures
-in src/makefiles. By default it will use the makefile.GENERIC and makefile.intel 
-files. This behaviour can be changed by setting new values on the command line:
-
-```
-MKFILEM=<new makefile> - replaces makefile.GENERIC
-MKFILEC=<new makefile> - replaces makefile.intel
+```bash
+source ../OP2-Common/scripts/source_gnuz
+make
 ```
 
-Four input decks are provided: Sod, Sedov, Saltzmann and Noh. A separate version of
-Bookleaf must be built for each deck. Specify which version is being built using 
-this argument on the make command line:
+Individual targets are:
 
-`MOD=<sod|sedov|saltzmann>`
+- `bookleaf_seq`: direct developer build, without translation.
+- `bookleaf_genseq`: translator-v2 sequential backend.
+- `bookleaf_openmp`: translator-v2 OpenMP backend.
+- `bookleaf_c_cuda`, `bookleaf_c_hip`: translator-v2 C/CUDA or C/HIP backend.
+- `bookleaf_mpi_seq`, `bookleaf_mpi_genseq`, `bookleaf_mpi_openmp`,
+  `bookleaf_mpi_c_cuda`, `bookleaf_mpi_c_hip`: corresponding MPI builds.
 
-The executable will be named: `bookleaf_$MOD`
+`make` includes only configured variants. Every named target can also be
+built explicitly; accelerator targets require the relevant compiler and OP2
+library to have been configured, pointed by OP2_INSTALL_PATH.
 
-Note that the noh deck does not require a MOD command and the executable will simply be called `'bookleaf'
+## Generating a mesh
 
-## MPI
+The mesh generator is built directly from BookLeaf's original mesh-construction
+sources.
 
-Bookleaf will automatically partition the mesh according to the number of cores that the problem is run on.
+```bash
+make bookleaf_meshgen
+./bookleaf_meshgen FILE=input/noh
+```
 
-By default Bookleaf builds with MPI, however a truly serial version can be built
-by adding:
-
-`NO_MPI=1`
-
-
-
-### Examples
-
-1) Building the Sod problem without MPI:
-
-`make NO_MPI=1 MOD=sod bookleaf`
-
-2) Building the Sedov problem using the pgi compiler:
-
-`make MOD=sedov MKFILEC=makefile.pgi bookleaf`
-
-3) Building the Noh problem in a seperate build directory:
-
-`make SRCDIR=../src bookleaf`
-
+This writes `mesh_hdf5` in the current directory. Generate it in a separate
+working directory if an existing mesh file must be retained.
 
 ## Running the Code
 
-BookLeaf can run with no command line arguments. By default it expects to find a
-file called "control" in the directory it is running in. This can be changed 
-by running:
+The application reads `mesh_hdf5` from its current working directory.
 
-`bookleaf_sod FILE=<newfile>`
+```bash
+./bookleaf_seq FILE=input/noh
+./bookleaf_genseq FILE=input/noh
+OMP_NUM_THREADS=4 ./bookleaf_openmp FILE=input/noh
+./bookleaf_c_cuda FILE=input/noh
+./bookleaf_c_hip FILE=input/noh
 
-This file is a copy of the files found in the inputs directory, depending on 
-which problem you wish to run.
+mpirun -np 4 ./bookleaf_mpi_seq FILE=input/noh
+mpirun -np 4 ./bookleaf_mpi_genseq FILE=input/noh
+OMP_NUM_THREADS=8 mpirun -np 4 --map-by ppr:4:node:PE=8 --bind-to core ./bookleaf_mpi_openmp FILE=input/noh
+mpirun -np 4 ./bookleaf_mpi_c_cuda FILE=input/noh
+mpirun -np 4 ./bookleaf_mpi_c_hip FILE=input/noh
+```
 
 ## Version History
 
@@ -92,5 +85,3 @@ V1.2   - Adds in parallel ALE. Plus:
 V1.1   - Adds in mesh partitioning. Parallel running now available.
 
 V1.0   - Initial version. Contains MPI comms, but only serial meshes can be contructed.
-
-
