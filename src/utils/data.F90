@@ -224,6 +224,11 @@ END MODULE timing_mod
 MODULE op2_bookleaf
 
   USE op2_bookleaf_api
+
+#ifdef OP2_TRANSLATOR
+  USE op2_consts
+#endif
+
   use, intrinsic :: ISO_C_BINDING
   type(op_set) :: s_nodes, s_elements, s_mat, s_reg
   type(op_map) :: m_el2node,m_el2el, m_el2reg
@@ -237,7 +242,7 @@ MODULE op2_bookleaf
 &                         d_rscratch24,d_rscratch25,d_rscratch26,d_rscratch27,d_rscratch28, &
 &                         d_iscratch11,d_zscratch11,d_rscratch111,d_rscratch112,d_rscratch113,d_rscratch114,d_rscratch115
 
-  PUBLIC :: op2_bookleaf_declare
+  PUBLIC :: op2_bookleaf_declare, bookleaf_op2_init_const
 
   CONTAINS
 
@@ -348,4 +353,23 @@ MODULE op2_bookleaf
      & m_el2node,  d_elx)
 
   END SUBROUTINE op2_bookleaf_declare
+
+  SUBROUTINE bookleaf_op2_init_const
+    USE reals_mod, ONLY: dt_min, dt_initial, dt_max, cfl_sf, div_sf, dt_g, &
+&                        ccut, zcut, zerocut, pcut, dencut, accut
+    IMPLICIT NONE
+
+    call op_decl_const(dt_min, 1, 'real(8)')
+    call op_decl_const(dt_initial, 1, 'real(8)')
+    call op_decl_const(dt_max, 1, 'real(8)')
+    call op_decl_const(cfl_sf, 1, 'real(8)')
+    call op_decl_const(div_sf, 1, 'real(8)')
+    call op_decl_const(dt_g, 1, 'real(8)')
+    call op_decl_const(ccut, 1, 'real(8)')
+    call op_decl_const(zcut, 1, 'real(8)')
+    call op_decl_const(zerocut, 1, 'real(8)')
+    call op_decl_const(pcut, 1, 'real(8)')
+    call op_decl_const(dencut, 1, 'real(8)')
+    call op_decl_const(accut, 1, 'real(8)')
+  END SUBROUTINE bookleaf_op2_init_const
 END MODULE op2_bookleaf
