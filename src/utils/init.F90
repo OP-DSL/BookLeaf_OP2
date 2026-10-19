@@ -103,7 +103,6 @@ SUBROUTINE init()
   USE init_kernels
   USE common_kernels,ONLY: set_zero1,set_zero4
   USE parameters_mod,ONLY: LI
-  USE op2_bookleaf_consts
   USE timing_mod,   ONLY: timer=>bookleaf_times, get_time
 
   IMPLICIT NONE
